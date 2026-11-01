@@ -27,3 +27,5 @@ goamiga.conf
 /macos/.build/
 /WHDLoad/
 /AHI/
+ios/Goamiga.xcframework/
+xcuserdata/
