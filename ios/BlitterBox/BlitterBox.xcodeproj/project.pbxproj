@@ -209,7 +209,7 @@
 					"@executable_path/Frameworks",
 				);
 				OTHER_LDFLAGS = "-lresolv";
-				PRODUCT_BUNDLE_IDENTIFIER = com.andrewsjg.goamiga;
+				PRODUCT_BUNDLE_IDENTIFIER = com.andrewsjg.blitterbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PRODUCT_MODULE_NAME = BlitterBoxApp;
 				TARGETED_DEVICE_FAMILY = 2;
@@ -229,7 +229,7 @@
 					"@executable_path/Frameworks",
 				);
 				OTHER_LDFLAGS = "-lresolv";
-				PRODUCT_BUNDLE_IDENTIFIER = com.andrewsjg.goamiga;
+				PRODUCT_BUNDLE_IDENTIFIER = com.andrewsjg.blitterbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PRODUCT_MODULE_NAME = BlitterBoxApp;
 				TARGETED_DEVICE_FAMILY = 2;

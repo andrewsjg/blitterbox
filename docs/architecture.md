@@ -9,7 +9,7 @@ BlitterBox emulates the Amiga 500 to 1200 (OCS, ECS and AGA chipsets; 68000 or
 | Path | Contents |
 |---|---|
 | `cmd/blitterbox/` | CLI and window: `main.go` (flags, no arguments opens the configuration screen), `machine.go` (builds an Amiga from `config.Settings`), `display.go` (the `app` game: configuration screen or running machine), `launcher.go` and `ui.go` (the configuration screen) |
-| `internal/config/` | Settings: the `Settings` struct behind the flags, settings files, and saved configurations (`~/.config/goamiga/configs/`) |
+| `internal/config/` | Settings: the `Settings` struct behind the flags, settings files, and saved configurations (`~/.config/blitterbox/configs/`) |
 | `m68k/` | The CPU: 68000 and 68020 instruction set, 68881/68882 FPU, exceptions, prefetch, cycle timing (`m68k/README.md`); `m68kmem/` memory interfaces; tests include the SingleStepTests 68000 suite (data in `m68k/testdata/680x0`, downloaded, not in git) |
 | `amiga/` | The machine: chipset, CIAs, floppy, input, display, and all tests |
 | `diag/` | Diagnostic tools: `adf.py` (list and extract files in OFS/FFS disk images) and `disasm68k.py` (68000/68020 disassembler for ROMs and memory dumps; needs capstone) |

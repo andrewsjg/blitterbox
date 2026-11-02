@@ -41,7 +41,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <dict>
 	<key>CFBundleName</key><string>BlitterBox</string>
 	<key>CFBundleDisplayName</key><string>BlitterBox</string>
-	<key>CFBundleIdentifier</key><string>com.github.andrewsjg.goamiga</string>
+	<key>CFBundleIdentifier</key><string>com.github.andrewsjg.blitterbox</string>
 	<key>CFBundleExecutable</key><string>$EXE</string>
 	<key>CFBundleIconFile</key><string>blitterbox</string>
 	<key>CFBundlePackageType</key><string>APPL</string>

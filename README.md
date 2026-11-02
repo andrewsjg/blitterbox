@@ -383,7 +383,7 @@ blitterbox --rom ROMS/kick31a1200.rom --cpu 68020 --chipset aga --fastram 8192 \
 ```
 
 - **The game** can be its `.lha` archive, its folder or its `.slave`. An
-  archive is unpacked once into `~/.config/goamiga/whdload/games/NAME`,
+  archive is unpacked once into `~/.config/blitterbox/whdload/games/NAME`,
   and its saves and high scores are kept there. The slave and its options
   come from the game's icon tooltypes (`SLAVE=`, `PRELOAD`, `CUSTOM1=` …),
   as WHDLoad packs set them.
@@ -396,7 +396,7 @@ blitterbox --rom ROMS/kick31a1200.rom --cpu 68020 --chipset aga --fastram 8192 \
   the installed folder. Pre-installed WHDLoad packs work as they are.
 - **WHDLoad** itself is downloaded from whdload.de the first time, along
   with the Kickstart relocation tables (Aminet `util/boot/skick346.lha`).
-  Both go in `~/.config/goamiga/whdload`.
+  Both go in `~/.config/blitterbox/whdload`.
 - **Kickstart:** WHDLoad needs Kickstart 2.0 or later. Games that emulate
   a Kickstart ("kickemu" slaves) also need that Kickstart's image. BlitterBox
   finds images in the ROM's folder by their checksums, for example a 1.3
@@ -457,7 +457,7 @@ Instead of typing flags each time, put them in a settings file, one
 - a bare key turns a switch on;
 - relative paths are taken from the file's folder.
 
-Copy `goamiga.conf.example` to start.
+Copy `blitterbox.conf.example` to start.
 
 ```
 rom     = ROMS/Kick32.rom
@@ -466,12 +466,14 @@ df0     = Workbench/Install3.2.adf
 fastram = 8192
 ```
 
-BlitterBox reads `./goamiga.conf`, else `~/.config/goamiga/goamiga.conf`, or
-the file given with `--config FILE`. Flags on the command line override
-the file.
+BlitterBox reads `./blitterbox.conf`, else
+`~/.config/blitterbox/blitterbox.conf`, or the file given with
+`--config FILE`. Flags on the command line override the file. (BlitterBox
+was goAmiga: the first time it runs it moves `~/.config/goamiga` to
+`~/.config/blitterbox`, and it still reads `./goamiga.conf`.)
 
 Configurations saved from the configuration screen are files of the same
-kind, in `~/.config/goamiga/configs/`.
+kind, in `~/.config/blitterbox/configs/`.
 
 ## While it runs
 

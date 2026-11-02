@@ -1,5 +1,5 @@
-# BlitterBox settings. Copy to goamiga.conf (read from the current folder) or
-# ~/.config/goamiga/goamiga.conf, or pass --config FILE.
+# BlitterBox settings. Copy to blitterbox.conf (read from the current folder) or
+# ~/.config/blitterbox/blitterbox.conf, or pass --config FILE.
 #
 # One "key = value" per line; keys are the command-line flag names
 # (blitterbox -h lists them). Keys like df0 and hdf may repeat. A bare key

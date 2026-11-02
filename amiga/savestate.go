@@ -31,8 +31,9 @@ import (
 // line's rendering scratch, which is rebuilt as the frame is drawn.
 
 const (
-	stateMagic   = "goAmiga state\n"
-	stateVersion = 21 // 20: the RTG pointer, the clipboard helper; 21: AHI
+	stateMagic   = "BlitterBox state\n"
+	oldMagic     = "goAmiga state\n" // states saved before the rename
+	stateVersion = 21                // 20: the RTG pointer, the clipboard helper; 21: AHI
 )
 
 // stateCodec writes or reads the fields of a state in order.
@@ -157,9 +158,14 @@ func (a *Amiga) LoadState(r io.Reader) error {
 		return fmt.Errorf("not a BlitterBox state: %w", err)
 	}
 	s := &stateCodec{load: true, r: bufio.NewReader(zr)}
-	magic := make([]byte, len(stateMagic))
+	magic := make([]byte, len(oldMagic))
 	s.raw(magic)
-	if s.err != nil || string(magic) != stateMagic {
+	if s.err == nil && string(magic) != oldMagic {
+		rest := make([]byte, len(stateMagic)-len(oldMagic))
+		s.raw(rest)
+		magic = append(magic, rest...)
+	}
+	if s.err != nil || string(magic) != stateMagic && string(magic) != oldMagic {
 		return errors.New("not a BlitterBox state")
 	}
 	a.state(s)

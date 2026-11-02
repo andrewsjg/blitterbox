@@ -197,12 +197,21 @@ func (d *Display) screenshot() (string, error) {
 
 // ---- Save states ----
 
+// slotPath is state n's file; one saved before the rename keeps its
+// goamiga-N.state name.
 func (d *Display) slotPath(n int) string {
 	dir := d.StateDir
 	if dir == "" {
 		dir = "."
 	}
-	return filepath.Join(dir, fmt.Sprintf("blitterbox-%d.state", n))
+	path := filepath.Join(dir, fmt.Sprintf("blitterbox-%d.state", n))
+	old := filepath.Join(dir, fmt.Sprintf("goamiga-%d.state", n))
+	if _, err := os.Stat(path); err != nil {
+		if _, err := os.Stat(old); err == nil {
+			return old
+		}
+	}
+	return path
 }
 
 func (d *Display) saveSlot(n int) {

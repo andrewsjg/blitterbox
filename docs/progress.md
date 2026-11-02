@@ -71,7 +71,7 @@ request per line on stdin (`cmd/blitterbox/launcherapi.go`): the startup
 configuration, saved configurations (load, save, delete), model presets,
 placing a chosen file (`applyChoice`, shared with the Ebitengine launcher),
 the Kickstart ROM's identity and fit, WHDLoad's state, and `start`, which
-checks the settings and writes `~/.config/goamiga/launch.conf`.
+checks the settings and writes `~/.config/blitterbox/launch.conf`.
 `config.Settings` gained JSON tags for this. The Swift side is only UI
 (`Bridge.swift` talks to the API; `Model.swift` holds the screen's state).
 
@@ -234,7 +234,7 @@ the queue after its filters, as a sound card's would be. It starts once
 two mixes are queued, so the bursts come out evenly.
 
 **Getting it onto the Amiga.** With the hard disk board present, BlitterBox
-mounts a read-only **BlitterBox** volume (`~/.config/goamiga/amiga`). It
+mounts a read-only **BlitterBox** volume (`~/.config/blitterbox/amiga`). It
 holds the driver, `DEVS:AudioModes/GOAMIGA` (an AHIM file with four
 modes: 16 bit and HiFi, stereo and mono, IDs $0072000x), an
 `Install-AHI-Driver` script and a ReadMe.
@@ -343,7 +343,7 @@ Along the way:
 
 **Booting a game directly** (`--whdload`, `internal/whdload`):
 - **The game:** an `.lha` is unpacked once into
-  `~/.config/goamiga/whdload/games/NAME` and kept, with its saves. A
+  `~/.config/blitterbox/whdload/games/NAME` and kept, with its saves. A
   folder or a `.slave` is used where it is.
 - **The slave and options** come from the game's icon. `ToolTypes` reads
   a DiskObject's tooltypes, skipping its images. Options pass to WHDLoad
@@ -1747,7 +1747,7 @@ its window need. It registers the command-line flags (`Register`), so
 flags, settings files and saved configurations all fill in the same
 struct:
 - `Write` saves the values that differ from the defaults, with absolute
-  paths, as an ordinary settings file in `~/.config/goamiga/configs/`.
+  paths, as an ordinary settings file in `~/.config/blitterbox/configs/`.
 - `Load` reads one back.
 - `Saved`, `LastUsed` and `Resolve` back the list, the start-up choice
   and `--config NAME`.
@@ -2535,7 +2535,7 @@ took 787 frames the second time and 827 the first.
 
 ## 2026-09-29 — Settings file; the command line builds without Ebitengine
 
-**`goamiga.conf`.** The format is `key = value` lines whose keys are the
+**`blitterbox.conf`.** The format is `key = value` lines whose keys are the
 flag names, so there's no new vocabulary and no TOML dependency
 (`internal/config`).
 - Keys can repeat where the flag can (`df0`, `hdf`).
@@ -2545,10 +2545,10 @@ flag names, so there's no new vocabulary and no TOML dependency
   so a config next to the ROMs works from anywhere.
 - Flags given on the command line win: `Apply` skips any flag
   `flag.Visit` reports as set.
-- Lookup order: `--config`, `./goamiga.conf`,
-  `~/.config/goamiga/goamiga.conf`.
+- Lookup order: `--config`, `./blitterbox.conf`,
+  `~/.config/blitterbox/blitterbox.conf`.
 - An unknown key, or a bad value, stops with the file and line number.
-- `goamiga.conf.example` documents it. The personal `goamiga.conf` is
+- `blitterbox.conf.example` documents it. The personal `blitterbox.conf` is
   git-ignored.
 
 **A test gotcha.** The parser first lived in `cmd/blitterbox`, but that test

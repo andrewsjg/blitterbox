@@ -19,7 +19,7 @@ func (l *diskList) Set(v string) error {
 
 func TestApplyConfig(t *testing.T) {
 	dir := t.TempDir()
-	conf := filepath.Join(dir, "goamiga.conf")
+	conf := filepath.Join(dir, "blitterbox.conf")
 	os.WriteFile(conf, []byte(`# my A500
 rom = ROMS/Kick32.rom
 df0 = "disks/a.adf"   # first disk
@@ -64,5 +64,33 @@ func TestApplyConfigErrors(t *testing.T) {
 		if err := Apply(fs, conf); err == nil {
 			t.Errorf("%q: no error", tc)
 		}
+	}
+}
+
+// goAmiga's folder from before the rename, its settings file and saved
+// configurations, becomes BlitterBox's.
+func TestMoveOld(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	old := filepath.Join(home, ".config", "goamiga")
+	os.MkdirAll(filepath.Join(old, "configs"), 0o755)
+	os.WriteFile(filepath.Join(old, "goamiga.conf"), []byte("chipram = 1024\n"), 0o644)
+	os.WriteFile(filepath.Join(old, "configs", "A4000.conf"), []byte("cpu = 68040\n"), 0o644)
+	t.Chdir(t.TempDir())
+
+	if got := Find(""); got != filepath.Join(home, ".config", "blitterbox", "blitterbox.conf") {
+		t.Errorf("Find found %q", got)
+	}
+	if _, err := os.Stat(old); err == nil {
+		t.Error("the old folder is still there")
+	}
+	if got := Saved(); len(got) != 1 || got[0] != "A4000" {
+		t.Errorf("saved configurations %v, want [A4000]", got)
+	}
+	// Once moved, a new goamiga folder is left alone.
+	os.MkdirAll(old, 0o755)
+	Dir()
+	if _, err := os.Stat(old); err != nil {
+		t.Error("a later goamiga folder was moved")
 	}
 }

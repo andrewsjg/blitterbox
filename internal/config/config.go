@@ -27,15 +27,13 @@ import (
 var pathKeys = map[string]bool{"tape": true, "scsi": true, "dir": true, "ide": true, "rom": true, "df0": true, "disk": true, "df1": true, "df2": true, "df3": true, "hdf": true, "screenshot-dir": true, "state-dir": true, "load-state": true}
 
 // Find returns the config file to use: the one named, else
-// ./goamiga.conf, else ~/.config/goamiga/goamiga.conf, else "".
+// ./blitterbox.conf (or, from before the rename, ./goamiga.conf), else
+// blitterbox.conf in Dir, else "".
 func Find(named string) string {
 	if named != "" {
 		return named
 	}
-	candidates := []string{"goamiga.conf"}
-	if home, err := os.UserHomeDir(); err == nil {
-		candidates = append(candidates, filepath.Join(home, ".config", "goamiga", "goamiga.conf"))
-	}
+	candidates := []string{"blitterbox.conf", "goamiga.conf", filepath.Join(Dir(), "blitterbox.conf")}
 	for _, c := range candidates {
 		if _, err := os.Stat(c); err == nil {
 			return c

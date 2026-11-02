@@ -91,7 +91,7 @@ func (l *List) Values() []string { return *l }
 // their defaults.
 func (s *Settings) Register(fs *flag.FlagSet) {
 	fs.StringVar(&s.ROM, "rom", s.ROM, "Path to Kickstart ROM file")
-	fs.StringVar(&s.WHDLoad, "whdload", s.WHDLoad, "Boot straight into a WHDLoad game: its .lha archive (unpacked once into ~/.config/goamiga/whdload/games, where its saves stay), its folder or its .slave. Needs Kickstart 2.0 or later; WHDLoad is downloaded from whdload.de the first time. Kickstart images in the ROM's folder are given to games that need them")
+	fs.StringVar(&s.WHDLoad, "whdload", s.WHDLoad, "Boot straight into a WHDLoad game: its .lha archive (unpacked once into ~/.config/blitterbox/whdload/games, where its saves stay), its folder or its .slave. Needs Kickstart 2.0 or later; WHDLoad is downloaded from whdload.de the first time. Kickstart images in the ROM's folder are given to games that need them")
 	fs.Var(&s.Drives[0], "df0", "ADF for DF0:; repeat to list more disks (Cmd+F11 swaps to the next, F11 chooses a file)")
 	fs.Var(&s.Drives[0], "disk", "same as --df0")
 	fs.Var(&s.Drives[1], "df1", "ADF for DF1: (connects the drive); repeat for more")
@@ -295,17 +295,32 @@ var dir string
 // written (the iPad).
 func SetDir(d string) { dir = d }
 
-// Dir is the folder for BlitterBox's own files: ~/.config/goamiga, unless
-// SetDir said otherwise.
+// Dir is the folder for BlitterBox's own files: ~/.config/blitterbox,
+// unless SetDir said otherwise. goAmiga's folder from before the rename,
+// ~/.config/goamiga, moves there the first time.
 func Dir() string {
 	if dir != "" {
 		return dir
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return ".goamiga"
+		return ".blitterbox"
 	}
-	return filepath.Join(home, ".config", "goamiga")
+	d := filepath.Join(home, ".config", "blitterbox")
+	MoveOld(filepath.Join(home, ".config", "goamiga"), d)
+	return d
+}
+
+// MoveOld moves old, a folder of goAmiga's from before the rename to
+// BlitterBox, to d, unless d is there already; its settings file,
+// goamiga.conf, becomes blitterbox.conf.
+func MoveOld(old, d string) {
+	if _, err := os.Stat(d); err == nil {
+		return
+	}
+	if os.Rename(old, d) == nil {
+		os.Rename(filepath.Join(d, "goamiga.conf"), filepath.Join(d, "blitterbox.conf"))
+	}
 }
 
 // SavedDir holds the saved configurations, one NAME.conf file each.

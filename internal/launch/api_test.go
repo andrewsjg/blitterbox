@@ -41,7 +41,7 @@ func apiCall(t *testing.T, reqs ...Request) []Response {
 func TestLauncherAPI(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	t.Chdir(t.TempDir()) // no ./goamiga.conf
+	t.Chdir(t.TempDir()) // no ./blitterbox.conf
 
 	r := apiCall(t, Request{Op: "startup"})[0]
 	if !r.OK || r.Settings == nil || r.Settings.CPU != "68000" || len(r.Saved) != 0 {

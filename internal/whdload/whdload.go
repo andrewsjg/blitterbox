@@ -3,7 +3,7 @@
 // starts the game, and the game's own folder, unpacked from its archive
 // once and kept (saves and high scores stay with it).
 //
-// Everything lives in a home folder (by default ~/.config/goamiga/whdload):
+// Everything lives in a home folder (by default ~/.config/blitterbox/whdload):
 //
 //	WHDLoad          the WHDLoad command (from WHDLoad_usr.lha)
 //	Kickstarts/      the .RTB relocation tables (from Aminet's skick346.lha)

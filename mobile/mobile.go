@@ -66,7 +66,10 @@ func init() {
 // no writable ~/.config on iOS.
 func SetDocuments(dir string) error {
 	config.SetBase(dir)
-	config.SetDir(filepath.Join(filepath.Dir(dir), "Library", "Application Support", "goAmiga"))
+	support := filepath.Join(filepath.Dir(dir), "Library", "Application Support")
+	own := filepath.Join(support, "BlitterBox")
+	config.MoveOld(filepath.Join(support, "goAmiga"), own)
+	config.SetDir(own)
 	return os.Chdir(dir)
 }
 

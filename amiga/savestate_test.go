@@ -2,7 +2,9 @@ package amiga
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
 	"testing"
 )
@@ -242,5 +244,45 @@ func TestSaveStateResumesSound(t *testing.T) {
 		if got[i] != want[i] {
 			t.Fatalf("sample %d = %v after load, want %v", i/2, got[i], want[i])
 		}
+	}
+}
+
+// A state saved before the rename to BlitterBox, with goAmiga's magic,
+// still loads.
+func TestLoadStateOldMagic(t *testing.T) {
+	rom, err := LoadROM("../ROMS/Kick13.rom")
+	if err != nil {
+		t.Skip(err)
+	}
+	a, _ := New(rom, nil)
+	a.Reset()
+	for i := 0; i < 50; i++ {
+		a.RunFrame()
+	}
+	var state bytes.Buffer
+	if err := a.SaveState(&state); err != nil {
+		t.Fatal(err)
+	}
+	zr, err := gzip.NewReader(&state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := io.ReadAll(zr)
+	if !bytes.HasPrefix(raw, []byte(stateMagic)) {
+		t.Fatal("the state doesn't start with the magic")
+	}
+	var old bytes.Buffer
+	zw := gzip.NewWriter(&old)
+	zw.Write([]byte(oldMagic))
+	zw.Write(raw[len(stateMagic):])
+	zw.Close()
+
+	b, _ := New(rom, nil)
+	if err := b.LoadState(&old); err != nil {
+		t.Fatal(err)
+	}
+	compareFingerprints(t, fingerprint(a), fingerprint(b))
+	if err := b.LoadState(bytes.NewReader(nil)); err == nil {
+		t.Error("an empty state loaded")
 	}
 }
