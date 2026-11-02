@@ -38,6 +38,11 @@ type Display struct {
 	// after a click freezes the UI on macOS).
 	mouseGrabbed bool
 
+	// touch is this frame's touches as mouse motion and buttons, from
+	// touchpad (display_touch.go).
+	touchpad touchpad
+	touch    touchpadOut
+
 	mousePrevX     int
 	mousePrevY     int
 	mousePrevValid bool
@@ -128,6 +133,7 @@ func (d *Display) Update() error {
 		d.pollHostKeys()
 	}
 	d.pollMouseGrab()
+	d.pollTouch()
 	d.pollDiskKeys()
 	d.pollDrops()
 	d.updateTitle()
@@ -272,7 +278,7 @@ func (d *Display) pollMouseGrab() {
 	if !d.mouseGrabbed {
 		left := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 		right := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight)
-		if (left || right) && d.statusClick(right) {
+		if mx, my := ebiten.CursorPosition(); (left || right) && d.statusClick(mx, my, right) {
 			d.ignoreButtonsUntilUp = true
 			return
 		}
@@ -351,6 +357,10 @@ func (d *Display) pollMouse() {
 		m.LeftButton = ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 		m.RightButton = ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight)
 	}
+	// Touches (display_touch.go) work whether or not the mouse is grabbed.
+	m.LeftButton = m.LeftButton || d.touch.left
+	m.RightButton = m.RightButton || d.touch.right
+	d.moveMouse(d.touch.dx, d.touch.dy)
 
 	if !d.mouseGrabbed {
 		d.mousePrevValid = false
@@ -363,33 +373,7 @@ func (d *Display) pollMouse() {
 		dy := clampDelta(y - d.mousePrevY)
 		if dx != 0 || dy != 0 {
 			d.zeroMotionFrames = 0
-			aw, ah := LowResWidth, PALVisibleLines
-			if _, pw, ph := d.amiga.Picture(); pw > 0 && ph > 0 {
-				aw, ah = pw, ph
-			}
-			if w, _ := d.amiga.PictureSize(); w > 0 {
-				aw = w // hires: the mouse's resolution
-			}
-			lw, lh := d.amiga.PictureSize()
-			adx := dx * aw / lw
-			ady := dy * ah / lh
-			if adx == 0 && dx != 0 {
-				if dx > 0 {
-					adx = 1
-				} else {
-					adx = -1
-				}
-			}
-			if ady == 0 && dy != 0 {
-				if dy > 0 {
-					ady = 1
-				} else {
-					ady = -1
-				}
-			}
-			if adx != 0 || ady != 0 {
-				m.Move(adx, ady)
-			}
+			d.moveMouse(dx, dy)
 		} else if d.anyHostMouseButton() {
 			// No host delta while dragging: often means capture was lost and
 			// the cursor is pinned at the window edge. Nudge re-capture.
@@ -405,6 +389,39 @@ func (d *Display) pollMouse() {
 	d.mousePrevX = x
 	d.mousePrevY = y
 	d.mousePrevValid = true
+}
+
+// moveMouse moves the Amiga mouse by dx, dy logical screen pixels: one
+// count per pixel of the picture's resolution (hires has twice as many
+// across), and at least one for any motion.
+func (d *Display) moveMouse(dx, dy int) {
+	if dx == 0 && dy == 0 {
+		return
+	}
+	aw, ah := LowResWidth, PALVisibleLines
+	if _, pw, ph := d.amiga.Picture(); pw > 0 && ph > 0 {
+		aw, ah = pw, ph
+	}
+	if w, _ := d.amiga.PictureSize(); w > 0 {
+		aw = w // hires: the mouse's resolution
+	}
+	lw, lh := d.amiga.PictureSize()
+	adx := dx * aw / lw
+	ady := dy * ah / lh
+	if adx == 0 && dx != 0 {
+		adx = sign(dx)
+	}
+	if ady == 0 && dy != 0 {
+		ady = sign(dy)
+	}
+	d.amiga.Mouse.Move(adx, ady)
+}
+
+func sign(v int) int {
+	if v < 0 {
+		return -1
+	}
+	return 1
 }
 
 // Draw copies the Video framebuffer to the Ebitengine screen.

@@ -116,17 +116,16 @@ func (d *Display) confirming(id string) bool {
 	return d.confirm == id && time.Now().Before(d.confirmUntil)
 }
 
-// statusClick handles a click on the status bar's buttons and reports
-// whether it was on one.
+// statusClick handles a click (or tap) at mx, my on the status bar's
+// buttons and reports whether it was on the bar.
 //
 // A click on a floppy drive's light opens the file chooser for it; a
 // right click ejects its disk.
-func (d *Display) statusClick(right bool) bool {
+func (d *Display) statusClick(mx, my int, right bool) bool {
 	if !d.StatusBar {
 		return false
 	}
 	w, h := d.amiga.PictureSize()
-	mx, my := ebiten.CursorPosition()
 	if my < h || my >= h+statusHeight {
 		return false
 	}
