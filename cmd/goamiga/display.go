@@ -72,22 +72,7 @@ func (g *app) showLauncher(l *launcher) {
 }
 
 func (g *app) startMachine(m *launch.Machine, s *config.Settings, name string) {
-	d := amiga.NewDisplay(m.A)
-	d.Mute = s.Mute
-	d.Scale = s.Scale
-	d.StatusBar = s.StatusBar
-	d.StartWarp = s.Warp
-	d.JoyKeys = s.JoyKeys
-	d.JoyAnalog = s.JoyAnalog
-	d.Name = name
-	d.ScreenshotDir = s.ScreenshotDir
-	d.StateDir = s.StateDir
-	for n, list := range m.Drives {
-		d.Disks[n] = list
-		if len(list) > 0 {
-			d.DiskIndex[n] = 0
-		}
-	}
+	d := m.NewDisplay(s, name)
 	fmt.Printf("Starting display (%.2f fps %s)...\n", m.A.FrameRate(), m.A.VideoStandard())
 	g.m, g.disp, g.s, g.name, g.launcher = m, d, *s, name, nil
 	d.Start()
@@ -161,24 +146,7 @@ func (g *app) Update() error {
 // powerCycle switches the machine off and on: a new machine from the same
 // settings, with the disks that are in the drives now.
 func (g *app) powerCycle() {
-	s, name := g.s, g.name
-	for n, list := range g.disp.Disks {
-		if i := g.disp.DiskIndex[n]; i >= 0 && i < len(list) {
-			// The disk in the drive goes in first; the rest stay listed.
-			s.Drives[n] = append(config.List{list[i]}, slices.Delete(slices.Clone(list), i, i+1)...)
-		} else {
-			s.Drives[n] = nil
-		}
-	}
-	// The drives as they are now (DiskIndex is -1 for an empty one).
-	if s.NumDrives < len(g.disp.Disks) {
-		for n := len(g.disp.Disks) - 1; n > 0; n-- {
-			if g.m.A.Disk.DF(n) != nil {
-				s.NumDrives = max(s.NumDrives, n+1)
-				break
-			}
-		}
-	}
+	s, name := g.m.PowerCycleSettings(g.s, g.disp), g.name
 	g.stopMachine()
 	m, err := launch.Build(&s, "", nil, os.Stdout)
 	if err != nil {

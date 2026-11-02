@@ -91,16 +91,29 @@ func (d *Display) openChooser(unit int) {
 	}
 	ch := make(chan diskChoice, 1)
 	d.chooser = ch
+	choose := d.ChooseDiskFile
+	if choose == nil {
+		choose = zenityDiskFile
+	}
 	go func() {
-		path, err := zenity.SelectFile(
-			zenity.Title(fmt.Sprintf("Insert disk in DF%d:", unit)),
-			zenity.Filename(start),
-			zenity.FileFilters{
-				{Name: "Amiga disk images", Patterns: []string{"*.adf", "*.ipf", "*.zip", "*.adz", "*.gz"}, CaseFold: true},
-				{Name: "All files", Patterns: []string{"*"}},
-			})
+		path, err := choose(unit, start)
 		ch <- diskChoice{unit, path, err}
 	}()
+}
+
+// zenityDiskFile is the desktop's file dialog for a drive.
+func zenityDiskFile(unit int, start string) (string, error) {
+	path, err := zenity.SelectFile(
+		zenity.Title(fmt.Sprintf("Insert disk in DF%d:", unit)),
+		zenity.Filename(start),
+		zenity.FileFilters{
+			{Name: "Amiga disk images", Patterns: []string{"*.adf", "*.ipf", "*.zip", "*.adz", "*.gz"}, CaseFold: true},
+			{Name: "All files", Patterns: []string{"*"}},
+		})
+	if err == zenity.ErrCanceled {
+		return "", nil
+	}
+	return path, err
 }
 
 // pollChooser inserts the disk chosen in the dialog, once it closes.
@@ -116,8 +129,8 @@ func (d *Display) pollChooser() {
 	}
 	d.chooser = nil
 	switch {
-	case c.err == zenity.ErrCanceled:
-		return
+	case c.err == nil && c.path == "":
+		return // cancelled
 	case c.err != nil:
 		fmt.Printf("DF%d: file dialog: %v\n", c.unit, c.err)
 		return

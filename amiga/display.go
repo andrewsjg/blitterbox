@@ -65,6 +65,11 @@ type Display struct {
 	Disks     [4][]string
 	DiskIndex [4]int
 	chooser   chan diskChoice // result of an open file dialog, or nil
+	// ChooseDiskFile asks for a disk image for DFunit:, starting in the
+	// folder start, and returns its path ("" if cancelled). It runs on its
+	// own goroutine, so it may wait for the answer. nil uses zenity's file
+	// dialog; the iPad app shows its own.
+	ChooseDiskFile func(unit int, start string) (string, error)
 
 	lastTitle string
 
