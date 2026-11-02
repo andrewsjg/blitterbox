@@ -321,6 +321,13 @@ func (c *CustomChips) Write(addr int, p []byte) (int, error) {
 	case 0x096, 0x09A, 0x09C, 0x09E: // DMACON, INTENA, INTREQ, ADKCON — set/clear registers
 		// handled in switch below — skip raw copy so set/clear logic works correctly
 	default:
+		if n == 2 && c.amiga != nil && c.amiga.Video != nil && (offset == 0x108 || offset == 0x10A) {
+			hpos := c.copperHpos
+			if hpos < 0 {
+				hpos = c.amiga.hpos
+			}
+			c.amiga.Video.noteModulo(offset, c.ReadReg16(offset), hpos)
+		}
 		if n == 2 && c.amiga != nil && c.amiga.Video != nil && deniseLineReg(offset) {
 			hpos := c.copperHpos
 			if hpos < 0 {

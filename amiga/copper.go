@@ -19,7 +19,7 @@ type Copper struct {
 	// write; it stops until restarted (VBLANK or a COPJMP strobe).
 	halted  bool
 	wait    bool // True if waiting for beam position
-	compare bool // a WAIT was fetched: compare the beam next cycle
+	compare int  // a WAIT was fetched: compare the beam in this many cycles
 	second  bool // the first word (ir1) of an instruction has been fetched
 	ir1     uint16
 	waitVP  uint16 // Wait vertical position
@@ -53,7 +53,7 @@ func (c *Copper) GetCop2LC() uint32 { return c.cop2lc }
 
 // Restart sets the Copper PC to COP1LC (which=1) or COP2LC (which=2).
 func (c *Copper) Restart(which int) {
-	c.wait, c.compare, c.second = false, false, false
+	c.wait, c.compare, c.second = false, 0, false
 	c.halted = false
 	if which == 1 {
 		c.pc = c.cop1lc
@@ -106,10 +106,15 @@ func (c *Copper) canWake(hposEnd, vpos int) bool {
 // in each it either fetches one instruction word or does its internal work:
 //
 //   - An instruction is two words; it executes when the second arrives.
-//   - A WAIT compares the beam in the cycle after its second word. When
-//     that cycle falls on the next line, the comparison sees the new line:
-//     this is what makes WAIT $FFDE followed by WAIT $2C wait for line
-//     256+$2C rather than end at once on line 255.
+//   - A WAIT compares the beam two cycles after its second word (as
+//     WinUAE has it). When that cycle falls on the next line, the
+//     comparison sees the new line: this is what makes WAIT $FFDE followed
+//     by WAIT $2C wait for line 256+$2C rather than end at once on line
+//     255. Alien Breed 2 ends its playfield with WAIT (255,$D8) and
+//     WAIT (33,0): with 6 lores planes taking slot $DA, the second WAIT
+//     arrives at $DE and is compared on line 256.
+//   - The last colour clock of a PAL line, $E2, is not a Copper cycle:
+//     the Copper's next line starts there.
 //   - Waking from a WAIT takes a cycle.
 //   - Bitplane DMA outranks the Copper: a word cannot be fetched in a slot
 //     the bitplanes take. Hires with 4 planes takes every even slot of the
@@ -122,7 +127,7 @@ func (c *Copper) canWake(hposEnd, vpos int) bool {
 // hpos is the beam tracker's position in CPU cycles (0..Amiga.lineCycles);
 // see beamHP for the conversion to Copper horizontal positions.
 func (c *Copper) Step(hpos, vpos int) {
-	if c.halted {
+	if c.halted || hpos/CPUCyclesPerColorClock+1 >= c.amiga.lineCycles/CPUCyclesPerColorClock {
 		return
 	}
 	if c.wait {
@@ -131,9 +136,11 @@ func (c *Copper) Step(hpos, vpos int) {
 		}
 		return
 	}
-	if c.compare {
-		c.compare = false
-		c.wait = !c.waitMet(hpos, vpos)
+	if c.compare > 0 {
+		c.compare--
+		if c.compare == 0 {
+			c.wait = !c.waitMet(hpos, vpos)
+		}
 		return
 	}
 	if c.amiga.bitplaneDMA(vpos).uses(hpos / CPUCyclesPerColorClock) {
@@ -200,7 +207,7 @@ func (c *Copper) execute(ir1, ir2 uint16, hpos, vpos int) {
 			c.wait = true
 			return
 		}
-		c.compare = true // in the next cycle
+		c.compare = 2
 	} else {
 		// SKIP: skip next instruction if beam is past position
 		skipVP := (ir1 >> 8) & 0xFF

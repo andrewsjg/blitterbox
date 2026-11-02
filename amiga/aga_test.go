@@ -279,10 +279,19 @@ func TestAGAScroll(t *testing.T) {
 	a := agaAmiga(t, 0x1200, plane)
 	setColor24(a, 1, 0xFFFFFF)
 	writeCustom16(a, 0x102, 0x0400) // PF1H6: 64 super-hires pixels, 16 lores
+	// The delay wraps at the fetch width: 16 lores pixels with 16-bit
+	// fetches, so PF1H6 alone is no delay; with 32-bit fetches it is.
+	a.Video.RenderLine(DisplayTop)
+	if rgbAt24(a, 0) != 0xFFFFFF {
+		t.Errorf("PF1H6 with 16-bit fetches should wrap to no delay: col 0 $%06X", rgbAt24(a, 0))
+	}
+	writeCustom16(a, 0x1FC, 1) // FMODE: 32-bit bitplane fetches
+	a.Video.bplpt[0] = 0x1000
 	a.Video.RenderLine(DisplayTop)
 	if rgbAt24(a, 32) != 0xFFFFFF || rgbAt24(a, 0) != 0 {
 		t.Errorf("PF1H6 should move pixel 0 to column 32: col 0 $%06X, col 32 $%06X", rgbAt24(a, 0), rgbAt24(a, 32))
 	}
+	writeCustom16(a, 0x1FC, 0)
 	writeCustom16(a, 0x102, 0x0200) // PF1H1: 2 super-hires pixels, one hires column
 	a.Video.bplpt[0] = 0x1000
 	a.Video.RenderLine(DisplayTop)
@@ -329,5 +338,59 @@ func TestAGABorderSprites(t *testing.T) {
 	a.Video.RenderLine(DisplayTop)
 	if rgbAt24(a, 0) != 0xFF0000 {
 		t.Errorf("sprite not shown in the border with BRDSPRT")
+	}
+}
+
+// A DDFSTRT between fetch-unit boundaries takes from the delay, which
+// wraps at the fetch width (WinUAE): with 32-bit fetches from $34, 12
+// colour clocks past a unit, pixel 0 shows 8 lores pixels later than from
+// $34 itself, where DDFSTRT $38 would put it.
+func TestAGAMisalignedDDFSTRT(t *testing.T) {
+	plane := make([]byte, 64)
+	plane[0] = 0x80
+	a := agaAmiga(t, 0x1200, plane)
+	setColor24(a, 1, 0xFFFFFF)
+	writeCustom16(a, 0x1FC, 1)
+	writeCustom16(a, 0x092, 0x34)
+	a.Video.RenderLine(DisplayTop)
+	if rgbAt24(a, 0) != 0xFFFFFF || rgbAt24(a, 1) != 0xFFFFFF || rgbAt24(a, 2) != 0 {
+		t.Errorf("pixel 0 should cover columns 0-1: $%06X $%06X $%06X", rgbAt24(a, 0), rgbAt24(a, 1), rgbAt24(a, 2))
+	}
+}
+
+// Alien Breed 2 ends its playfield with WAIT (255,$D8) and WAIT (33,0),
+// for line 289, under six lores planes fetched 32 bits wide from DDFSTRT
+// $24. The first WAIT ends at $D8; the bitplanes take slot $DA, so the
+// second arrives at $DC and $DE; it compares two cycles on, and with no
+// Copper cycle at $E2, that is on line 256.
+func TestCopperWaitAfterLine255(t *testing.T) {
+	a := createTestAmiga(t)
+	if err := a.SetChipset("aga"); err != nil {
+		t.Fatal(err)
+	}
+	writeCustom16(a, 0x100, 0x6200)
+	writeCustom16(a, 0x1FC, 1)
+	writeCustom16(a, 0x092, 0x24)
+	writeCustom16(a, 0x094, 0xD4)
+	writeCustom16(a, 0x08E, 0x2C81)
+	writeCustom16(a, 0x090, 0x2CC1) // to line 300
+	writeCustom16(a, 0x096, 0x8380) // DMAEN, BPLEN, COPEN
+	a.ChipRAM.Write(0x2000, []byte{
+		0xFF, 0xD9, 0xFF, 0xFE, // WAIT (255,$D8)
+		0x21, 0x01, 0xFF, 0xFE, // WAIT (33,0): line 289
+		0x01, 0x80, 0x0F, 0xFF, // MOVE COLOR00
+		0xFF, 0xFF, 0xFF, 0xFE,
+	})
+	a.Copper.cop1lc = 0x2000
+	a.Copper.Restart(1)
+	for v := 255; v < 289; v++ {
+		a.Copper.StepLine(0, a.lineCycles, v)
+		if a.Custom.ReadReg16(0x180) != 0 {
+			t.Fatalf("the MOVE ran on line %d, want 289", v)
+		}
+	}
+	a.Copper.StepLine(0, a.lineCycles, 289)
+	if a.Custom.ReadReg16(0x180) != 0x0FFF {
+		t.Error("the MOVE should run on line 289")
 	}
 }

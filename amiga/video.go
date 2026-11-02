@@ -26,6 +26,8 @@ type Video struct {
 	// changes lists this line's writes to Denise registers (colours,
 	// BPLCON1, BPLCON2) in beam order, for drawLine to apply mid-line.
 	changes []regChange
+	// modWrites are this line's BPL1MOD and BPL2MOD writes (noteModulo).
+	modWrites []modWrite
 
 	// linePal is the 24-bit palette as drawLine sweeps the line; agaPal
 	// is AGA's 256 colour registers (aga.go).
@@ -434,9 +436,17 @@ func (v *Video) RenderLine(vpos int) {
 			v.amiga.ChipRAM.Read(int(v.bplpt[p]), v.planeBuf[p][:2*words])
 		}
 	}
+	defer func() { v.modWrites = v.modWrites[:0] }()
 	if fetch {
-		bpl1mod := int32(int16(v.amiga.Custom.ReadReg16(0x108)))
-		bpl2mod := int32(int16(v.amiga.Custom.ReadReg16(0x10A)))
+		// The planes' last fetches: at the end of the fetch window, or
+		// with AGA's wide fetches, in the first 8 colour clocks of the
+		// last unit (the rest of it is idle).
+		f := v.amiga.bitplaneDMA(vpos)
+		last := f.end
+		if f.factor > 1 {
+			last = f.end - f.unit + min(f.unit, 8)
+		}
+		bpl1mod, bpl2mod := v.lineModulos(last)
 		// AGA's bitplane scan doubling (FMODE BSCAN2), for DblPAL and
 		// DblNTSC: every plane takes BPL1MOD on lines of DIWSTRT's start
 		// line's parity and BPL2MOD on the others, so a modulo of minus a
@@ -482,6 +492,36 @@ func (v *Video) lineInWindow(vpos int) bool {
 }
 
 // regChange is a write to a Denise register during the current line.
+// modWrite is a write to BPL1MOD or BPL2MOD during the line: Agnus adds
+// the modulo after each plane's last fetch, so one made after that is for
+// the next line.
+type modWrite struct {
+	reg, cck int
+	old      uint16
+}
+
+// noteModulo records a write to BPL1MOD or BPL2MOD (reg) at hpos, whose
+// value before was old.
+func (v *Video) noteModulo(reg int, old uint16, hpos int) {
+	v.modWrites = append(v.modWrites, modWrite{reg: reg, cck: hpos / CPUCyclesPerColorClock, old: old})
+}
+
+// lineModulos are BPL1MOD and BPL2MOD as the line's last fetches (from
+// colour clock last on) found them.
+func (v *Video) lineModulos(last int) (bpl1mod, bpl2mod int32) {
+	m1, m2 := v.amiga.Custom.ReadReg16(0x108), v.amiga.Custom.ReadReg16(0x10A)
+	for i := len(v.modWrites) - 1; i >= 0; i-- {
+		if w := v.modWrites[i]; w.cck >= last {
+			if w.reg == 0x108 {
+				m1 = w.old
+			} else {
+				m2 = w.old
+			}
+		}
+	}
+	return int32(int16(m1)), int32(int16(m2))
+}
+
 type regChange struct {
 	col      int // first output column showing the new value
 	cck      int // colour clock of the write
@@ -615,10 +655,15 @@ func (v *Video) drawLine(vpos, numPlanes int, hires bool, ddfstrt, words int, ro
 	// its last 16 pixels wrapping round to the left edge. AGA's wide
 	// fetches keep the 8-clock delay: graphics.library pairs FMODE 3 hires
 	// with DDFSTRT $38 and DIWSTRT $81.
-	unit := min(fetchUnitCCK(hires && !v.shres, v.shres, v.fetchFactor()), 8)
+	fetch := fetchUnitCCK(hires && !v.shres, v.shres, v.fetchFactor())
+	unit := min(fetch, 8)
 	cs := v.cs
 	pf := playfieldLayout{planes: numPlanes, words: words, pixW: 2 * cs,
 		origin: cs * (2*(2*ddfstrt+2*unit+1) - 2*v.left), aga: aga}
+	if aga {
+		pf.wrap = 2 * fetch
+		pf.misalign = 2 * ((ddfstrt - 0x18) & (fetch - 1))
+	}
 	if hires {
 		pf.pixW = cs
 	}
@@ -768,24 +813,38 @@ type playfieldLayout struct {
 	half          bool // super-hires in a hires frame: two pixels per column (pfIdx, pfIdxB)
 	origin        int  // output column of the first pixel, before scrolling
 	aga           bool // BPLCON1 has AGA's finer and longer scroll
+
+	// AGA: the delay wraps at wrap lores pixels, the width of a fetch unit
+	// (16, 32 or 64 in lores), less misalign, twice the colour clocks
+	// DDFSTRT is past a fetch-unit boundary.
+	wrap, misalign int
 }
 
 // scrollColumns is the BPLCON1 delay of the odd planes (or with even, the
 // even planes) in output columns. OCS/ECS delay by 0-15 lores pixels. AGA
 // adds two bits above (to 63 lores pixels, for 64-pixel fetches) and two
 // below (to a super-hires pixel): PF1H7-6 in bits 11-10 and PF1H1-0 in
-// bits 9-8, PF2's in bits 15-14 and 13-12.
+// bits 9-8, PF2's in bits 15-14 and 13-12. Lisa's delay only spans a fetch
+// unit, so it wraps at the fetch width, and a DDFSTRT between fetch-unit
+// boundaries takes from it (as WinUAE has it): Alien Breed 2's playfield,
+// with 32-bit fetches from DDFSTRT $24 and a delay of 63 pixels, starts 7
+// pixels in.
 func (pf playfieldLayout) scrollColumns(bplcon1 uint16, even bool, cs int) int {
 	b := bplcon1
 	lo, hi4 := b&0xF, b>>8
 	if even {
 		lo, hi4 = b>>4&0xF, b>>12
 	}
-	shres := int(lo) << 2 // in super-hires pixels
+	lores := int(lo)
+	sub := 0 // super-hires pixels
 	if pf.aga {
-		shres |= int(hi4&3) | int(hi4>>2&3)<<6
+		lores |= int(hi4>>2&3) << 4
+		sub = int(hi4 & 3)
+		if pf.wrap > 0 {
+			lores = ((lores-pf.misalign)%pf.wrap + pf.wrap) % pf.wrap
+		}
 	}
-	return shres * cs / 2
+	return (lores<<2 | sub) * cs / 2
 }
 
 // fillPlayfield sets pfIdx[from:] to the playfield colour index (plane

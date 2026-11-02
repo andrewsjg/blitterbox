@@ -225,10 +225,12 @@ func TestCopperWAIT(t *testing.T) {
 	a.Copper.cop1lc = 0x00002000
 	a.Copper.Restart(1)
 
-	// Fetch the WAIT (two words) and compare at vpos=50 — should be waiting
+	// Fetch the WAIT (two words) and, two cycles on, compare at vpos=50 —
+	// should be waiting
 	a.Copper.Step(0, 50)
 	a.Copper.Step(4, 50)
 	a.Copper.Step(8, 50)
+	a.Copper.Step(12, 50)
 	if !a.Copper.wait {
 		t.Error("Copper should be waiting at vpos=50")
 	}

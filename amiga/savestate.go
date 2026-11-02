@@ -632,7 +632,16 @@ func (c *Copper) state(s *stateCodec) {
 	num(s, &c.pc)
 	s.bool(&c.halted)
 	s.bool(&c.wait)
-	s.bool(&c.compare)
+	// A pending WAIT comparison, saved as a flag (a state saved in the
+	// cycle before it compares one cycle early).
+	comparing := c.compare > 0
+	s.bool(&comparing)
+	if s.load {
+		c.compare = 0
+		if comparing {
+			c.compare = 1
+		}
+	}
 	s.bool(&c.second)
 	num(s, &c.ir1)
 	num(s, &c.waitVP)

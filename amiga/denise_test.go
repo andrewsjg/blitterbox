@@ -592,3 +592,17 @@ func TestSpriteDataWrittenWhileShifting(t *testing.T) {
 		t.Errorf("column 72 = %v, want background", got)
 	}
 }
+
+// Agnus adds the modulo after each plane's last fetch: a write after that
+// is for the next line. Alien Breed 2's Copper sets BPL1MOD for one line
+// and puts it back at $E0, after the fetches, to wrap its playfield.
+func TestModuloWrittenAfterLastFetch(t *testing.T) {
+	a := deniseAmiga(t, 0x1200, make([]byte, 64))
+	writeCustom16(a, 0x108, 40)
+	a.hpos = 0xE0 * CPUCyclesPerColorClock
+	writeCustom16(a, 0x108, 0)
+	a.Video.RenderLine(DisplayTop)
+	if got, want := a.Video.bplpt[0], uint32(0x1000+40+40); got != want {
+		t.Errorf("BPL1PT = $%X, want $%X (20 words and the modulo of 40 in force at the last fetch)", got, want)
+	}
+}

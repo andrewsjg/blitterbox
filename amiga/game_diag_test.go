@@ -23,9 +23,13 @@ import (
 //	BLITTERBOX_CPU      68000 or 68020 (default 68000)
 //	BLITTERBOX_CLICKS   comma-separated frame numbers at which to click the
 //	                 left mouse button (for "click to start" screens)
-//	BLITTERBOX_SWAP_AT  frame,path: swap DF0: to another disk at that frame
+//	BLITTERBOX_SWAP_AT  frame,path[;frame,path...]: swap DF0: to another disk
+//	                 at each frame
 //	BLITTERBOX_MOVES    frame,dx,dy;...: move the mouse by dx,dy counts
 //	                 starting at frame, 4 counts per frame
+//	BLITTERBOX_JOY      frame,switches[,frames];...: hold the joystick's
+//	                 switches (U, D, L, R, F for fire) for frames (default 4)
+//	BLITTERBOX_SAVE_AT  frame,path: save the machine's state after that frame
 //	BLITTERBOX_TRACE    frame,count: trace count instructions from that frame
 //	BLITTERBOX_REGLOG   from,to,filter: log custom register writes whose line
 //	                 contains filter (e.g. "DSK") between those frames
@@ -79,11 +83,11 @@ func TestGameDiag(t *testing.T) {
 	var logFilter string
 	fmt.Sscanf(strings.ReplaceAll(os.Getenv("BLITTERBOX_REGLOG"), ",", " "), "%d %d %s", &logFrom, &logTo, &logFilter)
 	regLog := &filterLog{t: t, filter: logFilter}
-	swapAt, swapPath := 0, ""
-	if v := os.Getenv("BLITTERBOX_SWAP_AT"); v != "" {
+	swaps := map[int]string{}
+	for _, v := range strings.Split(os.Getenv("BLITTERBOX_SWAP_AT"), ";") {
 		if i := strings.IndexByte(v, ','); i > 0 {
-			swapAt, _ = strconv.Atoi(v[:i])
-			swapPath = v[i+1:]
+			f, _ := strconv.Atoi(v[:i])
+			swaps[f] = v[i+1:]
 		}
 	}
 	type move struct{ dx, dy int }
@@ -94,13 +98,39 @@ func TestGameDiag(t *testing.T) {
 			moves[f] = move{dx, dy}
 		}
 	}
+	// Joystick: frame,switches[,frames] held (U D L R F), default 4 frames.
+	type joy struct {
+		keys string
+		n    int
+	}
+	joys := map[int]joy{}
+	for _, j := range strings.Split(os.Getenv("BLITTERBOX_JOY"), ";") {
+		p := strings.Split(j, ",")
+		if len(p) < 2 {
+			continue
+		}
+		f, _ := strconv.Atoi(p[0])
+		n := 4
+		if len(p) > 2 {
+			n, _ = strconv.Atoi(p[2])
+		}
+		joys[f] = joy{p[1], n}
+	}
+	saveAt, savePath := 0, ""
+	if v := os.Getenv("BLITTERBOX_SAVE_AT"); v != "" {
+		if i := strings.IndexByte(v, ','); i > 0 {
+			saveAt, _ = strconv.Atoi(v[:i])
+			savePath = v[i+1:]
+		}
+	}
+	var held joy
 	var pending move
 	var traceAt, traceN int
 	fmt.Sscanf(os.Getenv("BLITTERBOX_TRACE"), "%d,%d", &traceAt, &traceN)
 
 	base := filepath.Base(game)
 	for f := 1; f <= frames; f++ {
-		if f == swapAt {
+		if swapPath, ok := swaps[f]; ok {
 			if err := a.SwapDisk(swapPath); err != nil {
 				t.Fatal(err)
 			}
@@ -116,6 +146,18 @@ func TestGameDiag(t *testing.T) {
 		}
 		if pending.dx != 0 || pending.dy != 0 {
 			a.Mouse.Move(step(&pending.dx), step(&pending.dy))
+		}
+		if j, ok := joys[f]; ok {
+			held = j
+		}
+		js := a.Joystick
+		js.Up, js.Down = strings.Contains(held.keys, "U"), strings.Contains(held.keys, "D")
+		js.Left, js.Right = strings.Contains(held.keys, "L"), strings.Contains(held.keys, "R")
+		js.Fire = strings.Contains(held.keys, "F")
+		if held.n > 0 {
+			held.n--
+		} else {
+			held.keys = ""
 		}
 		if clicks[f] {
 			a.Mouse.LeftButton = true
@@ -158,6 +200,17 @@ func TestGameDiag(t *testing.T) {
 					dr.selected, dr.motor, dr.adf != nil, d.side, d.adkcon, d.dsksync)
 			}
 			t.Logf("frame %d: PC=$%06X SR=$%04X motor=%v cyl=%d  %s", f, a.CPU.PC, a.CPU.SR, dr.MotorOn(), dr.Cylinder(), p)
+		}
+		if f == saveAt {
+			fh, err := os.Create(savePath)
+			if err == nil {
+				err = a.SaveState(fh)
+				fh.Close()
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Logf("frame %d: state saved in %s", f, savePath)
 		}
 	}
 }
