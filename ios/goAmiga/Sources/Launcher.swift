@@ -152,16 +152,25 @@ final class AppHost: NSObject, GoamigaHostProtocol {
 }
 
 /// RootView is the Amiga's screen, covered by the configuration screen
-/// whenever the machine isn't running.
+/// whenever the machine isn't running: the two crossfade, rather than the
+/// settings sliding away as a sheet. The status bar and home indicator
+/// stay out of the Amiga's way.
 struct RootView: View {
     @Environment(LauncherModel.self) private var model
 
     var body: some View {
-        AmigaScreen()
-            .ignoresSafeArea()
-            .fullScreenCover(isPresented: .constant(!model.running)) {
+        ZStack {
+            AmigaScreen()
+                .ignoresSafeArea()
+            if !model.running {
                 LauncherView()
+                    .transition(.opacity)
+                    .zIndex(1)
             }
+        }
+        .animation(.easeInOut(duration: 0.35), value: model.running)
+        .statusBarHidden(model.running)
+        .persistentSystemOverlays(model.running ? .hidden : .automatic)
     }
 }
 

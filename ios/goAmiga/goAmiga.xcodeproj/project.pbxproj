@@ -17,6 +17,7 @@
 		A10000000000000000000006 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* Model.swift */; };
 		A10000000000000000000007 /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* Views.swift */; };
 		A10000000000000000000008 /* Tabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* Tabs.swift */; };
+		A1000000000000000000000B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		A20000000000000000000008 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Model.swift; path = ../../macos/Sources/goAmigaLauncher/Model.swift; sourceTree = SOURCE_ROOT; };
 		A20000000000000000000009 /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Views.swift; path = ../../macos/Sources/goAmigaLauncher/Views.swift; sourceTree = SOURCE_ROOT; };
 		A20000000000000000000010 /* Tabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Tabs.swift; path = ../../macos/Sources/goAmigaLauncher/Tabs.swift; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000013 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,6 +47,17 @@
 		};
 /* End PBXFrameworksBuildPhase section */
 
+/* Begin PBXResourcesBuildPhase section */
+		A30000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000000B /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXGroup section */
 		A40000000000000000000001 = {
 			isa = PBXGroup;
@@ -52,6 +65,7 @@
 				A40000000000000000000002 /* Sources */,
 				A40000000000000000000004 /* Shared with the Mac launcher */,
 				A20000000000000000000003 /* Info.plist */,
+				A20000000000000000000013 /* Assets.xcassets */,
 				A20000000000000000000002 /* Goamiga.xcframework */,
 				A40000000000000000000003 /* Products */,
 			);
@@ -97,6 +111,7 @@
 			buildPhases = (
 				A60000000000000000000001 /* Sources */,
 				A30000000000000000000001 /* Frameworks */,
+				A30000000000000000000002 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -184,6 +199,7 @@
 		A90000000000000000000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = QG5Y4Q35W5;
@@ -203,6 +219,7 @@
 		A90000000000000000000004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = QG5Y4Q35W5;
