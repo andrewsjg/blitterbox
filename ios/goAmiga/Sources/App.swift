@@ -29,9 +29,10 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let host = AppHost(model: model)
         GoamigaSetHost(host)
         self.host = host
+        Pointer.start()
 
         let window = UIWindow(windowScene: scene)
-        window.rootViewController = UIHostingController(rootView: RootView().environment(model))
+        window.rootViewController = RootController(model: model)
         window.makeKeyAndVisible()
         self.window = window
     }
@@ -41,7 +42,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 /// controller, as a child) with the on-screen keyboard docked below it
 /// when shown; the picture shrinks to fit above the keyboard.
 final class AmigaViewController: UIViewController {
-    private let amiga = GoamigaEbitenViewController()
+    private let amiga = EbitenController()
     private let keyboard = AmigaKeyboardView()
     private let keyboardButton = UIButton(type: .system)
     private var keyboardShown: NSLayoutConstraint!

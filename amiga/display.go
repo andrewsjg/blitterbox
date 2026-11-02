@@ -25,6 +25,13 @@ type Display struct {
 	// Name is the machine's name for the title bar: the configuration's.
 	Name string
 
+	// pointer is a mouse or trackpad the app reads itself (PointerMove):
+	// motion still to give the Amiga, logical pixels, and its buttons.
+	pointer struct {
+		dx, dy  float64
+		buttons [3]bool // left, right, middle
+	}
+
 	// outsideW and outsideH are the window's size, from Layout.
 	outsideW, outsideH int
 
@@ -366,6 +373,7 @@ func (d *Display) pollMouse() {
 	m.LeftButton = m.LeftButton || d.touch.left
 	m.RightButton = m.RightButton || d.touch.right
 	d.moveMouse(d.touch.dx, d.touch.dy)
+	d.pollPointer()
 
 	if !d.mouseGrabbed {
 		d.mousePrevValid = false

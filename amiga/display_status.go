@@ -202,14 +202,20 @@ var (
 // window's size (from Layout) over the logical screen's, at the monitor's
 // pixel density, as Ebitengine fits the screen to the window.
 func (d *Display) finalScale(lw, lh int) float64 {
-	if lw <= 0 || lh <= 0 || d.outsideW <= 0 || d.outsideH <= 0 {
-		return 1
-	}
 	dsf := 1.0
 	if m := ebiten.Monitor(); m != nil {
 		dsf = m.DeviceScaleFactor()
 	}
-	return min(float64(d.outsideW)/float64(lw), float64(d.outsideH)/float64(lh)) * dsf
+	return d.pointScale(lw, lh) * dsf
+}
+
+// pointScale is how many of the window's points (device-independent
+// pixels: what touches and trackpads measure) a logical pixel takes.
+func (d *Display) pointScale(lw, lh int) float64 {
+	if lw <= 0 || lh <= 0 || d.outsideW <= 0 || d.outsideH <= 0 {
+		return 1
+	}
+	return min(float64(d.outsideW)/float64(lw), float64(d.outsideH)/float64(lh))
 }
 
 // placeStatus puts the bar drawn by renderStatus onto the final screen,

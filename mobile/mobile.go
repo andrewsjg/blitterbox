@@ -108,6 +108,27 @@ func Key(code int, down bool) {
 	}
 }
 
+// PointerMove moves the Amiga's mouse by dx, dy points, for the app's
+// mouse or trackpad (GCMouse: Ebitengine sees only a trackpad's clicks,
+// as touches, which the app keeps from it).
+func PointerMove(dx, dy float64) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.PointerMove(dx, dy)
+	}
+}
+
+// PointerButton presses (down) or releases the app's mouse or trackpad
+// button: 0 left, 1 right, 2 middle.
+func PointerButton(button int, down bool) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.PointerButton(button, down)
+	}
+}
+
 // DiskChosen answers ChooseDisk: the disk image's path, or "" if none
 // was chosen.
 func DiskChosen(path string) {

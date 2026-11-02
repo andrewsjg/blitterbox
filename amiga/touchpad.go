@@ -23,6 +23,8 @@ type touchpad struct {
 	maxFingers int        // most fingers down at once
 	dragging   bool       // tap-then-touch: left held for the gesture
 
+	slop int // how far a tap may move, logical pixels (0: tapSlop)
+
 	frame      int
 	lastTapEnd int // frame the last one-finger tap ended (0: none yet)
 	leftHold   int // frames left of a tap's click
@@ -45,7 +47,7 @@ type touchpadOut struct {
 
 const (
 	tapFrames   = 15 // a tap is shorter than this (0.3 s at 50 Hz)
-	tapSlop     = 4  // and moves no further (logical pixels)
+	tapSlop     = 4  // and moves no further (logical pixels), unless slop says
 	dragGap     = 15 // a touch this soon after a tap drags
 	clickFrames = 3  // how long a tap holds its button: the Amiga reads it once a frame
 )
@@ -95,7 +97,11 @@ func (t *touchpad) update(touches []touchPoint) touchpadOut {
 		out.dx, out.dy = sx/n, sy/n
 	}
 	if t.active && !t.moved {
-		if p, ok := cur[t.startAt.id]; ok && (abs(p.x-t.startAt.x) > tapSlop || abs(p.y-t.startAt.y) > tapSlop) {
+		slop := t.slop
+		if slop <= 0 {
+			slop = tapSlop
+		}
+		if p, ok := cur[t.startAt.id]; ok && (abs(p.x-t.startAt.x) > slop || abs(p.y-t.startAt.y) > slop) {
 			t.moved = true
 		}
 	}

@@ -143,3 +143,17 @@ func TestTouchpadTwoFingerTapClicksRight(t *testing.T) {
 		t.Error("a two-finger tap clicked left")
 	}
 }
+
+// TestTouchpadSlop: a finger wobbling within slop still taps (hires
+// modes, where a point is several logical pixels), and beyond it moves.
+func TestTouchpadSlop(t *testing.T) {
+	wobble := []([]touchPoint){finger(1, 50, 60), finger(1, 57, 55), finger(1, 53, 62), nil}
+	tp := touchpad{slop: 8}
+	if outs := touchRun(&tp, wobble...); !outs[3].tap {
+		t.Error("a 7-pixel wobble within slop 8 did not tap")
+	}
+	tp = touchpad{}
+	if outs := touchRun(&tp, wobble...); outs[3].tap {
+		t.Error("a 7-pixel wobble tapped with the default slop")
+	}
+}
