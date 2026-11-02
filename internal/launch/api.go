@@ -57,7 +57,7 @@ type Response struct {
 	Settings *config.Settings `json:"settings,omitempty"`
 	Name     *string          `json:"name,omitempty"`
 	Saved    []string         `json:"saved,omitempty"`
-	Presets  []string         `json:"Presets,omitempty"`
+	Presets  []string         `json:"presets,omitempty"`
 	ROM      *ROMReport       `json:"rom,omitempty"`
 	WHDLoad  *WHDLoadReport   `json:"whdload,omitempty"`
 	Config   string           `json:"config,omitempty"` // start: the settings file to run

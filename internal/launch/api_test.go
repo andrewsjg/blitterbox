@@ -110,3 +110,30 @@ func TestLauncherAPI(t *testing.T) {
 		t.Error("started with no ROM")
 	}
 }
+
+// TestHandleJSONKeys checks the answers' JSON keys, as the Swift screens
+// decode them (macos/Sources/goAmigaLauncher/Bridge.swift's Response):
+// the Go names are not on the wire, so a rename must not change these.
+func TestHandleJSONKeys(t *testing.T) {
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(HandleJSON([]byte(`{"op":"info"}`)), &got); err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range []string{"ok", "presets", "limits"} {
+		if _, ok := got[k]; !ok {
+			t.Errorf(`info's answer has no %q: %v`, k, got)
+		}
+	}
+	if err := json.Unmarshal(HandleJSON([]byte(`{"op":"defaults"}`)), &got); err != nil {
+		t.Fatal(err)
+	}
+	var s map[string]json.RawMessage
+	if err := json.Unmarshal(got["settings"], &s); err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range []string{"rom", "drives", "hardfiles", "cpu", "chipRAM", "fastRAM", "motherboard"} {
+		if _, ok := s[k]; !ok {
+			t.Errorf(`defaults' settings have no %q`, k)
+		}
+	}
+}
