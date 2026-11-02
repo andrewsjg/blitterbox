@@ -11,6 +11,7 @@ package goamiga
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -55,8 +56,11 @@ func init() {
 }
 
 // SetDocuments makes dir, the app's Documents folder, where relative
-// paths in settings are found.
+// paths in settings are found. goAmiga's own files (saved configurations,
+// WHDLoad's) go in the app's Library beside it: there is no writable
+// ~/.config on iOS.
 func SetDocuments(dir string) error {
+	config.SetDir(filepath.Join(filepath.Dir(dir), "Library", "Application Support", "goAmiga"))
 	return os.Chdir(dir)
 }
 

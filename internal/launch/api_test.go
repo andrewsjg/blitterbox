@@ -137,3 +137,19 @@ func TestHandleJSONKeys(t *testing.T) {
 		}
 	}
 }
+
+// TestSetDir: with goAmiga's folder set (the iPad's, where ~/.config
+// can't be written), configurations are saved there.
+func TestSetDir(t *testing.T) {
+	t.Setenv("HOME", "/nonexistent")
+	dir := filepath.Join(t.TempDir(), "goAmiga")
+	config.SetDir(dir)
+	defer config.SetDir("")
+	r := apiCall(t, Request{Op: "save", Name: "A4000", Settings: &config.Settings{}})[0]
+	if r.Error != "" {
+		t.Fatal(r.Error)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "configs", "A4000.conf")); err != nil {
+		t.Fatal(err)
+	}
+}

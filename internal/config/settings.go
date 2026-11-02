@@ -250,8 +250,19 @@ func Load(path string) (*Settings, error) {
 	return &s, nil
 }
 
-// Dir is the folder for goAmiga's own files: ~/.config/goamiga.
+// dir is where SetDir put goAmiga's own files, if it did.
+var dir string
+
+// SetDir puts goAmiga's own files in d, for where ~/.config can't be
+// written (the iPad).
+func SetDir(d string) { dir = d }
+
+// Dir is the folder for goAmiga's own files: ~/.config/goamiga, unless
+// SetDir said otherwise.
 func Dir() string {
+	if dir != "" {
+		return dir
+	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return ".goamiga"
