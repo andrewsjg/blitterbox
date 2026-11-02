@@ -89,7 +89,14 @@ struct Response: Decodable {
     var whdload: WHDLoadInfo?
     var config: String?
     var model: String?
+    var summaries: [String: ConfigSummary]?
     var limits: [String: Int]?
+}
+
+/// ConfigSummary is a saved configuration in brief (launch.Summary).
+struct ConfigSummary: Decodable, Equatable {
+    var model: String?
+    var line = ""
 }
 
 #if os(macOS)

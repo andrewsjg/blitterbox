@@ -11,7 +11,10 @@ final class LauncherModel {
         didSet { if settings != oldValue { settingsChanged(from: oldValue) } }
     }
     var name = ""
-    var saved: [String] = []
+    var saved: [String] = [] {
+        didSet { if saved != oldValue { refreshSummaries() } }
+    }
+    var summaries: [String: ConfigSummary] = [:] // the saved configurations', by name
     var selection: String?
     var status = ""
     var statusIsError = false
@@ -55,6 +58,7 @@ final class LauncherModel {
         }
         refreshROM()
         refreshPreset() // didSet doesn't run in init
+        refreshSummaries()
     }
 
     func say(_ message: String, error: Bool = false) {
@@ -87,6 +91,10 @@ final class LauncherModel {
         }
     }
 
+    func refreshSummaries() {
+        summaries = bridge.call(Request(op: "summaries")).summaries ?? [:]
+    }
+
     func refreshPreset() {
         preset = bridge.call(Request(op: "model", settings: settings)).model ?? ""
     }
@@ -112,7 +120,10 @@ final class LauncherModel {
     func save() {
         let r = bridge.call(Request(op: "save", name: name, settings: settings))
         apply(r)
-        if r.ok { markSaved() }
+        if r.ok {
+            markSaved()
+            refreshSummaries()
+        }
     }
 
     /// markSaved notes the settings are their saved configuration's, if

@@ -62,7 +62,9 @@ type Response struct {
 	WHDLoad  *WHDLoadReport   `json:"whdload,omitempty"`
 	Config   string           `json:"config,omitempty"` // start: the settings file to run
 	Model    string           `json:"model,omitempty"`  // model: the preset the settings are (MatchPreset)
-	Limits   map[string]int   `json:"limits,omitempty"`
+	// summaries: each saved configuration's, by name.
+	Summaries map[string]Summary `json:"summaries,omitempty"`
+	Limits    map[string]int     `json:"limits,omitempty"`
 }
 
 // Serve answers requests from r on w until r ends.
@@ -173,6 +175,13 @@ func Handle(req Request) (resp Response) {
 	case "choose":
 		ApplyChoice(&s, req.Target, req.Path)
 		resp.Settings = &s
+	case "summaries":
+		resp.Summaries = map[string]Summary{}
+		for _, n := range config.Saved() {
+			if ls, err := config.Load(config.SavedPath(n)); err == nil {
+				resp.Summaries[n] = Summarize(*ls)
+			}
+		}
 	case "model":
 		resp.Model = MatchPreset(s)
 	case "rom":

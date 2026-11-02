@@ -179,3 +179,25 @@ func TestMatchPresetDefaults(t *testing.T) {
 		t.Error("the default settings match no model")
 	}
 }
+
+func TestSummarize(t *testing.T) {
+	s := config.Defaults()
+	Presets[len(Presets)-1].Apply(&s) // A4000
+	if got := Summarize(s); got.Model != "A4000" || got.Line != "A4000" {
+		t.Errorf("an A4000 with no ROM: %+v", got)
+	}
+	s.CPU = "68030"
+	s.WHDLoad = "game.lha"
+	if got := Summarize(s); got.Model != "" || got.Line != "68030\u00a0· WHDLoad" {
+		t.Errorf("no model: %+v", got)
+	}
+	if rom := "../../ROMS/Kick13.rom"; fileExists(rom) {
+		s = config.Defaults()
+		s.ROM = rom
+		if got := Summarize(s).Line; !strings.HasSuffix(got, "\u00a0· Kickstart\u00a01.3") {
+			t.Errorf("with Kickstart 1.3: %q", got)
+		}
+	}
+}
+
+func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }

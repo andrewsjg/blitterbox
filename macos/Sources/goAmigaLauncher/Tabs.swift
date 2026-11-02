@@ -36,7 +36,9 @@ struct MachineTab: View {
                         }
                     }
                 } else if let d = model.rom.description {
-                    Note(d)
+                    Label(d, systemImage: "checkmark.seal.fill")
+                        .font(.callout)
+                        .foregroundStyle(.green)
                 }
             }
             Section {
@@ -236,9 +238,10 @@ struct HardDiskTab: View {
                 ForEach(drives) { d in
                     LabeledContent(d.kind) {
                         HStack {
-                            Text(d.path).lineLimit(1).truncationMode(.middle)
+                            Text(displayName(d.path)).lineLimit(1).truncationMode(.middle)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .help(d.path)
+                                .accessibilityValue(d.path)
                             Button("Remove", systemImage: "minus.circle") { d.remove(&model.settings) }
                         }
                     }
@@ -286,7 +289,8 @@ struct WHDLoadTab: View {
             Section {
                 LabeledContent("Game") {
                     HStack {
-                        Text(s.whdload.isEmpty ? "None: the machine boots as usual" : s.whdload)
+                        Text(s.whdload.isEmpty ? "None: the machine boots as usual" : displayName(s.whdload))
+                            .help(s.whdload)
                             .foregroundStyle(s.whdload.isEmpty ? .secondary : .primary)
                             .lineLimit(1).truncationMode(.middle)
                             .frame(maxWidth: .infinity, alignment: .leading)

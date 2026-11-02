@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/andrewsjg/goamiga/amiga"
 	"github.com/andrewsjg/goamiga/internal/config"
 )
 
@@ -82,6 +83,37 @@ func MatchPreset(s config.Settings) string {
 		}
 	}
 	return best
+}
+
+// Summary is a configuration's settings in brief, for a list of them:
+// its model, else its processor, and its Kickstart.
+type Summary struct {
+	Model string `json:"model,omitempty"` // a preset's name (MatchPreset)
+	Line  string `json:"line"`            // "A4000 · Kickstart 3.1"
+}
+
+// Summarize sums up settings s.
+func Summarize(s config.Settings) Summary {
+	sum := Summary{Model: MatchPreset(s)}
+	parts := []string{sum.Model}
+	if sum.Model == "" {
+		parts[0] = s.CPU
+	}
+	if s.ROM != "" {
+		if data, err := amiga.LoadROM(s.ROM); err == nil {
+			info := amiga.IdentifyROM(data)
+			rel := info.Release()
+			if rel == "" {
+				rel = fmt.Sprintf("%d.%d", info.Version, info.Revision)
+			}
+			parts = append(parts, "Kickstart\u00a0"+rel) // kept together on a narrow line
+		}
+	}
+	if s.WHDLoad != "" {
+		parts = append(parts, "WHDLoad")
+	}
+	sum.Line = strings.Join(parts, "\u00a0· ") // a line breaks after a dot, not before
+	return sum
 }
 
 // freeSCSIID is the ID for a new SCSI disk: 6 (the A3000's internal

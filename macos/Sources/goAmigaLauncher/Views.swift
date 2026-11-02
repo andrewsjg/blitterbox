@@ -34,16 +34,25 @@ struct LauncherView: View {
             .navigationTitle("Configurations")
         } detail: {
             VStack(spacing: 0) {
+                #if os(macOS)
                 TabView(selection: $model.tab) {
-                    MachineTab().tabItem { Text("Machine") }.tag(LauncherModel.Tab.machine)
-                    MemoryTab().tabItem { Text("Memory") }.tag(LauncherModel.Tab.memory)
-                    FloppyTab().tabItem { Text("Floppies") }.tag(LauncherModel.Tab.floppies)
-                    HardDiskTab().tabItem { Text("Hard disks") }.tag(LauncherModel.Tab.hardDisks)
-                    WHDLoadTab().tabItem { Text("WHDLoad") }.tag(LauncherModel.Tab.whdload)
-                    PortsTab().tabItem { Text("Ports") }.tag(LauncherModel.Tab.ports)
-                    DisplayTab().tabItem { Text("Display") }.tag(LauncherModel.Tab.display)
+                    ForEach(LauncherModel.Tab.allCases) { t in
+                        tabContent(t).tabItem { Text(t.rawValue) }.tag(t)
+                    }
                 }
                 .padding([.horizontal, .top])
+                #else
+                // A segmented control rather than the iPad's tab bar, which
+                // hid the last three tabs behind a ›.
+                Picker("Settings", selection: $model.tab) {
+                    ForEach(LauncherModel.Tab.allCases) { t in
+                        Text(t.rawValue).tag(t)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 20).padding(.top, 4).padding(.bottom, 8)
+                tabContent(model.tab)
+                #endif
                 Divider().padding(.top, 10)
                 HStack(alignment: .center) {
                     // The status is a quiet note, unless it is an error.
@@ -87,13 +96,26 @@ struct LauncherView: View {
 }
 
 extension LauncherView {
+    @ViewBuilder
+    private func tabContent(_ t: LauncherModel.Tab) -> some View {
+        switch t {
+        case .machine: MachineTab()
+        case .memory: MemoryTab()
+        case .floppies: FloppyTab()
+        case .hardDisks: HardDiskTab()
+        case .whdload: WHDLoadTab()
+        case .ports: PortsTab()
+        case .display: DisplayTab()
+        }
+    }
+
     #if os(macOS)
     // configurations is the saved configurations: a click loads one, a
     // double-click starts it.
     private var configurations: some View {
         @Bindable var model = model
         return List(model.saved, id: \.self, selection: $model.selection) { name in
-            Text(name)
+            ConfigRow(name: name)
         }
         .contextMenu(forSelectionType: String.self) { names in
             if let n = names.first {
@@ -118,23 +140,40 @@ extension LauncherView {
     }
     #else
     // configurations is the saved configurations: a tap loads one, to be
-    // started with Start. The one loaded is marked with a capsule (the
-    // List's own selection is a squared-off highlight, and comes and goes).
+    // started with Start or its ▶. The one loaded is marked with a capsule
+    // (the List's own selection is a squared-off highlight, and comes and
+    // goes).
     private var configurations: some View {
         List(model.saved, id: \.self) { name in
             let loaded = name == model.name
-            Button { model.load(name) } label: {
-                Text(name)
-                    .fontWeight(loaded ? .semibold : .regular)
-                    .padding(.leading, 8) // clear of the capsule's curve
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
+            HStack(spacing: 4) {
+                Button { model.load(name) } label: {
+                    ConfigRow(name: name)
+                        .padding(.leading, 8) // clear of the capsule's curve
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityAddTraits(loaded ? .isSelected : [])
+                Button {
+                    model.load(name)
+                    model.start()
+                } label: {
+                    Image(systemName: "play.circle.fill")
+                        .font(.title2)
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(.white, Color.accentColor)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("Start \(name)")
             }
-            .buttonStyle(.plain)
-            .accessibilityAddTraits(loaded ? .isSelected : [])
+            .buttonStyle(.plain) // each its own target
             .listRowBackground(loaded
                 ? Capsule().fill(Color.accentColor.opacity(0.2)).padding(.horizontal, 10).padding(.vertical, 2)
                 : nil)
+            .swipeActions {
+                Button("Delete", systemImage: "trash", role: .destructive) { confirmDeleting(name) }
+            }
             .contextMenu {
                 Button("Start", systemImage: "play.fill") {
                     model.load(name)
@@ -192,7 +231,7 @@ extension LauncherView {
                 Text("Double-click a configuration to start it.")
                     .font(.caption).foregroundStyle(.secondary)
                 #else
-                Text("Tap a configuration to load it, then Start it.")
+                Text("Tap a configuration to load it; ▶ starts it.")
                     .font(.caption).foregroundStyle(.secondary)
                 #endif
             }
@@ -208,6 +247,60 @@ extension LauncherView {
         deleting = n
         confirmDelete = true
     }
+}
+
+// ConfigRow is a saved configuration in the list: an icon for its kind
+// of Amiga, its name (with a dot while the one loaded has unsaved
+// changes), and its model and Kickstart.
+struct ConfigRow: View {
+    @Environment(LauncherModel.self) private var model
+    let name: String
+
+    var body: some View {
+        let summary = model.summaries[name]
+        let loaded = name == model.name
+        HStack(spacing: 10) {
+            Image(systemName: icon(summary?.model))
+                .font(.body)
+                .foregroundStyle(loaded ? Color.accentColor : .secondary)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(name)
+                        .fontWeight(loaded ? .semibold : .regular)
+                        .lineLimit(1)
+                    if loaded && model.unsaved {
+                        Circle().fill(.orange).frame(width: 7, height: 7)
+                            .accessibilityLabel("Unsaved changes")
+                    }
+                }
+                if let line = summary?.line, !line.isEmpty {
+                    Text(line).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                }
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    // icon: the big-box Amigas are desktops; the rest are a keyboard.
+    private func icon(_ model: String?) -> String {
+        switch model {
+        case "A3000", "A4000": "desktopcomputer"
+        case nil, "": "cpu"
+        default: "keyboard"
+        }
+    }
+}
+
+// displayName is how a file in the settings is shown: its name, and for
+// a disk inside a zip ("games.zip#Disk 1.adf") that disk's, with the zip's.
+func displayName(_ path: String) -> String {
+    let parts = path.split(separator: "#", maxSplits: 1).map(String.init)
+    let file = (parts.first.map { ($0 as NSString).lastPathComponent }) ?? path
+    if parts.count == 2 {
+        return "\((parts[1] as NSString).lastPathComponent) (in \(file))"
+    }
+    return file
 }
 
 // MARK: - Controls
@@ -295,11 +388,22 @@ struct FileRow: View {
     var body: some View {
         LabeledContent(title) {
             HStack {
-                Text(path.isEmpty ? empty : path)
+                // Its name; the whole path on hovering (Mac) or touching
+                // and holding (iPad).
+                Text(path.isEmpty ? empty : displayName(path))
                     .foregroundStyle(path.isEmpty ? .secondary : .primary)
                     .lineLimit(1).truncationMode(.middle)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .help(path)
+                    .accessibilityValue(path)
+                    #if !os(macOS)
+                    .contextMenu {
+                        if !path.isEmpty {
+                            Text(path)
+                            Button("Copy Path", systemImage: "doc.on.doc") { UIPasteboard.general.string = path }
+                        }
+                    }
+                    #endif
                 Button("Choose…", systemImage: "folder") {
                     chooseFile(title: title, folder: folder, types: types, start: path) { url in
                         model.choose(target, url)
