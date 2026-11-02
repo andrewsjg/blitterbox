@@ -82,6 +82,10 @@ final class LauncherModel {
 
     // MARK: Saved configurations
 
+    /// current is the saved configuration being edited: the one selected,
+    /// else the one loaded.
+    var current: String? { selection ?? (saved.contains(name) ? name : nil) }
+
     func load(_ n: String) {
         guard n != name || !saved.contains(n) else { return }
         apply(bridge.call(Request(op: "load", name: n)))

@@ -59,7 +59,10 @@ func Apply(fs *flag.FlagSet, path string) error {
 		return err
 	}
 	defer f.Close()
-	dir := filepath.Dir(path)
+	dir := filepath.Dir(path) // relative paths are from the file's folder
+	if base != "" {
+		dir = base // or from SetBase's
+	}
 	sc := bufio.NewScanner(f)
 	for n := 1; sc.Scan(); n++ {
 		line := sc.Text()

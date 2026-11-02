@@ -155,7 +155,7 @@ func (s *Settings) Write(path string) error {
 		}
 		if l, ok := f.Value.(*List); ok {
 			for _, v := range l.Values() {
-				fmt.Fprintf(&b, "%s = %s\n", f.Name, quote(absPath(f.Name, v)))
+				fmt.Fprintf(&b, "%s = %s\n", f.Name, quote(storedPath(f.Name, v)))
 			}
 			return
 		}
@@ -167,7 +167,7 @@ func (s *Settings) Write(path string) error {
 			fmt.Fprintf(&b, "%s\n", f.Name)
 			return
 		}
-		fmt.Fprintf(&b, "%s = %s\n", f.Name, quote(absPath(f.Name, v)))
+		fmt.Fprintf(&b, "%s = %s\n", f.Name, quote(storedPath(f.Name, v)))
 	})
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
@@ -187,18 +187,55 @@ func (s *Settings) clone() *Settings {
 	return &c
 }
 
-func absPath(key, v string) string {
-	return mapPath(key, v, func(p string) string {
-		if a, err := filepath.Abs(p); err == nil {
+// base is SetBase's folder, or "".
+var base string
+
+// SetBase makes settings files keep paths within dir relative to it, and
+// find relative paths there, rather than as absolute paths and from the
+// file's own folder. The iPad's files are in its Documents folder, whose
+// absolute path changes when iOS moves the app's container.
+func SetBase(dir string) {
+	if r, err := filepath.EvalSymlinks(dir); err == nil {
+		dir = r
+	}
+	base = dir
+}
+
+// storedPath is how a settings file keeps the path in a setting's value:
+// absolute, or relative to SetBase's folder when within it.
+func storedPath(key, v string) string {
+	return mapAnyPath(key, v, func(p string) string {
+		a, err := filepath.Abs(p)
+		if err != nil {
+			return p
+		}
+		if base == "" {
 			return a
 		}
-		return p
+		if r, err := filepath.EvalSymlinks(a); err == nil {
+			a = r
+		}
+		if r, err := filepath.Rel(base, a); err == nil && r != ".." && !strings.HasPrefix(r, ".."+string(filepath.Separator)) {
+			return r
+		}
+		return a
 	})
 }
 
 // mapPath applies fn to the path in a setting's value, if it names a file
 // and the path is relative.
 func mapPath(key, v string, fn func(string) string) string {
+	return mapAnyPath(key, v, func(p string) string {
+		if filepath.IsAbs(p) {
+			return p
+		}
+		return fn(p)
+	})
+}
+
+// mapAnyPath applies fn to the path in a setting's value, if it names a
+// file.
+func mapAnyPath(key, v string, fn func(string) string) string {
 	if !pathKeys[key] {
 		return v
 	}
@@ -208,13 +245,10 @@ func mapPath(key, v string, fn func(string) string) string {
 		vol, p = SplitDir(v)
 	case "scsi", "tape":
 		if len(v) > 2 && v[1] == ':' && v[0] >= '0' && v[0] <= '9' {
-			if filepath.IsAbs(v[2:]) {
-				return v
-			}
 			return v[:2] + fn(v[2:])
 		}
 	}
-	if p == "" || filepath.IsAbs(p) {
+	if p == "" {
 		return v
 	}
 	if vol != "" {

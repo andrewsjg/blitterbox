@@ -28,7 +28,8 @@ final class AmigaKeyboardView: UIView {
     // The A500/A1200 layout, 15 key widths across. Codes are from the
     // Amiga Hardware Reference Manual's raw key map.
     private static let rows: [[Key]] = [
-        [k("Esc", 0x45), gap(0.5)] + (1...10).map { k("F\($0)", 0x4F + $0) } + [gap(0.5), k("Del", 0x46), k("Help", 0x5F)],
+        [k("Esc", 0x45), gap(0.5)] + (1...10).map { k("F\($0)", 0x4F + $0) } + [gap(0.5), k("Del", 0x46), k("Help", 0x5F),
+         k("PrtSc", 0x5D)], // keypad *: WHDLoad's usual quit key
         [k("`", 0x00)] + run("1234567890", from: 0x01) + [k("-", 0x0B), k("=", 0x0C), k("\\", 0x0D), k("⌫", 0x41)],
         [k("Tab", 0x42, 1.5)] + run("QWERTYUIOP", from: 0x10) + [k("[", 0x1A), k("]", 0x1B), k("Return", 0x44, 1.5)],
         [k("Ctrl", 0x63), k("Caps", 0x62, 1.5)] + run("ASDFGHJKL", from: 0x20) + [k(";", 0x29), k("'", 0x2A)],

@@ -109,3 +109,42 @@ func TestDirSetting(t *testing.T) {
 		t.Errorf("mapPath changed an absolute folder: %q", got)
 	}
 }
+
+// TestSetBase: with a base folder (the iPad's Documents), a settings file
+// keeps paths within it relative, finds them there again wherever the
+// file is, and keeps other paths absolute.
+func TestSetBase(t *testing.T) {
+	docs, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	SetBase(docs)
+	defer SetBase("")
+	t.Chdir(docs)
+	outside := filepath.Join(t.TempDir(), "other.adf")
+
+	s := Defaults()
+	s.ROM = "Kick13.rom" // as the iPad's picker names it: relative to Documents
+	s.Hardfiles = List{filepath.Join(docs, "HDD", "dh0.hdf")}
+	s.Drives[0] = List{outside}
+	conf := filepath.Join(t.TempDir(), "configs", "x.conf")
+	if err := s.Write(conf); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(conf)
+	for _, want := range []string{"rom = Kick13.rom\n", "hdf = HDD/dh0.hdf\n", "df0 = " + outside + "\n"} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("file lacks %q:\n%s", want, b)
+		}
+	}
+	l, err := Load(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := filepath.Join(docs, "Kick13.rom"); l.ROM != want {
+		t.Errorf("rom loaded as %q, want %q", l.ROM, want)
+	}
+	if want := filepath.Join(docs, "HDD", "dh0.hdf"); len(l.Hardfiles) != 1 || l.Hardfiles[0] != want {
+		t.Errorf("hdf loaded as %q, want %q", l.Hardfiles, want)
+	}
+}

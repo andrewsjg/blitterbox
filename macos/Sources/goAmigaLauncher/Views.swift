@@ -9,12 +9,20 @@ import UniformTypeIdentifiers
 struct LauncherView: View {
     @Environment(LauncherModel.self) private var model
     @State private var confirmDelete = false
+    @State private var deleting: String? // the configuration confirmDelete asks about
 
     var body: some View {
         @Bindable var model = model
         NavigationSplitView {
             List(model.saved, id: \.self, selection: $model.selection) { name in
                 Text(name)
+                    #if !os(macOS)
+                    // A tap starts a configuration rather than selecting
+                    // it, and the List can clear the selection after: the
+                    // one loaded is marked instead.
+                    .fontWeight(name == model.name ? .semibold : .regular)
+                    .listRowBackground(name == model.name ? Color.accentColor.opacity(0.2) : nil)
+                    #endif
             }
             .contextMenu(forSelectionType: String.self) { names in
                 if let n = names.first {
@@ -29,6 +37,7 @@ struct LauncherView: View {
                     #endif
                     Button("Delete…", role: .destructive) {
                         model.selection = n
+                        deleting = n
                         confirmDelete = true
                     }
                 }
@@ -49,8 +58,11 @@ struct LauncherView: View {
                         Button("Save") { model.save() }
                         Button("New") { model.newConfiguration() }
                         Spacer()
-                        Button("Delete…") { confirmDelete = true }
-                            .disabled(model.selection == nil)
+                        Button("Delete…") {
+                            deleting = model.current
+                            confirmDelete = true
+                        }
+                        .disabled(model.current == nil)
                     }
                     #if os(macOS)
                     Text("Double-click a configuration to start it.")
@@ -99,9 +111,9 @@ struct LauncherView: View {
         #if os(macOS)
         .task { await saveTabShots(model) }
         #endif
-        .confirmationDialog("Delete the configuration \(model.selection ?? "")?", isPresented: $confirmDelete) {
+        .confirmationDialog("Delete the configuration \(deleting ?? "")?", isPresented: $confirmDelete) {
             Button("Delete", role: .destructive) {
-                if let n = model.selection { model.delete(n) }
+                if let n = deleting { model.delete(n) }
             }
         }
     }
