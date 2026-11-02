@@ -100,9 +100,7 @@ func (a *Amiga) AttachDirectory(dir, volume string, readOnly bool) error {
 	if volume == "" || len(volume) > 30 {
 		return fmt.Errorf("%q can't be a volume name (1 to 30 characters, no : or /)", volume)
 	}
-	if a.HardDisk == nil {
-		a.HardDisk = &hdBoard{amiga: a}
-	}
+	a.FitHardDiskBoard()
 	d := &HostDir{Path: dir, Volume: volume, ReadOnly: readOnly, BootPri: -10}
 	if _, err := d.find("S/Startup-Sequence"); err == nil {
 		d.Bootable = true
@@ -110,6 +108,16 @@ func (a *Amiga) AttachDirectory(dir, volume string, readOnly bool) error {
 	a.HardDisk.Dirs = append(a.HardDisk.Dirs, d)
 	a.wireMemoryMap(a.overlay)
 	return nil
+}
+
+// FitHardDiskBoard fits goAmiga's hard disk board, if it isn't already:
+// with no disks or folders, it carries the clipboard helper. Call it
+// before Reset.
+func (a *Amiga) FitHardDiskBoard() {
+	if a.HardDisk == nil {
+		a.HardDisk = &hdBoard{amiga: a}
+		a.wireMemoryMap(a.overlay)
+	}
 }
 
 // partition is the DosEnvec MakeDosNode gets for the folder.

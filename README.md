@@ -423,8 +423,7 @@ It works through a small helper that goAmiga runs on the Amiga, the
 "goAmiga clipboard" process. The helper needs Kickstart 2.0 or later and
 `clipboard.device` in DEVS:, as every Workbench has. It works from a
 floppy Workbench too: the helper lives on goAmiga's hard disk board,
-which goAmiga fits for it when there are no drives, along with the
-read-only goAmiga volume.
+which goAmiga fits for it when there are no drives.
 
 Text is converted between the Mac's UTF-8 and the Amiga's ISO-8859-1;
 characters the Amiga can't show become `?`.
@@ -437,10 +436,10 @@ goAmiga has an AHI driver, `goamiga.audio`. AHI mixes on the Amiga as
 usual, and the driver plays the result on the Mac, alongside Paula.
 
 1. Install AHI from Aminet (`driver/audio/m68k-amigaos-ahiusr.lha`).
-2. In a Shell, run `Execute goAmiga:Install-AHI-Driver`. The read-only
-   **goAmiga** volume, with the driver on it, appears whenever there's a
-   hardfile or shared folder, or clipboard sharing is on with Kickstart
-   2.0 or later.
+2. Turn on **goAmiga volume** (Ports, or `--amiga-files`): a read-only
+   volume with the driver on it. In a Shell, run
+   `Execute goAmiga:Install-AHI-Driver`, then turn the volume off again
+   if you like; the driver stays installed.
 3. In Prefs/AHI, choose a GOAMIGA mode for each unit, for example
    "GOAMIGA:16 bit stereo++" or "GOAMIGA:HiFi 32 bit stereo++", and a
    mixing frequency.

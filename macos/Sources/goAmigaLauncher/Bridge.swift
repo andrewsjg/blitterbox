@@ -41,6 +41,7 @@ struct Settings: Codable, Equatable {
 
     var exactBus = true
     var clipboard = true
+    var amigaFiles = false
 
     var mute = false
     var overscan = false

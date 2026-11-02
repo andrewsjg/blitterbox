@@ -239,17 +239,19 @@ func Build(s *config.Settings, loadState string, logger io.Writer, out io.Writer
 			return fail(fmt.Errorf("folder %v", err))
 		}
 	}
-	// goAmiga's own files for the Amiga (the AHI driver ...), as a
-	// read-only volume beside the drives the board carries. With no
-	// drives it brings the board itself, for clipboard sharing (and AHI)
-	// on Kickstart 2.0 or later; it has no Startup-Sequence, so the floppy
-	// still boots.
-	if a.HardDisk != nil || s.Clipboard && romInfo.Version >= 36 {
+	// goAmiga's own files for the Amiga (the AHI driver ...), if asked
+	// for, as a read-only volume beside the drives the board carries; it
+	// has no Startup-Sequence, so the floppy still boots. Clipboard
+	// sharing (Kickstart 2.0 or later) needs the board, drives or not.
+	if s.AmigaFiles {
 		if dir, err := writeAmigaFiles(); err == nil {
 			a.AttachDirectory(dir, "goAmiga", true)
 		} else {
 			fmt.Fprintf(out, "goAmiga volume: %v\n", err)
 		}
+	}
+	if a.HostClipboard != nil && romInfo.Version >= 36 {
+		a.FitHardDiskBoard()
 	}
 	gayle := false
 	switch s.Gayle {

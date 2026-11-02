@@ -395,6 +395,12 @@ struct PortsTab: View {
                     Text("Copy on either side, paste on the other. Needs Kickstart 2.0 or later and clipboard.device in DEVS:, as every Workbench has.")
                 }
             }
+            Section("AHI sound") {
+                Toggle(isOn: $model.settings.amigaFiles) {
+                    Text("goAmiga volume")
+                    Text("A read-only disk with goAmiga's AHI driver: run goAmiga:Install-AHI-Driver once, with AHI installed.")
+                }
+            }
         }
         .settingsForm()
     }

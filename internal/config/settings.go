@@ -54,6 +54,9 @@ type Settings struct {
 
 	ExactBus  bool `json:"exactBus"`  // the 68000's chip accesses timed one by one (cpubus.go)
 	Clipboard bool `json:"clipboard"` // share the clipboard with the host
+	// AmigaFiles mounts the goAmiga volume: goAmiga's files for the
+	// Amiga (its AHI driver).
+	AmigaFiles bool `json:"amigaFiles"`
 
 	Mute          bool   `json:"mute"`
 	Overscan      bool   `json:"overscan"`
@@ -124,6 +127,7 @@ func (s *Settings) Register(fs *flag.FlagSet) {
 	fs.IntVar(&s.Z3RAM, "z3ram", s.Z3RAM, "Zorro III fast RAM with --motherboard, in MB: 0 or a power of two from 16 to 1024")
 	fs.IntVar(&s.RTG, "rtg", s.RTG, "Fit the uaegfx RTG graphics card for Picasso96 (install it with its uaegfx driver), with this much video memory in MB: 1, 2 or 4 on Zorro II, or 16 to 1024 (a power of two) on Zorro III with --motherboard")
 	fs.BoolVar(&s.Clipboard, "clipboard", s.Clipboard, "Share the clipboard with this computer: text copied on either side can be pasted on the other (needs Kickstart 2.0 or later and clipboard.device in DEVS:; with no drives, goAmiga fits its hard disk board for the helper)")
+	fs.BoolVar(&s.AmigaFiles, "amiga-files", s.AmigaFiles, "Mount the read-only goAmiga volume, with goAmiga's AHI driver and a script that installs it")
 	fs.BoolVar(&s.ExactBus, "exact-bus", s.ExactBus, "Time a 68000's chip RAM and custom chip accesses one by one against the Copper and other DMA, as the real bus does; --exact-bus=false uses the faster, rougher forecast")
 	fs.BoolVar(&s.Overscan, "overscan", s.Overscan, "Show the overscan area (720x284) instead of the standard 640x256 window")
 	fs.IntVar(&s.Scale, "scale", s.Scale, "Window size multiplier (the emulated resolution is unchanged); reduced if it doesn't fit the screen")

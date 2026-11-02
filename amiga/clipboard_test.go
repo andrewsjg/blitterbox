@@ -159,7 +159,12 @@ func TestClipboardShellCopy(t *testing.T) {
 // With no hard disk or folder of its own, a Workbench floppy still gets
 // clipboard sharing: goAmiga's volume alone carries the board the helper
 // lives on, and the floppy still boots.
-func TestClipboardFloppyWorkbench(t *testing.T) {
+func TestClipboardFloppyWorkbench(t *testing.T) { clipboardFloppyWorkbench(t, true) }
+
+// The board alone, with no volume at all, carries it too.
+func TestClipboardBoardAlone(t *testing.T) { clipboardFloppyWorkbench(t, false) }
+
+func clipboardFloppyWorkbench(t *testing.T, volume bool) {
 	rom, err := LoadROM("../ROMS/kick32a1200.rom")
 	if err != nil {
 		t.Skip(err)
@@ -184,7 +189,11 @@ func TestClipboardFloppyWorkbench(t *testing.T) {
 	a.SetChipset("aga")
 	a.SetChipRAM(2048)
 	a.HostClipboard = host
-	a.AttachDirectory(vol, "goAmiga", true)
+	if volume {
+		a.AttachDirectory(vol, "goAmiga", true)
+	} else {
+		a.FitHardDiskBoard()
+	}
 	a.Disk.DF(0).InsertImage(img)
 	a.Video.DisplayActive = true
 	a.Reset()
