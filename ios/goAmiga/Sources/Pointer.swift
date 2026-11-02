@@ -1,15 +1,19 @@
-// The Magic Keyboard's trackpad (or any mouse) as the Amiga's mouse.
-// Ebitengine sees a trackpad only as touches where its clicks land, so
-// the app reads it through GameController's GCMouse instead (relative
-// motion and buttons, as the desktop's grabbed mouse is) and keeps its
-// touches from Ebitengine. While the Amiga runs, the pointer is locked:
-// hidden and held, so that it never stops at the screen's edge.
+// Touches, and the Magic Keyboard's trackpad (or any mouse), for the
+// Amiga. The app gives Go every touch itself (EbitenController), and
+// reads the trackpad through GameController's GCMouse, which Ebitengine
+// can't: it sees a trackpad only as touches where it clicks.
+//
+// The trackpad works as the desktop's mouse does. Free, it is the iPad's
+// pointer and clicks the status bar; a click in the picture traps it,
+// and the Amiga has it (hidden and locked, so it never stops at the
+// screen's edge) until Esc or F12.
 import GameController
 import Goamiga
 import SwiftUI
 import UIKit
 
-/// Pointer hands every connected mouse's motion and buttons to the Amiga.
+/// Pointer hands every connected mouse's motion and buttons to Go, which
+/// uses them while the pointer is trapped.
 enum Pointer {
     private static var observer: NSObjectProtocol?
 
@@ -31,9 +35,10 @@ enum Pointer {
 }
 
 /// RootController is the window's root: the Amiga's screen under the
-/// settings, locking the pointer while the machine runs.
+/// settings. It locks the pointer while the Amiga has it trapped.
 final class RootController: UIHostingController<AnyView> {
     private let model: LauncherModel
+    private var trapped = false
 
     init(model: LauncherModel) {
         self.model = model
@@ -44,38 +49,62 @@ final class RootController: UIHostingController<AnyView> {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
 
-    override var prefersPointerLocked: Bool { model.running }
+    override var prefersPointerLocked: Bool { model.running && trapped }
+
+    /// lockPointer hides and holds the pointer (trapped) or lets it go.
+    func lockPointer(_ lock: Bool) {
+        trapped = lock
+        setNeedsUpdateOfPrefersPointerLocked()
+        guard lock else { return }
+        // The iPad locks it only for an app that fills the screen.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self, self.trapped, self.view.window?.windowScene?.pointerLockState?.isLocked == false else { return }
+            GoamigaSay("The iPad hides the pointer only with goAmiga full screen. Esc or F12 frees it")
+        }
+    }
 
     private func watchRunning() {
         withObservationTracking { _ = model.running } onChange: { [weak self] in
             DispatchQueue.main.async {
-                self?.setNeedsUpdateOfPrefersPointerLocked()
-                self?.watchRunning()
+                guard let self else { return }
+                if !self.model.running { self.trapped = false }
+                self.setNeedsUpdateOfPrefersPointerLocked()
+                self.watchRunning()
             }
         }
     }
 }
 
-/// EbitenController is Ebitengine's view controller without a pointer's
-/// touches (a trackpad's clicks): Pointer gives the Amiga those.
+/// EbitenController is Ebitengine's view controller with its touches
+/// given to Go by the app: fingers as touches (every event, so none is
+/// missed between frames), the pointer's as clicks.
 final class EbitenController: GoamigaEbitenViewController {
-    private func fingers(_ touches: Set<UITouch>) -> Set<UITouch> {
-        touches.filter { $0.type != .indirectPointer }
+    private var ids: [ObjectIdentifier: Int] = [:]
+    private var nextID = 1
+
+    private func handle(_ touches: Set<UITouch>, _ event: UIEvent?) {
+        for touch in touches {
+            let p = touch.location(in: touch.view)
+            let up = touch.phase == .ended || touch.phase == .cancelled
+            if touch.type == .indirectPointer {
+                guard touch.phase == .began || up else { continue }
+                let right = event?.buttonMask.contains(.secondary) ?? false
+                GoamigaPointerClick(p.x, p.y, right, !up)
+                continue
+            }
+            let key = ObjectIdentifier(touch)
+            let id = ids[key] ?? nextID
+            if ids[key] == nil {
+                ids[key] = id
+                nextID += 1
+            }
+            GoamigaTouch(id, touch.phase == .began ? 0 : up ? 2 : 1, p.x, p.y)
+            if up { ids[key] = nil }
+        }
     }
 
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesBegan(fingers(touches), with: event)
-    }
-
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesMoved(fingers(touches), with: event)
-    }
-
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesEnded(fingers(touches), with: event)
-    }
-
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesCancelled(fingers(touches), with: event)
-    }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) { handle(touches, event) }
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) { handle(touches, event) }
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) { handle(touches, event) }
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { handle(touches, event) }
 }

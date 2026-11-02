@@ -126,6 +126,7 @@ private func topViewController() -> UIViewController? {
 /// on the main thread.
 final class AppHost: NSObject, GoamigaHostProtocol {
     let model: LauncherModel
+    weak var root: RootController?
 
     init(model: LauncherModel) { self.model = model }
 
@@ -134,6 +135,10 @@ final class AppHost: NSObject, GoamigaHostProtocol {
             model.running = false
             model.say("The machine has been switched off. Change the settings and Start it again.")
         }
+    }
+
+    func pointerLock(_ locked: Bool) {
+        DispatchQueue.main.async { [weak self] in self?.root?.lockPointer(locked) }
     }
 
     func chooseDisk(_ unit: Int) {

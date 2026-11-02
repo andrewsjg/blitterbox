@@ -32,6 +32,15 @@ type Display struct {
 		buttons [3]bool // left, right, middle
 	}
 
+	// Touches from the app (Touch): once fed, the display's only ones.
+	touchFed   bool
+	touchQueue []touchEvent
+	fingers    map[int]touchPoint // down now, by id
+
+	// GrabChanged, if set, hears the mouse trapped or freed, for an app
+	// that holds the pointer itself (the iPad's: Ebitengine can't there).
+	GrabChanged func(grabbed bool)
+
 	// outsideW and outsideH are the window's size, from Layout.
 	outsideW, outsideH int
 
@@ -239,8 +248,15 @@ func (d *Display) applyGrab(grab bool) {
 		ebiten.SetCursorMode(ebiten.CursorModeCaptured)
 	} else {
 		ebiten.SetCursorMode(ebiten.CursorModeVisible)
+		d.pointer.buttons = [3]bool{}
 	}
 	d.updateTitle()
+	if d.GrabChanged != nil {
+		d.GrabChanged(grab)
+		if grab {
+			d.message("Esc or F12 frees the pointer")
+		}
+	}
 }
 
 // pollDiskKeys handles the disk keys: F11 swaps DF0: to the next disk in

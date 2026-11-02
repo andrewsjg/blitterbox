@@ -32,7 +32,9 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         Pointer.start()
 
         let window = UIWindow(windowScene: scene)
-        window.rootViewController = RootController(model: model)
+        let root = RootController(model: model)
+        host.root = root
+        window.rootViewController = root
         window.makeKeyAndVisible()
         self.window = window
     }

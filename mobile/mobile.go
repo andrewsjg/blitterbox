@@ -32,6 +32,9 @@ type Host interface {
 	// ChooseDisk asks for a disk image for DFunit: (a drive's light was
 	// tapped); the app answers with DiskChosen.
 	ChooseDisk(unit int)
+	// PointerLock: the pointer was trapped (locked: hide and hold it) or
+	// freed.
+	PointerLock(locked bool)
 }
 
 // game is the running machine and its display, or nothing (black) while
@@ -108,9 +111,34 @@ func Key(code int, down bool) {
 	}
 }
 
-// PointerMove moves the Amiga's mouse by dx, dy points, for the app's
-// mouse or trackpad (GCMouse: Ebitengine sees only a trackpad's clicks,
-// as touches, which the app keeps from it).
+// Touch gives the machine a finger's event: phase 0 down, 1 moved, 2 up
+// or cancelled, at x, y points in Ebitengine's view; id tells fingers
+// apart. The app sends every touch here rather than to Ebitengine, which
+// misses a tap begun and ended between two frames.
+func Touch(id, phase int, x, y float64) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.Touch(id, phase, x, y)
+	}
+}
+
+// The app's trackpad or mouse (GCMouse: Ebitengine sees only a pointer's
+// clicks, as touches) works as the desktop's mouse does: free, it clicks
+// the status bar, and a click anywhere else traps it, for the Amiga, till
+// Esc or F12. Host.PointerLock hears which.
+
+// PointerClick: the pointer pressed (down) or released, with its right
+// button or not, at x, y points in Ebitengine's view.
+func PointerClick(x, y float64, right, down bool) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.PointerClick(x, y, right, down)
+	}
+}
+
+// PointerMove moves the Amiga's mouse by dx, dy points, while trapped.
 func PointerMove(dx, dy float64) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -119,13 +147,22 @@ func PointerMove(dx, dy float64) {
 	}
 }
 
-// PointerButton presses (down) or releases the app's mouse or trackpad
-// button: 0 left, 1 right, 2 middle.
+// PointerButton presses (down) or releases the pointer's button: 0 left,
+// 1 right, 2 middle. The Amiga's, while trapped.
 func PointerButton(button int, down bool) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	if g.disp != nil {
 		g.disp.PointerButton(button, down)
+	}
+}
+
+// Say shows a note in the status bar.
+func Say(text string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.Say(text)
 	}
 }
 
@@ -147,6 +184,7 @@ func (g *game) start(s config.Settings, name string) error {
 	s.Scale = 1 // the window is the screen
 	d := m.NewDisplay(&s, name)
 	d.ChooseDiskFile = g.chooseDisk
+	d.GrabChanged = g.pointerLock
 	fmt.Printf("Starting display (%.2f fps %s)...\n", m.A.FrameRate(), m.A.VideoStandard())
 	g.m, g.disp, g.s, g.name = m, d, s, name
 	d.Start()
@@ -203,6 +241,14 @@ func (g *game) Update() error {
 		g.settingsRequested()
 	}
 	return nil
+}
+
+// pointerLock tells the app the pointer was trapped or freed. g.mu is
+// held.
+func (g *game) pointerLock(locked bool) {
+	if g.host != nil {
+		g.host.PointerLock(locked)
+	}
 }
 
 func (g *game) settingsRequested() {
