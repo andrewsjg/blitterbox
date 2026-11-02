@@ -362,6 +362,9 @@ struct PortsTab: View {
     var body: some View {
         @Bindable var model = model
         Form {
+            // The serial port is a TCP listener, on the loopback interface
+            // unless given a host: on the iPad nothing could reach it.
+            #if os(macOS)
             Section("Serial port") {
                 Choice(title: "Connection", value: serialMode, options: [
                     ("Not connected", ""), ("Telnet (a terminal)", "telnet"), ("Raw TCP", "tcp"),
@@ -373,6 +376,7 @@ struct PortsTab: View {
                     Note("Connect with: \(serialMode.wrappedValue == "tcp" ? "nc" : "telnet") \(host). On the Amiga, NewShell AUX: starts a shell there.")
                 }
             }
+            #endif
             Section("Network") {
                 Toggle(isOn: $model.settings.bsdSocket) {
                     Text("bsdsocket.library")
@@ -393,12 +397,14 @@ struct PortsTab: View {
                     Text("Proportional, for the few games that read one.")
                 }
             }
+            #if os(macOS) // clipboard sharing is the Mac's (launch.hostClipboard)
             Section("Clipboard") {
                 Toggle(isOn: $model.settings.clipboard) {
                     Text("Share with this computer")
                     Text("Copy on either side, paste on the other. Needs Kickstart 2.0 or later and clipboard.device in DEVS:, as every Workbench has.")
                 }
             }
+            #endif
             Section("AHI sound") {
                 Toggle(isOn: $model.settings.amigaFiles) {
                     Text("goAmiga volume")
