@@ -1,4 +1,4 @@
-module github.com/andrewsjg/goamiga
+module github.com/andrewsjg/blitterbox
 
 go 1.25.0
 

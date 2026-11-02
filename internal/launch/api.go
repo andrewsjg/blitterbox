@@ -2,7 +2,7 @@
 // end: Build makes the machine, Presets and ApplyChoice edit settings, and
 // the launcher API (Handle) is what a native configuration screen asks of
 // Go, so that settings files, presets and Kickstart checks stay here. The
-// macOS screen (macos/) talks to goamiga --launcher-api, which Serves one
+// macOS screen (macos/) talks to blitterbox --launcher-api, which Serves one
 // JSON request per line on stdin with one JSON line on stdout; the iPad
 // app calls HandleJSON in-process.
 package launch
@@ -18,9 +18,9 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/andrewsjg/goamiga/amiga"
-	"github.com/andrewsjg/goamiga/internal/config"
-	"github.com/andrewsjg/goamiga/internal/whdload"
+	"github.com/andrewsjg/blitterbox/amiga"
+	"github.com/andrewsjg/blitterbox/internal/config"
+	"github.com/andrewsjg/blitterbox/internal/whdload"
 )
 
 // Request is one question from a configuration screen; Op says which.

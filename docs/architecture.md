@@ -1,14 +1,14 @@
-# goAmiga architecture
+# BlitterBox architecture
 
-goAmiga emulates the Amiga 500 to 1200 (OCS, ECS and AGA chipsets; 68000 or
+BlitterBox emulates the Amiga 500 to 1200 (OCS, ECS and AGA chipsets; 68000 or
 68020). The CPU is the pure-Go 680x0 core in `m68k/`
-(`github.com/andrewsjg/goamiga/m68k`), part of this module.
+(`github.com/andrewsjg/blitterbox/m68k`), part of this module.
 
 ## Layout
 
 | Path | Contents |
 |---|---|
-| `cmd/goamiga/` | CLI and window: `main.go` (flags, no arguments opens the configuration screen), `machine.go` (builds an Amiga from `config.Settings`), `display.go` (the `app` game: configuration screen or running machine), `launcher.go` and `ui.go` (the configuration screen) |
+| `cmd/blitterbox/` | CLI and window: `main.go` (flags, no arguments opens the configuration screen), `machine.go` (builds an Amiga from `config.Settings`), `display.go` (the `app` game: configuration screen or running machine), `launcher.go` and `ui.go` (the configuration screen) |
 | `internal/config/` | Settings: the `Settings` struct behind the flags, settings files, and saved configurations (`~/.config/goamiga/configs/`) |
 | `m68k/` | The CPU: 68000 and 68020 instruction set, 68881/68882 FPU, exceptions, prefetch, cycle timing (`m68k/README.md`); `m68kmem/` memory interfaces; tests include the SingleStepTests 68000 suite (data in `m68k/testdata/680x0`, downloaded, not in git) |
 | `amiga/` | The machine: chipset, CIAs, floppy, input, display, and all tests |
@@ -115,12 +115,12 @@ in the repository root (they skip otherwise). There are three kinds:
   `wb_diag_helpers_test.go`, `wb_drag_release_test.go` and
   `wb_open_window_drag_test.go`.
 - **Diagnostic traces** that print large amounts of state. They are skipped
-  unless `GOAMIGA_DIAG=1` is set.
+  unless `BLITTERBOX_DIAG=1` is set.
 
 ```bash
 go test ./amiga/                                    # full suite, ~6 min
 go test -tags noebitengine ./amiga/                 # without the Ebitengine window code
-GOAMIGA_DIAG=1 go test -run TestHotPCs -v ./amiga/  # a diagnostic trace
+BLITTERBOX_DIAG=1 go test -run TestHotPCs -v ./amiga/  # a diagnostic trace
 ```
 
 Tests write screenshots (PNG) to the repository root or `screenshots/`;

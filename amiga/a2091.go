@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/andrewsjg/goamiga/m68k/m68kmem"
+	"github.com/andrewsjg/blitterbox/m68k/m68kmem"
 )
 
 // The A2091 SCSI controller: a Zorro II board with Commodore's DMA

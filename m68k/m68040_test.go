@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/andrewsjg/goamiga/m68k/m68kmem"
+	"github.com/andrewsjg/blitterbox/m68k/m68kmem"
 )
 
 // The 68040 test tables, 4 KB pages: the root table at $20000 (SRP and

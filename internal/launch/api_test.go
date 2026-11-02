@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/andrewsjg/goamiga/internal/config"
+	"github.com/andrewsjg/blitterbox/internal/config"
 )
 
 // apiCall sends requests to the launcher API and decodes the answers.
@@ -112,7 +112,7 @@ func TestLauncherAPI(t *testing.T) {
 }
 
 // TestHandleJSONKeys checks the answers' JSON keys, as the Swift screens
-// decode them (macos/Sources/goAmigaLauncher/Bridge.swift's Response):
+// decode them (macos/Sources/BlitterBoxLauncher/Bridge.swift's Response):
 // the Go names are not on the wire, so a rename must not change these.
 func TestHandleJSONKeys(t *testing.T) {
 	var got map[string]json.RawMessage
@@ -138,11 +138,11 @@ func TestHandleJSONKeys(t *testing.T) {
 	}
 }
 
-// TestSetDir: with goAmiga's folder set (the iPad's, where ~/.config
+// TestSetDir: with BlitterBox's folder set (the iPad's, where ~/.config
 // can't be written), configurations are saved there.
 func TestSetDir(t *testing.T) {
 	t.Setenv("HOME", "/nonexistent")
-	dir := filepath.Join(t.TempDir(), "goAmiga")
+	dir := filepath.Join(t.TempDir(), "BlitterBox")
 	config.SetDir(dir)
 	defer config.SetDir("")
 	r := apiCall(t, Request{Op: "save", Name: "A4000", Settings: &config.Settings{}})[0]

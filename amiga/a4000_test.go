@@ -72,10 +72,10 @@ func TestA4000BootsFloppy(t *testing.T) {
 }
 
 // TestA4000ROMProbe boots the A4000 Kickstart on a 68040 and reports
-// what it touches where nothing is mapped (GOAMIGA_DIAG=1).
+// what it touches where nothing is mapped (BLITTERBOX_DIAG=1).
 func TestA4000ROMProbe(t *testing.T) {
-	if os.Getenv("GOAMIGA_DIAG") == "" {
-		t.Skip("GOAMIGA_DIAG not set")
+	if os.Getenv("BLITTERBOX_DIAG") == "" {
+		t.Skip("BLITTERBOX_DIAG not set")
 	}
 	a := newA4000(t)
 	type key struct {
@@ -121,7 +121,7 @@ func TestA4000ROMProbe(t *testing.T) {
 			t.Logf("%6d× %v $%08X", seen[k], k.write, k.addr)
 		}
 	}
-	if p := os.Getenv("GOAMIGA_DIAG_PNG"); p != "" {
+	if p := os.Getenv("BLITTERBOX_DIAG_PNG"); p != "" {
 		savePNG(t, a, p)
 	}
 }
@@ -194,7 +194,7 @@ func TestA4000BootsIDE(t *testing.T) {
 	if active, _ := a.Gayle.Activity(); !active && a.Gayle.lastIO == 0 {
 		t.Error("the IDE drive was never read")
 	}
-	if p := os.Getenv("GOAMIGA_DIAG_PNG"); p != "" {
+	if p := os.Getenv("BLITTERBOX_DIAG_PNG"); p != "" {
 		a.Video.DisplayActive = true
 		for i := 0; i < 300; i++ {
 			a.RunFrame()

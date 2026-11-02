@@ -49,11 +49,11 @@ func TestChipsetDetectedKS32(t *testing.T) {
 		if got := gfxChipRevBits(a) & 3; got != c.want {
 			t.Errorf("%s: GfxBase ChipRevBits0 = %d, want %d", c.chipset, got, c.want)
 		}
-		if os.Getenv("GOAMIGA_DIAG_PNG") != "" {
+		if os.Getenv("BLITTERBOX_DIAG_PNG") != "" {
 			a.Video.DisplayActive = true
 			a.RunFrame()
 			a.RunFrame()
-			savePNG(t, a, os.Getenv("GOAMIGA_DIAG_PNG")+"_"+c.chipset+".png")
+			savePNG(t, a, os.Getenv("BLITTERBOX_DIAG_PNG")+"_"+c.chipset+".png")
 		}
 	}
 }

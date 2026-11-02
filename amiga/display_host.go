@@ -183,7 +183,7 @@ func (d *Display) screenshot() (string, error) {
 	if dir == "" {
 		dir = "."
 	}
-	path := filepath.Join(dir, time.Now().Format("goamiga-20060102-150405.png"))
+	path := filepath.Join(dir, time.Now().Format("blitterbox-20060102-150405.png"))
 	f, err := os.Create(path)
 	if err != nil {
 		return "", err
@@ -202,7 +202,7 @@ func (d *Display) slotPath(n int) string {
 	if dir == "" {
 		dir = "."
 	}
-	return filepath.Join(dir, fmt.Sprintf("goamiga-%d.state", n))
+	return filepath.Join(dir, fmt.Sprintf("blitterbox-%d.state", n))
 }
 
 func (d *Display) saveSlot(n int) {

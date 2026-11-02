@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 
-	m68k "github.com/andrewsjg/goamiga/m68k"
-	"github.com/andrewsjg/goamiga/m68k/m68kmem"
+	m68k "github.com/andrewsjg/blitterbox/m68k"
+	"github.com/andrewsjg/blitterbox/m68k/m68kmem"
 )
 
 const (
@@ -642,7 +642,7 @@ func (a *Amiga) Step() error {
 	return err
 }
 
-// defaultExactBus is ExactBus for new machines (GOAMIGA_EXACTBUS=0 turns
+// defaultExactBus is ExactBus for new machines (BLITTERBOX_EXACTBUS=0 turns
 // it off for the tests, to compare with the forecast).
 var defaultExactBus = true
 

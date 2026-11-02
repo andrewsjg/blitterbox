@@ -3,7 +3,7 @@ package amiga
 import (
 	"fmt"
 
-	m68k "github.com/andrewsjg/goamiga/m68k"
+	m68k "github.com/andrewsjg/blitterbox/m68k"
 )
 
 // The A3000 and A4000 motherboard resources at $DE0000, and the

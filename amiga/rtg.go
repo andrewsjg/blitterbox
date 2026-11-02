@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/andrewsjg/goamiga/m68k"
-	"github.com/andrewsjg/goamiga/m68k/m68kmem"
+	"github.com/andrewsjg/blitterbox/m68k"
+	"github.com/andrewsjg/blitterbox/m68k/m68kmem"
 )
 
 // An RTG graphics card for Picasso96, the one emulators use: the uaegfx

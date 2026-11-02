@@ -1,6 +1,6 @@
 package amiga
 
-import m68k "github.com/andrewsjg/goamiga/m68k"
+import m68k "github.com/andrewsjg/blitterbox/m68k"
 
 // Exact chip bus timing for the 68000 (ExactBus).
 //

@@ -12,9 +12,9 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 
-	"github.com/andrewsjg/goamiga/amiga"
-	"github.com/andrewsjg/goamiga/internal/config"
-	"github.com/andrewsjg/goamiga/internal/launch"
+	"github.com/andrewsjg/blitterbox/amiga"
+	"github.com/andrewsjg/blitterbox/internal/config"
+	"github.com/andrewsjg/blitterbox/internal/launch"
 )
 
 // app is the window's game: the configuration screen or a running
@@ -29,7 +29,7 @@ type app struct {
 	s    config.Settings // the running machine's settings
 	name string          // and its saved name, if any
 
-	// shotDir, from GOAMIGA_UISHOT, saves each tab of the configuration
+	// shotDir, from BLITTERBOX_UISHOT, saves each tab of the configuration
 	// screen as a PNG there and quits (for checking the layout).
 	shotDir   string
 	shotFrame int
@@ -44,7 +44,7 @@ type app struct {
 
 // runLauncher opens the window on the configuration screen.
 func runLauncher() error {
-	g := &app{shotDir: os.Getenv("GOAMIGA_UISHOT")}
+	g := &app{shotDir: os.Getenv("BLITTERBOX_UISHOT")}
 	g.showLauncher(startupLauncher())
 	setIcon()
 	return ebiten.RunGame(g)

@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/andrewsjg/goamiga/amiga"
-	"github.com/andrewsjg/goamiga/internal/config"
-	"github.com/andrewsjg/goamiga/internal/whdload"
+	"github.com/andrewsjg/blitterbox/amiga"
+	"github.com/andrewsjg/blitterbox/internal/config"
+	"github.com/andrewsjg/blitterbox/internal/whdload"
 )
 
 // Machine is an Amiga built from settings, with what it holds open.
@@ -239,7 +239,7 @@ func Build(s *config.Settings, loadState string, logger io.Writer, out io.Writer
 			return fail(fmt.Errorf("folder %v", err))
 		}
 	}
-	// goAmiga's own files for the Amiga (the AHI driver ...), if asked
+	// BlitterBox's own files for the Amiga (the AHI driver ...), if asked
 	// for, as a read-only volume beside the drives the board carries; it
 	// has no Startup-Sequence, so the floppy still boots. Clipboard
 	// sharing (Kickstart 2.0 or later) needs the board, drives or not.
@@ -402,7 +402,7 @@ func (m *Machine) bootWHDLoad(s *config.Settings, rom amiga.ROMInfo, out io.Writ
 	return nil
 }
 
-// writeAmigaFiles writes goAmiga's files for the Amiga (amiga.AmigaFiles)
+// writeAmigaFiles writes BlitterBox's files for the Amiga (amiga.AmigaFiles)
 // into a folder for the goAmiga volume, and returns it.
 func writeAmigaFiles() (string, error) {
 	dir := filepath.Join(config.Dir(), "amiga")

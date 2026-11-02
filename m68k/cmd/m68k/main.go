@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/andrewsjg/goamiga/m68k/dump"
-	"github.com/andrewsjg/goamiga/m68k/sim"
-	"github.com/andrewsjg/goamiga/m68k/srec"
+	"github.com/andrewsjg/blitterbox/m68k/dump"
+	"github.com/andrewsjg/blitterbox/m68k/sim"
+	"github.com/andrewsjg/blitterbox/m68k/srec"
 )
 
 var debug = os.Getenv("DEBUG") == "1"

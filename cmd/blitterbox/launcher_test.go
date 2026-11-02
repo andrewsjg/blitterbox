@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/andrewsjg/goamiga/internal/config"
+	"github.com/andrewsjg/blitterbox/internal/config"
 )
 
 // No text on any tab of the configuration screen runs past the panel it

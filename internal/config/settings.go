@@ -54,7 +54,7 @@ type Settings struct {
 
 	ExactBus  bool `json:"exactBus"`  // the 68000's chip accesses timed one by one (cpubus.go)
 	Clipboard bool `json:"clipboard"` // share the clipboard with the host
-	// AmigaFiles mounts the goAmiga volume: goAmiga's files for the
+	// AmigaFiles mounts the goAmiga volume: BlitterBox's files for the
 	// Amiga (its AHI driver).
 	AmigaFiles bool `json:"amigaFiles"`
 
@@ -288,14 +288,14 @@ func Load(path string) (*Settings, error) {
 	return &s, nil
 }
 
-// dir is where SetDir put goAmiga's own files, if it did.
+// dir is where SetDir put BlitterBox's own files, if it did.
 var dir string
 
-// SetDir puts goAmiga's own files in d, for where ~/.config can't be
+// SetDir puts BlitterBox's own files in d, for where ~/.config can't be
 // written (the iPad).
 func SetDir(d string) { dir = d }
 
-// Dir is the folder for goAmiga's own files: ~/.config/goamiga, unless
+// Dir is the folder for BlitterBox's own files: ~/.config/goamiga, unless
 // SetDir said otherwise.
 func Dir() string {
 	if dir != "" {

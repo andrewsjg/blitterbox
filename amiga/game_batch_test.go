@@ -16,7 +16,7 @@ import (
 )
 
 // TestGameBatch boots a list of games in parallel and writes contact
-// sheets of screenshots, to triage which run. GOAMIGA_BATCH names a list
+// sheets of screenshots, to triage which run. BLITTERBOX_BATCH names a list
 // file, one game per line (diag/games.txt is the collection's):
 //
 //	label | disk image | options
@@ -40,16 +40,16 @@ import (
 // chipset=aga chip=2048 slow=0 fast=0 frames=3000. Each game gets left
 // clicks and joystick fire presses at intervals to get past title
 // screens. Screenshots are taken at a third, two thirds and the end;
-// GOAMIGA_OUT is the folder for the sheets (sheet-N.png, 8 games each;
+// BLITTERBOX_OUT is the folder for the sheets (sheet-N.png, 8 games each;
 // row numbers match the log).
 //
-//	GOAMIGA_BATCH=../diag/games.txt GOAMIGA_OUT=/tmp/sheets go test -tags noebitengine -run TestGameBatch -v ./amiga/
+//	BLITTERBOX_BATCH=../diag/games.txt BLITTERBOX_OUT=/tmp/sheets go test -tags noebitengine -run TestGameBatch -v ./amiga/
 func TestGameBatch(t *testing.T) {
-	list := os.Getenv("GOAMIGA_BATCH")
+	list := os.Getenv("BLITTERBOX_BATCH")
 	if list == "" {
-		t.Skip("set GOAMIGA_BATCH to a list of games")
+		t.Skip("set BLITTERBOX_BATCH to a list of games")
 	}
-	out := os.Getenv("GOAMIGA_OUT")
+	out := os.Getenv("BLITTERBOX_OUT")
 	if out == "" {
 		out = t.TempDir()
 	}

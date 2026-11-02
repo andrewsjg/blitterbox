@@ -2,7 +2,7 @@
 // Boing Ball before the 1984 demo's purple grid (an iOS icon has no
 // transparency), and its launch screen's ball and background colour.
 //
-//	go run ./internal/boing/mkassets ios/goAmiga/Assets.xcassets
+//	go run ./internal/boing/mkassets ios/BlitterBox/Assets.xcassets
 package main
 
 import (
@@ -15,7 +15,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/andrewsjg/goamiga/internal/boing"
+	"github.com/andrewsjg/blitterbox/internal/boing"
 )
 
 func main() {

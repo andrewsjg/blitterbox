@@ -39,7 +39,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/andrewsjg/goamiga/amiga"
+	"github.com/andrewsjg/blitterbox/amiga"
 )
 
 // macClipboard is the Mac's general pasteboard.

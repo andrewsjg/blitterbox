@@ -8,7 +8,7 @@
 // and the Amiga has it (hidden and locked, so it never stops at the
 // screen's edge) until Esc or F12.
 import GameController
-import Goamiga
+import Blitterbox
 import SwiftUI
 import UIKit
 
@@ -27,10 +27,10 @@ enum Pointer {
     private static func attach(_ mouse: GCMouse) {
         guard let input = mouse.mouseInput else { return }
         // GCMouse's y grows upward; the screen's downward.
-        input.mouseMovedHandler = { _, dx, dy in GoamigaPointerMove(Double(dx), Double(-dy)) }
-        input.leftButton.pressedChangedHandler = { _, _, down in GoamigaPointerButton(0, down) }
-        input.rightButton?.pressedChangedHandler = { _, _, down in GoamigaPointerButton(1, down) }
-        input.middleButton?.pressedChangedHandler = { _, _, down in GoamigaPointerButton(2, down) }
+        input.mouseMovedHandler = { _, dx, dy in BlitterboxPointerMove(Double(dx), Double(-dy)) }
+        input.leftButton.pressedChangedHandler = { _, _, down in BlitterboxPointerButton(0, down) }
+        input.rightButton?.pressedChangedHandler = { _, _, down in BlitterboxPointerButton(1, down) }
+        input.middleButton?.pressedChangedHandler = { _, _, down in BlitterboxPointerButton(2, down) }
     }
 }
 
@@ -59,7 +59,7 @@ final class RootController: UIHostingController<AnyView> {
         // The iPad locks it only for an app that fills the screen.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self, self.trapped, self.view.window?.windowScene?.pointerLockState?.isLocked == false else { return }
-            GoamigaSay("The iPad hides the pointer only with BlitterBox full screen. Esc or F12 frees it")
+            BlitterboxSay("The iPad hides the pointer only with BlitterBox full screen. Esc or F12 frees it")
         }
     }
 
@@ -78,7 +78,7 @@ final class RootController: UIHostingController<AnyView> {
 /// EbitenController is Ebitengine's view controller with its touches
 /// given to Go by the app: fingers as touches (every event, so none is
 /// missed between frames), the pointer's as clicks.
-final class EbitenController: GoamigaEbitenViewController {
+final class EbitenController: BlitterboxEbitenViewController {
     private var ids: [ObjectIdentifier: Int] = [:]
     private var nextID = 1
 
@@ -89,7 +89,7 @@ final class EbitenController: GoamigaEbitenViewController {
             if touch.type == .indirectPointer {
                 guard touch.phase == .began || up else { continue }
                 let right = event?.buttonMask.contains(.secondary) ?? false
-                GoamigaPointerClick(p.x, p.y, right, !up)
+                BlitterboxPointerClick(p.x, p.y, right, !up)
                 continue
             }
             let key = ObjectIdentifier(touch)
@@ -98,7 +98,7 @@ final class EbitenController: GoamigaEbitenViewController {
                 ids[key] = id
                 nextID += 1
             }
-            GoamigaTouch(id, touch.phase == .began ? 0 : up ? 2 : 1, p.x, p.y)
+            BlitterboxTouch(id, touch.phase == .began ? 0 : up ? 2 : 1, p.x, p.y)
             if up { ids[key] = nil }
         }
     }

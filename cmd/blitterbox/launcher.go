@@ -14,10 +14,10 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/ncruces/zenity"
 
-	"github.com/andrewsjg/goamiga/amiga"
-	"github.com/andrewsjg/goamiga/internal/config"
-	"github.com/andrewsjg/goamiga/internal/launch"
-	"github.com/andrewsjg/goamiga/internal/whdload"
+	"github.com/andrewsjg/blitterbox/amiga"
+	"github.com/andrewsjg/blitterbox/internal/config"
+	"github.com/andrewsjg/blitterbox/internal/launch"
+	"github.com/andrewsjg/blitterbox/internal/whdload"
 )
 
 // The configuration screen: the saved configurations on the left, the

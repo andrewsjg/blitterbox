@@ -7,8 +7,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/andrewsjg/goamiga/internal/config"
-	"github.com/andrewsjg/goamiga/internal/launch"
+	"github.com/andrewsjg/blitterbox/internal/config"
+	"github.com/andrewsjg/blitterbox/internal/launch"
 )
 
 func main() {
@@ -52,8 +52,8 @@ func main() {
 		}
 	}
 	if s.ROM == "" {
-		fmt.Fprintf(os.Stderr, "Usage: goamiga [--rom <kickstart.rom> [--df0 a.adf ...] [flags] | --config NAME]\n"+
-			"With no arguments goamiga opens its configuration screen.\n")
+		fmt.Fprintf(os.Stderr, "Usage: blitterbox [--rom <kickstart.rom> [--df0 a.adf ...] [flags] | --config NAME]\n"+
+			"With no arguments blitterbox opens its configuration screen.\n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}

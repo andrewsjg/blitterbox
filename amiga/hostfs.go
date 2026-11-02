@@ -110,7 +110,7 @@ func (a *Amiga) AttachDirectory(dir, volume string, readOnly bool) error {
 	return nil
 }
 
-// FitHardDiskBoard fits goAmiga's hard disk board, if it isn't already:
+// FitHardDiskBoard fits BlitterBox's hard disk board, if it isn't already:
 // with no disks or folders, it carries the clipboard helper. Call it
 // before Reset.
 func (a *Amiga) FitHardDiskBoard() {

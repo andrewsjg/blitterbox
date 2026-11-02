@@ -64,7 +64,7 @@ func ofsReadFile(t *testing.T, adf []byte, name string) ([]byte, bool) {
 
 // AmigaDOS writes a file during boot and it lands, well-formed, in the
 // disk image: the startup-sequence's first echo is patched to
-// `echo >df0:written "goAmiga write test"`.
+// `echo >df0:written "BlitterBox write test"`.
 func TestAmigaDOSWritesFile(t *testing.T) {
 	rom, err := LoadROM("../ROMS/Kick13.rom")
 	if err != nil {
@@ -82,7 +82,7 @@ func TestAmigaDOSWritesFile(t *testing.T) {
 	if i < 0 {
 		t.Skip("startup-sequence not where expected on this ADF")
 	}
-	cmd := []byte(`echo >df0:written "goAmiga write test"`)
+	cmd := []byte(`echo >df0:written "BlitterBox write test"`)
 	copy(b[i:], append(cmd, bytes.Repeat([]byte(" "), len(old)-len(cmd))...))
 	ofsFixChecksum(b)
 
@@ -116,7 +116,7 @@ func TestAmigaDOSWritesFile(t *testing.T) {
 	if !ok {
 		t.Fatal("df0:written not found in the disk image")
 	}
-	if string(got) != "goAmiga write test\n" {
-		t.Errorf("df0:written = %q, want %q", got, "goAmiga write test\n")
+	if string(got) != "BlitterBox write test\n" {
+		t.Errorf("df0:written = %q, want %q", got, "BlitterBox write test\n")
 	}
 }

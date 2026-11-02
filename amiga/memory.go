@@ -3,9 +3,9 @@ package amiga
 import (
 	"fmt"
 
-	m68k "github.com/andrewsjg/goamiga/m68k"
+	m68k "github.com/andrewsjg/blitterbox/m68k"
 
-	"github.com/andrewsjg/goamiga/m68k/m68kmem"
+	"github.com/andrewsjg/blitterbox/m68k/m68kmem"
 )
 
 // Expansion memory: slow RAM and a Zorro II fast RAM board.
@@ -43,7 +43,7 @@ type zorroRAM struct {
 // the whole megabyte. Call it before Reset.
 //
 // Agnus still identifies as OCS in VPOSR: an ECS ID makes Kickstart 2.0+
-// use ECS-only registers (BLTSIZV/BLTSIZH, BEAMCON0) that goAmiga does not
+// use ECS-only registers (BLTSIZV/BLTSIZH, BEAMCON0) that BlitterBox does not
 // have. Kickstart sizes chip RAM by probing, not from the ID.
 func (a *Amiga) SetChipRAM(kb int) error {
 	if kb != 512 && kb != 1024 && kb != 2048 {
@@ -91,7 +91,7 @@ func (z *zorroRAM) configByte(reg int) byte {
 		return 0x01
 	case 0x08: // er_Flags: prefers the 8 MB memory space
 		return 0x80
-	case 0x10, 0x14: // er_Manufacturer: $07DB (goAmiga, not assigned)
+	case 0x10, 0x14: // er_Manufacturer: $07DB (BlitterBox, not assigned)
 		if reg == 0x10 {
 			return 0x07
 		}

@@ -6,7 +6,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/andrewsjg/goamiga/m68k/m68kmem"
+	"github.com/andrewsjg/blitterbox/m68k/m68kmem"
 )
 
 // Network board: a Zorro II board whose ROM adds bsdsocket.library, the

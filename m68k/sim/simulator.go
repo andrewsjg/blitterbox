@@ -15,8 +15,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/andrewsjg/goamiga/m68k"
-	"github.com/andrewsjg/goamiga/m68k/m68kmem"
+	"github.com/andrewsjg/blitterbox/m68k"
+	"github.com/andrewsjg/blitterbox/m68k/m68kmem"
 )
 
 var (

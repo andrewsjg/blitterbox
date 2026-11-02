@@ -1,7 +1,7 @@
 // Command mkiconset writes the Boing Ball as a macOS iconset: the folder
 // of PNGs iconutil turns into an .icns (scripts/macos-app.sh uses it).
 //
-//	go run ./internal/boing/mkiconset goamiga.iconset
+//	go run ./internal/boing/mkiconset blitterbox.iconset
 package main
 
 import (
@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/andrewsjg/goamiga/internal/boing"
+	"github.com/andrewsjg/blitterbox/internal/boing"
 )
 
 func main() {

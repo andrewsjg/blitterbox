@@ -3,8 +3,8 @@ package amiga
 import (
 	"fmt"
 
-	m68k "github.com/andrewsjg/goamiga/m68k"
-	"github.com/andrewsjg/goamiga/m68k/m68kmem"
+	m68k "github.com/andrewsjg/blitterbox/m68k"
+	"github.com/andrewsjg/blitterbox/m68k/m68kmem"
 )
 
 // Zorro III, the A3000's and A4000's 32-bit expansion bus. Boards join
@@ -49,7 +49,7 @@ func (z *zorro3RAM) configByte(reg int) byte {
 		return 0x03
 	case 0x08: // er_Flags: extended sizes, Zorro III
 		return 0x30
-	case 0x10, 0x14: // er_Manufacturer: $07DB (goAmiga, not assigned)
+	case 0x10, 0x14: // er_Manufacturer: $07DB (BlitterBox, not assigned)
 		if reg == 0x10 {
 			return 0x07
 		}

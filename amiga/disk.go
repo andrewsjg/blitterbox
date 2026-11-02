@@ -392,7 +392,7 @@ func (d *DiskDrive) writeTrack(dr *Drive, words int) {
 	if n > 0 && dr.path != "" {
 		d.SaveErr = dr.saveTrack(track)
 		if d.SaveErr != nil {
-			fmt.Fprintf(os.Stderr, "goamiga: saving track %d to %s: %v\n", track, dr.path, d.SaveErr)
+			fmt.Fprintf(os.Stderr, "blitterbox: saving track %d to %s: %v\n", track, dr.path, d.SaveErr)
 		}
 	}
 }

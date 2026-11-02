@@ -13,28 +13,28 @@ import (
 // TestGameDiag boots a game disk and saves a screenshot every so often, to
 // see how far it gets. Settings come from the environment:
 //
-//	GOAMIGA_GAME     disk image (ADF, zip, adz)            required
-//	GOAMIGA_KS       ROM (default ../ROMS/Kick13.rom)
-//	GOAMIGA_OUT      folder for PNGs (default: a temp dir, logged)
-//	GOAMIGA_FRAMES   frames to run (default 3000)
-//	GOAMIGA_EVERY    screenshot interval in frames (default 250)
-//	GOAMIGA_MEM      chip,slow,fast KB (default 512,512,0)
-//	GOAMIGA_CHIPSET  ocs, ecs-agnus, ecs (default ocs)
-//	GOAMIGA_CPU      68000 or 68020 (default 68000)
-//	GOAMIGA_CLICKS   comma-separated frame numbers at which to click the
+//	BLITTERBOX_GAME     disk image (ADF, zip, adz)            required
+//	BLITTERBOX_KS       ROM (default ../ROMS/Kick13.rom)
+//	BLITTERBOX_OUT      folder for PNGs (default: a temp dir, logged)
+//	BLITTERBOX_FRAMES   frames to run (default 3000)
+//	BLITTERBOX_EVERY    screenshot interval in frames (default 250)
+//	BLITTERBOX_MEM      chip,slow,fast KB (default 512,512,0)
+//	BLITTERBOX_CHIPSET  ocs, ecs-agnus, ecs (default ocs)
+//	BLITTERBOX_CPU      68000 or 68020 (default 68000)
+//	BLITTERBOX_CLICKS   comma-separated frame numbers at which to click the
 //	                 left mouse button (for "click to start" screens)
-//	GOAMIGA_SWAP_AT  frame,path: swap DF0: to another disk at that frame
-//	GOAMIGA_MOVES    frame,dx,dy;...: move the mouse by dx,dy counts
+//	BLITTERBOX_SWAP_AT  frame,path: swap DF0: to another disk at that frame
+//	BLITTERBOX_MOVES    frame,dx,dy;...: move the mouse by dx,dy counts
 //	                 starting at frame, 4 counts per frame
-//	GOAMIGA_TRACE    frame,count: trace count instructions from that frame
-//	GOAMIGA_REGLOG   from,to,filter: log custom register writes whose line
+//	BLITTERBOX_TRACE    frame,count: trace count instructions from that frame
+//	BLITTERBOX_REGLOG   from,to,filter: log custom register writes whose line
 //	                 contains filter (e.g. "DSK") between those frames
 //
-//	GOAMIGA_GAME=../ADF/Lemmings.zip go test -tags noebitengine -run TestGameDiag -v ./amiga/
+//	BLITTERBOX_GAME=../ADF/Lemmings.zip go test -tags noebitengine -run TestGameDiag -v ./amiga/
 func TestGameDiag(t *testing.T) {
-	game := os.Getenv("GOAMIGA_GAME")
+	game := os.Getenv("BLITTERBOX_GAME")
 	if game == "" {
-		t.Skip("set GOAMIGA_GAME to a disk image")
+		t.Skip("set BLITTERBOX_GAME to a disk image")
 	}
 	env := func(k, def string) string {
 		if v := os.Getenv(k); v != "" {
@@ -42,26 +42,26 @@ func TestGameDiag(t *testing.T) {
 		}
 		return def
 	}
-	rom, err := LoadROM(env("GOAMIGA_KS", "../ROMS/Kick13.rom"))
+	rom, err := LoadROM(env("BLITTERBOX_KS", "../ROMS/Kick13.rom"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	var chipKB, slowKB, fastKB int
-	fmt.Sscanf(env("GOAMIGA_MEM", "512,512,0"), "%d,%d,%d", &chipKB, &slowKB, &fastKB)
-	frames, _ := strconv.Atoi(env("GOAMIGA_FRAMES", "3000"))
-	every, _ := strconv.Atoi(env("GOAMIGA_EVERY", "250"))
-	out := env("GOAMIGA_OUT", t.TempDir())
+	fmt.Sscanf(env("BLITTERBOX_MEM", "512,512,0"), "%d,%d,%d", &chipKB, &slowKB, &fastKB)
+	frames, _ := strconv.Atoi(env("BLITTERBOX_FRAMES", "3000"))
+	every, _ := strconv.Atoi(env("BLITTERBOX_EVERY", "250"))
+	out := env("BLITTERBOX_OUT", t.TempDir())
 	clicks := map[int]bool{}
-	for _, f := range filepathSplitList(os.Getenv("GOAMIGA_CLICKS")) {
+	for _, f := range filepathSplitList(os.Getenv("BLITTERBOX_CLICKS")) {
 		n, _ := strconv.Atoi(f)
 		clicks[n] = true
 	}
 
 	a, _ := New(rom, nil)
-	if err := a.SetCPU(env("GOAMIGA_CPU", "68000"), 0); err != nil {
+	if err := a.SetCPU(env("BLITTERBOX_CPU", "68000"), 0); err != nil {
 		t.Fatal(err)
 	}
-	if err := a.SetChipset(env("GOAMIGA_CHIPSET", "ocs")); err != nil {
+	if err := a.SetChipset(env("BLITTERBOX_CHIPSET", "ocs")); err != nil {
 		t.Fatal(err)
 	}
 	if err := a.SetChipRAM(chipKB); err != nil {
@@ -77,10 +77,10 @@ func TestGameDiag(t *testing.T) {
 	a.Video.DisplayActive = true
 	var logFrom, logTo int
 	var logFilter string
-	fmt.Sscanf(strings.ReplaceAll(os.Getenv("GOAMIGA_REGLOG"), ",", " "), "%d %d %s", &logFrom, &logTo, &logFilter)
+	fmt.Sscanf(strings.ReplaceAll(os.Getenv("BLITTERBOX_REGLOG"), ",", " "), "%d %d %s", &logFrom, &logTo, &logFilter)
 	regLog := &filterLog{t: t, filter: logFilter}
 	swapAt, swapPath := 0, ""
-	if v := os.Getenv("GOAMIGA_SWAP_AT"); v != "" {
+	if v := os.Getenv("BLITTERBOX_SWAP_AT"); v != "" {
 		if i := strings.IndexByte(v, ','); i > 0 {
 			swapAt, _ = strconv.Atoi(v[:i])
 			swapPath = v[i+1:]
@@ -88,7 +88,7 @@ func TestGameDiag(t *testing.T) {
 	}
 	type move struct{ dx, dy int }
 	moves := map[int]move{}
-	for _, m := range strings.Split(os.Getenv("GOAMIGA_MOVES"), ";") {
+	for _, m := range strings.Split(os.Getenv("BLITTERBOX_MOVES"), ";") {
 		var f, dx, dy int
 		if n, _ := fmt.Sscanf(m, "%d,%d,%d", &f, &dx, &dy); n == 3 {
 			moves[f] = move{dx, dy}
@@ -96,7 +96,7 @@ func TestGameDiag(t *testing.T) {
 	}
 	var pending move
 	var traceAt, traceN int
-	fmt.Sscanf(os.Getenv("GOAMIGA_TRACE"), "%d,%d", &traceAt, &traceN)
+	fmt.Sscanf(os.Getenv("BLITTERBOX_TRACE"), "%d,%d", &traceAt, &traceN)
 
 	base := filepath.Base(game)
 	for f := 1; f <= frames; f++ {
@@ -152,7 +152,7 @@ func TestGameDiag(t *testing.T) {
 			}
 			dr := a.Disk.DF(0)
 			d := a.Disk
-			if os.Getenv("GOAMIGA_DISKSTATE") != "" {
+			if os.Getenv("BLITTERBOX_DISKSTATE") != "" {
 				t.Logf("  A6=$%08X INTREQR=$%04X DSKLEN=$%04X waiting=%v compl=%d sync=%d selected=%v motor=%v adf=%v side=%d adkcon=$%04X dsksync=$%04X",
 					a.CPU.A[6], a.Custom.ReadReg16(0x09C), d.dsklen, d.dmaWaiting, d.completionCycles, d.syncCycles,
 					dr.selected, dr.motor, dr.adf != nil, d.side, d.adkcon, d.dsksync)

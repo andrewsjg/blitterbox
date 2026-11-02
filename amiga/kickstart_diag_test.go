@@ -10,16 +10,16 @@ import (
 )
 
 // TestKickstartDiag boots a Kickstart ROM (default ../ROMS/Kick32.rom, or
-// $GOAMIGA_KS) with no disk, logs CPU/chipset state and exec's last alert
+// $BLITTERBOX_KS) with no disk, logs CPU/chipset state and exec's last alert
 // every 2 s, catches illegal-instruction exceptions, and saves the screen
-// to /tmp/ks_<frame>.png. With $GOAMIGA_ADF it boots that disk
+// to /tmp/ks_<frame>.png. With $BLITTERBOX_ADF it boots that disk
 // (write-protected) for 60 s:
 //
-//	GOAMIGA_DIAG=1 go test -run TestKickstartDiag -v ./amiga/
+//	BLITTERBOX_DIAG=1 go test -run TestKickstartDiag -v ./amiga/
 func TestKickstartDiag(t *testing.T) {
 	requireDiag(t)
 	path := "../ROMS/Kick32.rom"
-	if p := os.Getenv("GOAMIGA_KS"); p != "" {
+	if p := os.Getenv("BLITTERBOX_KS"); p != "" {
 		path = p
 	}
 	rom, err := LoadROM(path)
@@ -31,15 +31,15 @@ func TestKickstartDiag(t *testing.T) {
 		t.Fatal(err)
 	}
 	a.ConfigureMemory(512, 0)
-	if adf := os.Getenv("GOAMIGA_ADF"); adf != "" {
+	if adf := os.Getenv("BLITTERBOX_ADF"); adf != "" {
 		data, err := os.ReadFile(adf)
 		if err != nil {
 			t.Fatal(err)
 		}
-		// $GOAMIGA_RUN runs a command early in the startup-sequence, in
+		// $BLITTERBOX_RUN runs a command early in the startup-sequence, in
 		// place of its AddBuffers line (same length; FFS data blocks have
 		// no checksum). The image on disk is never touched.
-		if cmd := os.Getenv("GOAMIGA_RUN"); cmd != "" {
+		if cmd := os.Getenv("BLITTERBOX_RUN"); cmd != "" {
 			old := []byte("AddBuffers >NIL: DF0: 15")
 			i := bytes.Index(data, old)
 			line := []byte("Run " + cmd)
@@ -48,10 +48,10 @@ func TestKickstartDiag(t *testing.T) {
 			}
 			copy(data[i:], append(line, bytes.Repeat([]byte(" "), len(old)-len(line))...))
 		}
-		// $GOAMIGA_PATCH="old|new" replaces a line of the startup-sequence
+		// $BLITTERBOX_PATCH="old|new" replaces a line of the startup-sequence
 		// with a command of at most the same length (padded with spaces).
 		// Several patches may be given, separated by ";".
-		for _, pt := range strings.Split(os.Getenv("GOAMIGA_PATCH"), ";") {
+		for _, pt := range strings.Split(os.Getenv("BLITTERBOX_PATCH"), ";") {
 			if pt == "" {
 				continue
 			}
@@ -62,9 +62,9 @@ func TestKickstartDiag(t *testing.T) {
 			}
 			copy(data[i:], append([]byte(repl), bytes.Repeat([]byte(" "), len(old)-len(repl))...))
 		}
-		// $GOAMIGA_BOOTBLOCK copies another disk's boot block, to boot a
+		// $BLITTERBOX_BOOTBLOCK copies another disk's boot block, to boot a
 		// disk that ships non-bootable (Workbench3.2.adf).
-		if bb := os.Getenv("GOAMIGA_BOOTBLOCK"); bb != "" {
+		if bb := os.Getenv("BLITTERBOX_BOOTBLOCK"); bb != "" {
 			other, err := os.ReadFile(bb)
 			if err != nil {
 				t.Fatal(err)
@@ -75,8 +75,8 @@ func TestKickstartDiag(t *testing.T) {
 			t.Fatal(err)
 		}
 		a.Disk.WriteProtected = true
-		// $GOAMIGA_DF1: a disk for DF1: (connects the drive).
-		if df1 := os.Getenv("GOAMIGA_DF1"); df1 != "" {
+		// $BLITTERBOX_DF1: a disk for DF1: (connects the drive).
+		if df1 := os.Getenv("BLITTERBOX_DF1"); df1 != "" {
 			d1, err := os.ReadFile(df1)
 			if err != nil {
 				t.Fatal(err)
@@ -98,7 +98,7 @@ func TestKickstartDiag(t *testing.T) {
 		ver  uint32
 	}
 	var opens []pendingOpen
-	traceOpen := os.Getenv("GOAMIGA_TRACE_OPEN") != ""
+	traceOpen := os.Getenv("BLITTERBOX_TRACE_OPEN") != ""
 	step := func() error {
 		prev := a.CPU.PC
 		if traceOpen {
@@ -137,29 +137,29 @@ func TestKickstartDiag(t *testing.T) {
 		return nil
 	}
 	frames := 600
-	if os.Getenv("GOAMIGA_ADF") != "" {
+	if os.Getenv("BLITTERBOX_ADF") != "" {
 		frames = 3000
 	}
-	if n, err := strconv.Atoi(os.Getenv("GOAMIGA_FRAMES")); err == nil {
+	if n, err := strconv.Atoi(os.Getenv("BLITTERBOX_FRAMES")); err == nil {
 		frames = n
 	}
-	// $GOAMIGA_SWAP="disk.adf:frame" swaps DF0: to another disk at that
+	// $BLITTERBOX_SWAP="disk.adf:frame" swaps DF0: to another disk at that
 	// frame (write-protected, via SwapDisk's eject/insert).
 	swapFrame, swapData := -1, []byte(nil)
-	if sw := os.Getenv("GOAMIGA_SWAP"); sw != "" {
+	if sw := os.Getenv("BLITTERBOX_SWAP"); sw != "" {
 		i := strings.LastIndex(sw, ":")
 		swapFrame, _ = strconv.Atoi(sw[i+1:])
 		if swapData, err = os.ReadFile(sw[:i]); err != nil {
 			t.Fatal(err)
 		}
 	}
-	// $GOAMIGA_SWAP_ON_REQUEST="other.adf": act like a user with two disks.
+	// $BLITTERBOX_SWAP_ON_REQUEST="other.adf": act like a user with two disks.
 	// Whenever a "System Request" window is up (DOS asking for a volume),
 	// swap to the other disk; DOS closes the requester itself once the
 	// right volume is in.
 	var disks [2][]byte
 	cur := 0
-	if other := os.Getenv("GOAMIGA_SWAP_ON_REQUEST"); other != "" {
+	if other := os.Getenv("BLITTERBOX_SWAP_ON_REQUEST"); other != "" {
 		disks[0] = append([]byte(nil), a.Disk.adf...)
 		if disks[1], err = os.ReadFile(other); err != nil {
 			t.Fatal(err)
@@ -189,13 +189,13 @@ func TestKickstartDiag(t *testing.T) {
 			lastSwap = f
 			t.Logf("frame %d: requester up, swapped to disk %d", f, cur)
 		}
-		if os.Getenv("GOAMIGA_TRACE_VOLUMES") != "" && f%5 == 0 {
+		if os.Getenv("BLITTERBOX_TRACE_VOLUMES") != "" && f%5 == 0 {
 			if v := fmt.Sprint(dosVolumes(a)); v != lastVols {
 				t.Logf("frame %d: volumes %s (drive: disk=%v change=%v motor=%v)", f, v, a.Disk.Inserted(), a.Disk.diskChange, a.Disk.motor)
 				lastVols = v
 			}
 		}
-		if os.Getenv("GOAMIGA_TRACE_DRIVE") != "" && lastSwap > 0 && f%25 == 0 && f < lastSwap+160 {
+		if os.Getenv("BLITTERBOX_TRACE_DRIVE") != "" && lastSwap > 0 && f%25 == 0 && f < lastSwap+160 {
 			d := a.Disk
 			t.Logf("frame %d: drive disk=%v swapping=%v change=%v motor=%v sel=%v cyl=%d statusReadsSelected=%d pendingWait=%.2fs",
 				f, d.Inserted(), d.Swapping(), d.diskChange, d.motor, d.selected, d.cylinder, d.StatusSelectedTrue,

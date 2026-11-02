@@ -5,7 +5,7 @@ import "testing"
 // TestOverscanScreenshot boots Workbench and saves the overscan view to
 // /tmp/workbench_overscan.png:
 //
-//	GOAMIGA_DIAG=1 go test -run TestOverscanScreenshot ./amiga/
+//	BLITTERBOX_DIAG=1 go test -run TestOverscanScreenshot ./amiga/
 func TestOverscanScreenshot(t *testing.T) {
 	requireDiag(t)
 	a := bootWB(t)

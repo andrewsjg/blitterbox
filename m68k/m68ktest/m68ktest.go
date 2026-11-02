@@ -8,10 +8,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/andrewsjg/goamiga/m68k"
-	"github.com/andrewsjg/goamiga/m68k/dump"
-	"github.com/andrewsjg/goamiga/m68k/m68kmem"
-	"github.com/andrewsjg/goamiga/m68k/srec"
+	"github.com/andrewsjg/blitterbox/m68k"
+	"github.com/andrewsjg/blitterbox/m68k/dump"
+	"github.com/andrewsjg/blitterbox/m68k/m68kmem"
+	"github.com/andrewsjg/blitterbox/m68k/srec"
 )
 
 type testLogWriter struct {

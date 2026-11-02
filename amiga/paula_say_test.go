@@ -34,7 +34,7 @@ func writeWAV(path string, samples []float32) error {
 // ROM's audio.device: audio DMA, AUDx interrupts and all. The startup-
 // sequence's first echo is patched to `sys:Utilities/Say hello`. If audio
 // interrupts were missing, Say would never finish and Workbench would not
-// start. With GOAMIGA_DIAG=1 the sound is saved to /tmp/goamiga_say.wav.
+// start. With BLITTERBOX_DIAG=1 the sound is saved to /tmp/blitterbox_say.wav.
 func TestSayHello(t *testing.T) {
 	rom, err := LoadROM("../ROMS/Kick13.rom")
 	if err != nil {
@@ -109,12 +109,12 @@ func TestSayHello(t *testing.T) {
 	if total < 10 {
 		t.Errorf("only %d audio interrupts", total)
 	}
-	if os.Getenv("GOAMIGA_DIAG") != "" {
+	if os.Getenv("BLITTERBOX_DIAG") != "" {
 		// Just the speech, with half a second either side.
 		from := max(0, (first-50)*win*2)
 		to := min(len(samples), (last+51)*win*2)
-		if err := writeWAV("/tmp/goamiga_say.wav", samples[from:to]); err == nil {
-			t.Logf("wrote /tmp/goamiga_say.wav (%.1f s)", float64((to-from)/2)/AudioSampleRate)
+		if err := writeWAV("/tmp/blitterbox_say.wav", samples[from:to]); err == nil {
+			t.Logf("wrote /tmp/blitterbox_say.wav (%.1f s)", float64((to-from)/2)/AudioSampleRate)
 		}
 	}
 }

@@ -45,7 +45,7 @@ func TestBoot68020KS32(t *testing.T) {
 	if f := execAttnFlags(a); f&3 != 3 {
 		t.Errorf("AttnFlags = $%04X, want 68010 and 68020 bits set", f)
 	}
-	if p := os.Getenv("GOAMIGA_DIAG_PNG"); p != "" {
+	if p := os.Getenv("BLITTERBOX_DIAG_PNG"); p != "" {
 		a.Video.DisplayActive = true
 		a.RunFrame()
 		a.RunFrame()
@@ -164,7 +164,7 @@ func TestBootKS32On68040(t *testing.T) {
 				t.Errorf("%s: %d exceptions with vector %d", m.rom, exc[v], v)
 			}
 		}
-		if p := os.Getenv("GOAMIGA_DIAG_PNG"); p != "" {
+		if p := os.Getenv("BLITTERBOX_DIAG_PNG"); p != "" {
 			a.Video.DisplayActive = true
 			a.RunFrame()
 			a.RunFrame()

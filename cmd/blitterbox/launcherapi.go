@@ -7,7 +7,7 @@ import "errors"
 // and exits with exitReturnToLauncher, for the screen to show them again.
 // (The screen's questions are answered by launch.Serve, --launcher-api.)
 const (
-	returnEnv            = "GOAMIGA_RETURN_CONFIG"
+	returnEnv            = "BLITTERBOX_RETURN_CONFIG"
 	exitReturnToLauncher = 3
 )
 

@@ -1,8 +1,8 @@
 // The iPad's half of the configuration screen shared with the Mac
-// (macos/Sources/goAmigaLauncher: LauncherView, LauncherModel, the tabs):
+// (macos/Sources/BlitterBoxLauncher: LauncherView, LauncherModel, the tabs):
 // its Bridge asks the Go code in-process, its MachineRunner runs the
 // machine in this app, and chooseFile shows the document picker.
-import Goamiga
+import Blitterbox
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
@@ -12,7 +12,7 @@ final class Bridge {
     func call(_ req: Request) -> Response {
         do {
             let json = String(decoding: try JSONEncoder().encode(req), as: UTF8.self)
-            return try JSONDecoder().decode(Response.self, from: Data(GoamigaRequest(json).utf8))
+            return try JSONDecoder().decode(Response.self, from: Data(BlitterboxRequest(json).utf8))
         } catch {
             return Response(error: "BlitterBox: \(error.localizedDescription)")
         }
@@ -37,7 +37,7 @@ enum Documents {
 final class MachineRunner {
     func run(config: String, name: String, model: LauncherModel) {
         var error: NSError?
-        guard GoamigaStart(config, name, &error) else {
+        guard BlitterboxStart(config, name, &error) else {
             model.say("Can't start: \(error?.localizedDescription ?? "unknown error")", error: true)
             return
         }
@@ -45,7 +45,7 @@ final class MachineRunner {
     }
 
     func stop() {
-        GoamigaStop()
+        BlitterboxStop()
     }
 }
 
@@ -122,9 +122,9 @@ private func topViewController() -> UIViewController? {
     return top
 }
 
-/// AppHost answers what the running machine asks of the app (GoamigaHost),
+/// AppHost answers what the running machine asks of the app (BlitterboxHost),
 /// on the main thread.
-final class AppHost: NSObject, GoamigaHostProtocol {
+final class AppHost: NSObject, BlitterboxHostProtocol {
     let model: LauncherModel
     weak var root: RootController?
 
@@ -144,8 +144,8 @@ final class AppHost: NSObject, GoamigaHostProtocol {
     func chooseDisk(_ unit: Int) {
         DispatchQueue.main.async { [model] in
             chooseFile(title: "Insert disk in DF\(unit):", folder: false, types: diskTypes,
-                       cancelled: { GoamigaDiskChosen("") }) { url in
-                GoamigaDiskChosen(model.bridge.settingsPath(url))
+                       cancelled: { BlitterboxDiskChosen("") }) { url in
+                BlitterboxDiskChosen(model.bridge.settingsPath(url))
             }
         }
     }

@@ -3,11 +3,11 @@
 // lights, the keyboard, Reset, Power and Settings, floating over the
 // bottom of the picture. It fades to a small handle when left alone, and
 // the machine's notes show above it.
-import Goamiga
+import Blitterbox
 import SwiftUI
 
 /// MachineStatus is the machine's status bar (amiga.Status, from
-/// GoamigaStatus).
+/// BlitterboxStatus).
 struct MachineStatus: Decodable, Equatable {
     struct Light: Decodable, Equatable, Identifiable {
         var label: String
@@ -45,7 +45,7 @@ final class MachineBarModel {
     }
 
     private func poll() {
-        let json = GoamigaStatus()
+        let json = BlitterboxStatus()
         let s = json.isEmpty ? nil : try? JSONDecoder().decode(MachineStatus.self, from: Data(json.utf8))
         if s == status { return }
         if status == nil, s != nil {
@@ -124,9 +124,9 @@ struct MachineBar: View {
                             titleVisibility: .visible) {
             switch confirming {
             case .power:
-                Button("Power Cycle", systemImage: "power", role: .destructive) { GoamigaPowerCycle() }
+                Button("Power Cycle", systemImage: "power", role: .destructive) { BlitterboxPowerCycle() }
             case .settings:
-                Button("Switch Off", systemImage: "gearshape", role: .destructive) { GoamigaChangeSettings() }
+                Button("Switch Off", systemImage: "gearshape", role: .destructive) { BlitterboxChangeSettings() }
             case nil:
                 EmptyView()
             }
@@ -144,10 +144,10 @@ struct MachineBar: View {
             ForEach(s.lights) { l in
                 if l.unit >= 0 {
                     // A drive: tap to insert a disk, touch and hold to eject it.
-                    Button { tapped { GoamigaInsertDisk(l.unit) } } label: { DriveLight(light: l) }
+                    Button { tapped { BlitterboxInsertDisk(l.unit) } } label: { DriveLight(light: l) }
                         .contextMenu {
-                            Button("Insert Disk…", systemImage: "square.and.arrow.down") { GoamigaInsertDisk(l.unit) }
-                            Button("Eject", systemImage: "eject") { GoamigaEject(l.unit) }
+                            Button("Insert Disk…", systemImage: "square.and.arrow.down") { BlitterboxInsertDisk(l.unit) }
+                            Button("Eject", systemImage: "eject") { BlitterboxEject(l.unit) }
                                 .disabled(l.disk == nil)
                         }
                         .accessibilityLabel("DF\(l.unit): \(l.disk ?? "empty")")
@@ -159,7 +159,7 @@ struct MachineBar: View {
             Rectangle().fill(.white.opacity(0.25)).frame(width: 1, height: 28)
             ControlButton(bar.keyboardShown ? "keyboard.chevron.compact.down" : "keyboard",
                           bar.keyboardShown ? "Hide the keyboard" : "Show the keyboard") { tapped(bar.toggleKeyboard) }
-            ControlButton("arrow.counterclockwise", "Reset") { tapped { GoamigaReset() } }
+            ControlButton("arrow.counterclockwise", "Reset") { tapped { BlitterboxReset() } }
             ControlButton("power", "Power cycle", tint: .red) { confirming = .power }
             ControlButton("gearshape", "Settings") { confirming = .settings }
         }

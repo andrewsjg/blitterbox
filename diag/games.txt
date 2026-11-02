@@ -1,4 +1,4 @@
-# goAmiga game sweep: GOAMIGA_BATCH=../diag/games.txt GOAMIGA_OUT=DIR \
+# BlitterBox game sweep: BLITTERBOX_BATCH=../diag/games.txt BLITTERBOX_OUT=DIR \
 #   go test -tags noebitengine -run TestGameBatch -v ./amiga/
 # label | disk (relative to amiga/) | options (see game_batch_test.go)
 Alien Breed TA          | ../ADF/Alien Breed - Tower Assault v1.1 (1994)(Team 17)(OCS-AGA)[2331].zip | swap=auto,frames=6000

@@ -1,6 +1,6 @@
 import SwiftUI
 
-// The settings tabs, as in the Ebitengine launcher (cmd/goamiga/launcher.go).
+// The settings tabs, as in the Ebitengine launcher (cmd/blitterbox/launcher.go).
 
 struct MachineTab: View {
     @Environment(LauncherModel.self) private var model

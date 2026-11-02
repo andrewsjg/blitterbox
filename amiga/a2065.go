@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/andrewsjg/goamiga/m68k/m68kmem"
+	"github.com/andrewsjg/blitterbox/m68k/m68kmem"
 )
 
 // The A2065 Ethernet card: a Zorro II board with an AMD Am7990 LANCE and

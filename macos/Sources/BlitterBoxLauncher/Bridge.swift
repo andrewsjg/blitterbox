@@ -100,26 +100,26 @@ struct ConfigSummary: Decodable, Equatable {
 }
 
 #if os(macOS)
-// Bridge talks to goamiga --launcher-api: one JSON line out, one back.
+// Bridge talks to blitterbox --launcher-api: one JSON line out, one back.
 // (The iPad app's Bridge asks the Go code in-process.)
 final class Bridge {
-    let goamiga: URL
+    let blitterbox: URL
     private var process: Process?
     private var input: FileHandle?
     private var output: FileHandle?
     private var buffer = Data()
 
     init() {
-        if let env = ProcessInfo.processInfo.environment["GOAMIGA_BIN"] {
-            goamiga = URL(fileURLWithPath: env)
+        if let env = ProcessInfo.processInfo.environment["BLITTERBOX_BIN"] {
+            blitterbox = URL(fileURLWithPath: env)
         } else {
-            goamiga = Bundle.main.executableURL!.deletingLastPathComponent().appendingPathComponent("goamiga")
+            blitterbox = Bundle.main.executableURL!.deletingLastPathComponent().appendingPathComponent("blitterbox")
         }
     }
 
     private func start() throws {
         let p = Process()
-        p.executableURL = goamiga
+        p.executableURL = blitterbox
         p.arguments = ["--launcher-api"]
         p.currentDirectoryURL = Bridge.workingDirectory
         let inPipe = Pipe(), outPipe = Pipe()
@@ -130,7 +130,7 @@ final class Bridge {
         (process, input, output, buffer) = (p, inPipe.fileHandleForWriting, outPipe.fileHandleForReading, Data())
     }
 
-    // The folder goamiga runs in: where the app was started, unless that is
+    // The folder blitterbox runs in: where the app was started, unless that is
     // the root (as from the Finder), then the home folder.
     static var workingDirectory: URL {
         let cwd = FileManager.default.currentDirectoryPath
@@ -154,13 +154,13 @@ final class Bridge {
                 let more = output!.availableData // what has come, waiting for some
                 guard !more.isEmpty else {
                     process = nil
-                    return Response(error: "goamiga stopped answering")
+                    return Response(error: "blitterbox stopped answering")
                 }
                 buffer.append(more)
             }
         } catch {
             process = nil
-            return Response(error: "goamiga (\(goamiga.path)): \(error.localizedDescription)")
+            return Response(error: "blitterbox (\(blitterbox.path)): \(error.localizedDescription)")
         }
     }
 

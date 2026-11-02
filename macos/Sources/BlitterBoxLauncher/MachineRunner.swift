@@ -1,7 +1,7 @@
 #if os(macOS)
 import AppKit
 
-// MachineRunner runs the machine on the Mac: goamiga --config, a process
+// MachineRunner runs the machine on the Mac: blitterbox --config, a process
 // beside this app, whose window becomes the app while the configuration
 // screen hides. (The iPad app's runs it in-process.)
 @MainActor
@@ -17,11 +17,11 @@ final class MachineRunner {
         try? FileManager.default.removeItem(at: back)
 
         let p = Process()
-        p.executableURL = model.bridge.goamiga
+        p.executableURL = model.bridge.blitterbox
         p.arguments = ["--config", conf] + (name.isEmpty ? [] : ["--name", name])
         p.currentDirectoryURL = Bridge.workingDirectory
         var env = ProcessInfo.processInfo.environment
-        env["GOAMIGA_RETURN_CONFIG"] = back.path
+        env["BLITTERBOX_RETURN_CONFIG"] = back.path
         p.environment = env
         let pipe = Pipe()
         p.standardOutput = pipe
@@ -40,7 +40,7 @@ final class MachineRunner {
         do {
             try p.run()
         } catch {
-            model.say("Can't run goamiga: \(error.localizedDescription)", error: true)
+            model.say("Can't run blitterbox: \(error.localizedDescription)", error: true)
             return
         }
         machine = p

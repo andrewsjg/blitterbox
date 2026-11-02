@@ -11,6 +11,7 @@ Picasso96/
 .DS_Store
 
 # Build outputs
+/blitterbox
 /goamiga
 /boot_diag
 *.test
@@ -23,10 +24,10 @@ Picasso96/
 __pycache__/
 goamiga.conf
 *.hdf
-/goAmiga.app/
 /BlitterBox.app/
+/goAmiga.app/
 /macos/.build/
 /WHDLoad/
 /AHI/
-ios/Goamiga.xcframework/
+ios/Blitterbox.xcframework/
 xcuserdata/

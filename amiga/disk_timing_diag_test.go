@@ -10,7 +10,7 @@ import (
 // long the transfer took, plus motor changes. Use it to see where boot time
 // goes on the floppy:
 //
-//	GOAMIGA_DIAG=1 go test -run TestDiskTimingDiag -v ./amiga/
+//	BLITTERBOX_DIAG=1 go test -run TestDiskTimingDiag -v ./amiga/
 func TestDiskTimingDiag(t *testing.T) {
 	requireDiag(t)
 	rom, err := LoadROM("../ROMS/Kick13.rom")

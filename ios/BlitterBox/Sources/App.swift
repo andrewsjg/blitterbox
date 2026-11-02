@@ -1,9 +1,9 @@
-// BlitterBox (goAmiga) for iPadOS: the Go emulator (../../mobile, built into
-// Goamiga.xcframework by scripts/ios-framework.sh) runs inside Ebitengine's
+// BlitterBox (BlitterBox) for iPadOS: the Go emulator (../../mobile, built into
+// Blitterbox.xcframework by scripts/ios-framework.sh) runs inside Ebitengine's
 // view controller, set up on the configuration screen it shares with the
 // Mac (Launcher.swift). ROMs, disks and hardfiles live in the app's
 // Documents folder, which the Files app shows as "On My iPad > BlitterBox".
-import Goamiga
+import Blitterbox
 import SwiftUI
 import UIKit
 
@@ -22,12 +22,12 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Settings name files relative to Documents; Go must be there
         // before the model asks it anything.
         var error: NSError?
-        if !GoamigaSetDocuments(Documents.url.path, &error) {
+        if !BlitterboxSetDocuments(Documents.url.path, &error) {
             print("BlitterBox: \(error?.localizedDescription ?? "can't use Documents")")
         }
         let model = MainActor.assumeIsolated { LauncherModel() }
         let host = AppHost(model: model)
-        GoamigaSetHost(host)
+        BlitterboxSetHost(host)
         self.host = host
         Pointer.start()
 
@@ -60,7 +60,7 @@ final class AmigaViewController: UIViewController {
         view.addSubview(amiga.view)
         amiga.didMove(toParent: self)
         view.addSubview(keyboard)
-        keyboard.onKey = { code, down in GoamigaKey(code, down) }
+        keyboard.onKey = { code, down in BlitterboxKey(code, down) }
 
         bar.toggleKeyboard = { [weak self] in self?.toggleKeyboard() }
         barHost.sizingOptions = .intrinsicContentSize

@@ -8,7 +8,7 @@ import (
 // TestDiskSwapGapDiag measures how soon after an eject AmigaDOS takes the
 // volume out of the drive:
 //
-//	GOAMIGA_DIAG=1 go test -run TestDiskSwapGapDiag -v ./amiga/
+//	BLITTERBOX_DIAG=1 go test -run TestDiskSwapGapDiag -v ./amiga/
 func TestDiskSwapGapDiag(t *testing.T) {
 	requireDiag(t)
 	data, err := os.ReadFile("../Workbench/Workbench v1.3.3 rev 34.34-Disk 1 of 2.adf")

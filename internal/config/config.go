@@ -1,4 +1,4 @@
-// Package config reads goamiga settings files.
+// Package config reads blitterbox settings files.
 package config
 
 import (

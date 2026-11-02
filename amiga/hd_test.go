@@ -73,11 +73,11 @@ func bootHardfileMem(t *testing.T, romPath, adf string, chipKB, slowKB, fastKB i
 	if waitWorkbench(t, a) {
 		return a
 	}
-	if os.Getenv("GOAMIGA_DIAG") != "" {
+	if os.Getenv("BLITTERBOX_DIAG") != "" {
 		a.Video.DisplayActive = true
 		a.RunFrame()
 		a.RunFrame()
-		if f, err := os.Create(os.Getenv("GOAMIGA_DIAG_PNG")); err == nil {
+		if f, err := os.Create(os.Getenv("BLITTERBOX_DIAG_PNG")); err == nil {
 			png.Encode(f, a.Video.ScreenImage())
 			f.Close()
 		}

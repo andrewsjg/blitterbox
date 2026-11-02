@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/andrewsjg/goamiga/internal/whdload"
+	"github.com/andrewsjg/blitterbox/internal/whdload"
 )
 
 // WHDLoad (whdload.de, free) and game installs (whdload.de/games, each a

@@ -10,7 +10,7 @@ import (
 // and host time, and how fast the emulator runs once it is up. Use it to
 // compare timing changes:
 //
-//	GOAMIGA_DIAG=1 go test -run TestTimingProfile -v ./amiga/
+//	BLITTERBOX_DIAG=1 go test -run TestTimingProfile -v ./amiga/
 func TestTimingProfile(t *testing.T) {
 	requireDiag(t)
 	rom, err := LoadROM("../ROMS/Kick13.rom")

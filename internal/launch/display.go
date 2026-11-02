@@ -5,8 +5,8 @@ package launch
 import (
 	"slices"
 
-	"github.com/andrewsjg/goamiga/amiga"
-	"github.com/andrewsjg/goamiga/internal/config"
+	"github.com/andrewsjg/blitterbox/amiga"
+	"github.com/andrewsjg/blitterbox/internal/config"
 )
 
 // NewDisplay makes the machine's display as the settings say, with its

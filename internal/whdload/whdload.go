@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andrewsjg/goamiga/internal/lha"
+	"github.com/andrewsjg/blitterbox/internal/lha"
 )
 
 // Where WHDLoad and the kickstart relocation tables come from.
@@ -119,7 +119,7 @@ func fetchAndUnpack(url string) (string, error) {
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("%s: %s", url, resp.Status)
 	}
-	f, err := os.CreateTemp("", "goamiga-*.lha")
+	f, err := os.CreateTemp("", "blitterbox-*.lha")
 	if err != nil {
 		return "", err
 	}
@@ -129,7 +129,7 @@ func fetchAndUnpack(url string) (string, error) {
 		return "", err
 	}
 	f.Close()
-	dir, err := os.MkdirTemp("", "goamiga-whdload")
+	dir, err := os.MkdirTemp("", "blitterbox-whdload")
 	if err != nil {
 		return "", err
 	}

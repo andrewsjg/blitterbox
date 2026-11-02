@@ -157,7 +157,7 @@ func TestClipboardShellCopy(t *testing.T) {
 }
 
 // With no hard disk or folder of its own, a Workbench floppy still gets
-// clipboard sharing: goAmiga's volume alone carries the board the helper
+// clipboard sharing: the goAmiga volume alone carries the board the helper
 // lives on, and the floppy still boots.
 func TestClipboardFloppyWorkbench(t *testing.T) { clipboardFloppyWorkbench(t, true) }
 

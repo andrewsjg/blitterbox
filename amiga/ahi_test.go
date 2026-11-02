@@ -14,8 +14,8 @@ import (
 const ahiUsr = "../AHI/m68k-amigaos-ahiusr.lha"
 
 // ahiMachine boots Workbench 3.2 on an A1200 from a folder with AHI
-// installed and goAmiga's volume beside it. Before Workbench, the
-// volume's script installs goAmiga's driver, AUDIO: is mounted, and
+// installed and the goAmiga volume beside it. Before Workbench, the
+// volume's script installs BlitterBox's driver, AUDIO: is mounted, and
 // script runs.
 func ahiMachine(t *testing.T, files map[string][]byte, script ...string) (*Amiga, string) {
 	t.Helper()
@@ -29,13 +29,13 @@ func ahiMachine(t *testing.T, files map[string][]byte, script ...string) (*Amiga
 	copyTree(t, filepath.Join(usr, "m68k-amigaos-ahi", "User", "Devs"), filepath.Join(boot, "Devs"))
 	copyTree(t, filepath.Join(usr, "m68k-amigaos-ahi", "User", "C"), filepath.Join(boot, "C"))
 	copyTree(t, filepath.Join(usr, "m68k-amigaos-ahi", "User", "L"), filepath.Join(boot, "L"))
-	// Only goAmiga's modes: with no AHI preferences, AHI picks from those
+	// Only BlitterBox's modes: with no AHI preferences, AHI picks from those
 	// it has.
 	modes, _ := filepath.Glob(filepath.Join(boot, "Devs", "AudioModes", "*"))
 	for _, m := range modes {
 		os.Remove(m)
 	}
-	// goAmiga's volume, from which its script installs the driver.
+	// the goAmiga volume, from which its script installs the driver.
 	vol := filepath.Join(t.TempDir(), "goAmiga")
 	for name, b := range AmigaFiles() {
 		p := filepath.Join(vol, filepath.FromSlash(name))
@@ -78,7 +78,7 @@ func tone(freq, rate float64, seconds float64) []byte {
 	return b
 }
 
-// A tone played through AHI (AUDIO:, AHI's DOS device) with goAmiga's
+// A tone played through AHI (AUDIO:, AHI's DOS device) with BlitterBox's
 // driver comes out on the host, at its pitch and in time: AHI mixes it on
 // the Amiga and the driver hands it over.
 func TestAHIPlaysOnTheHost(t *testing.T) {

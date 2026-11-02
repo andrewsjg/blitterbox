@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/andrewsjg/goamiga/amiga"
-	"github.com/andrewsjg/goamiga/internal/config"
+	"github.com/andrewsjg/blitterbox/amiga"
+	"github.com/andrewsjg/blitterbox/internal/config"
 )
 
 // Presets set up the common models (the ROM stays as chosen).

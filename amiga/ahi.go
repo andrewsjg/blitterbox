@@ -939,7 +939,7 @@ func (o *ahiOut) peak() float64 {
 	return p
 }
 
-// AmigaFiles are the files goAmiga offers the Amiga on its "goAmiga"
+// AmigaFiles are the files BlitterBox offers the Amiga on its "goAmiga"
 // volume: the AHI driver and its mode file, a script that installs them,
 // and a ReadMe. Paths are the volume's, slash-separated.
 func AmigaFiles() map[string][]byte {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 
-	"github.com/andrewsjg/goamiga/internal/boing"
+	"github.com/andrewsjg/blitterbox/internal/boing"
 )
 
 // setIcon gives the window the Boing Ball (Windows and Linux use it).

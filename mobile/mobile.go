@@ -1,12 +1,12 @@
-// Package goamiga is goAmiga for iPadOS: ebitenmobile binds it into an
+// Package blitterbox is BlitterBox for iPadOS: ebitenmobile binds it into an
 // xcframework (scripts/ios-framework.sh) that the app in ios/ hosts.
 //
 // The app's settings screen asks Request (the launcher API, as the macOS
-// one asks goamiga --launcher-api), then Starts the machine from the file
+// one asks blitterbox --launcher-api), then Starts the machine from the file
 // "start" wrote. Paths in settings are relative to the app's Documents
 // folder (SetDocuments), which the Files app shows, so they survive the
 // app moving container on an update.
-package goamiga
+package blitterbox
 
 import (
 	"encoding/json"
@@ -18,9 +18,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/mobile"
 
-	"github.com/andrewsjg/goamiga/amiga"
-	"github.com/andrewsjg/goamiga/internal/config"
-	"github.com/andrewsjg/goamiga/internal/launch"
+	"github.com/andrewsjg/blitterbox/amiga"
+	"github.com/andrewsjg/blitterbox/internal/config"
+	"github.com/andrewsjg/blitterbox/internal/launch"
 )
 
 // Host is the app, for what the machine asks of it. Its methods are
@@ -61,7 +61,7 @@ func init() {
 
 // SetDocuments makes dir, the app's Documents folder, where relative
 // paths in settings are found; settings files keep paths there relative
-// to it, as iOS can move the app's container. goAmiga's own files (saved
+// to it, as iOS can move the app's container. BlitterBox's own files (saved
 // configurations, WHDLoad's) go in the app's Library beside it: there is
 // no writable ~/.config on iOS.
 func SetDocuments(dir string) error {

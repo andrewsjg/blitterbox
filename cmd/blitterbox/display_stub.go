@@ -5,8 +5,8 @@ package main
 import (
 	"errors"
 
-	"github.com/andrewsjg/goamiga/internal/config"
-	"github.com/andrewsjg/goamiga/internal/launch"
+	"github.com/andrewsjg/blitterbox/internal/config"
+	"github.com/andrewsjg/blitterbox/internal/launch"
 )
 
 var errNoDisplay = errors.New("built with -tags noebitengine: no display; use --headless")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Make a Picasso96 2.0 settings file for goAmiga's uaegfx RTG card.
+"""Make a Picasso96 2.0 settings file for BlitterBox's uaegfx RTG card.
 
 Picasso96 2.0 offers only the screen modes in SYS:Devs/Picasso96Settings,
 and only those for the board type in the file's STHD chunk. The presets

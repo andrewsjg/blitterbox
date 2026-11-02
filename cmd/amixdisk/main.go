@@ -29,7 +29,7 @@
 // The root and swap partitions are marked not to be mounted by AmigaOS.
 //
 //	amixdisk -cpio AMIX/amix_2.1.cpio -o amix.hdf
-//	goamiga --cpu 68030 --fpu 68882 --rom ROMS/Kick32.rom --fastram 8192 \
+//	blitterbox --cpu 68030 --fpu 68882 --rom ROMS/Kick32.rom --fastram 8192 \
 //	        --hdf amix.hdf --scsi 6:amix.hdf
 package main
 

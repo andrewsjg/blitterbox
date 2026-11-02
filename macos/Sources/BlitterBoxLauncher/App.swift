@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 @main
-struct GoAmigaApp: App {
+struct BlitterBoxApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @State private var model = LauncherModel()
 
@@ -29,7 +29,7 @@ struct GoAmigaApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
-        signal(SIGPIPE, SIG_IGN) // a goamiga that has gone away is an error, not a crash
+        signal(SIGPIPE, SIG_IGN) // a blitterbox that has gone away is an error, not a crash
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

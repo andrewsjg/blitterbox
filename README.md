@@ -1,9 +1,9 @@
-# goAmiga
+# BlitterBox
 
-BlitterBox is the app; goAmiga is the project behind it. BlitterBox is an
-Amiga emulator written in Go, from the 68000 up. It runs Kickstart and
-Workbench, games and demos (copy-protected originals included), from the
-A500 to the A1200. It has its own 680x0 CPU core, in [`m68k/`](m68k/).
+BlitterBox is an Amiga emulator written in Go, from the 68000 up. It runs
+Kickstart and Workbench, games and demos (copy-protected originals
+included), from the A500 to the A1200. It has its own 680x0 CPU core, in
+[`m68k/`](m68k/).
 
 ![The configuration screen](docs/images/config-screen.png)
 
@@ -49,7 +49,7 @@ A500 to the A1200. It has its own 680x0 CPU core, in [`m68k/`](m68k/).
   [WHDLoad games](#whdload-games)).
 - A clipboard shared with the Mac: copy on either side, paste on the
   other.
-- AHI sound (16-bit, mixed by AHI) through goAmiga's own AHI driver.
+- AHI sound (16-bit, mixed by AHI) through BlitterBox's own AHI driver.
 
 **Connections:**
 - The serial port over telnet or TCP.
@@ -75,12 +75,12 @@ You need:
   `zenity` or `kdialog` for file dialogs.
 
 ```bash
-git clone https://github.com/andrewsjg/goamiga
-cd goamiga
-go build ./cmd/goamiga
+git clone https://github.com/andrewsjg/blitterbox
+cd blitterbox
+go build ./cmd/blitterbox
 ```
 
-Or install it with `go install github.com/andrewsjg/goamiga/cmd/goamiga@latest`.
+Or install it with `go install github.com/andrewsjg/blitterbox/cmd/blitterbox@latest`.
 
 On macOS, `scripts/macos-app.sh` builds `BlitterBox.app`, an application
 bundle with the Boing Ball icon, which you can put in Applications. The
@@ -88,8 +88,8 @@ bare binary shows the icon in the Dock too, and on Windows and Linux it is
 the window's icon. With Swift installed (Xcode or its command-line tools)
 the app opens on a native SwiftUI configuration screen (`macos/`): the same
 settings, with Mac pop-up menus, file dialogs and drag and drop of disks
-and hardfiles. `GOAMIGA_NO_SWIFTUI=1 scripts/macos-app.sh` builds the app
-with goAmiga's own configuration screen instead.
+and hardfiles. `BLITTERBOX_NO_SWIFTUI=1 scripts/macos-app.sh` builds the app
+with BlitterBox's own configuration screen instead.
 
 You also need a **Kickstart ROM**; none is included. Amiga Forever (Cloanto)
 supplies the classic ROMs, and Hyperion sells Kickstart 3.2.
@@ -102,7 +102,7 @@ supplies the classic ROMs, and Hyperion sells Kickstart 3.2.
 Run it with no arguments:
 
 ```bash
-./goamiga
+./blitterbox
 ```
 
 It opens the configuration screen:
@@ -122,7 +122,7 @@ right-click to step back. Choose… opens a file dialog.
 **Start** boots the machine. A problem, such as a missing ROM, shows at the
 bottom of the screen instead.
 
-goAmiga opens with the configuration you started last. While the Amiga
+BlitterBox opens with the configuration you started last. While the Amiga
 runs, the **Config** button (or Cmd+,) switches it off and returns here.
 
 ## Command line
@@ -130,14 +130,14 @@ runs, the **Config** button (or Cmd+,) switches it off and returns here.
 Flags skip the configuration screen and boot straight away:
 
 ```bash
-goamiga --rom ROMS/Kick13.rom --df0 "Workbench/Workbench v1.3.3 rev 34.34-Disk 1 of 2.adf"
-goamiga --rom ROMS/Kick32.rom --df0 Workbench/Install3.2.adf --df1 Workbench/Workbench3.2.adf
-goamiga --rom ROMS/kick32a1200.rom --chipset aga --cpu 68020 --hdf dh0.hdf
-goamiga --config "My A1200"        # a configuration saved from the screen
-goamiga --rom ROMS/Kick13.rom --headless --cycles 10000000
+blitterbox --rom ROMS/Kick13.rom --df0 "Workbench/Workbench v1.3.3 rev 34.34-Disk 1 of 2.adf"
+blitterbox --rom ROMS/Kick32.rom --df0 Workbench/Install3.2.adf --df1 Workbench/Workbench3.2.adf
+blitterbox --rom ROMS/kick32a1200.rom --chipset aga --cpu 68020 --hdf dh0.hdf
+blitterbox --config "My A1200"        # a configuration saved from the screen
+blitterbox --rom ROMS/Kick13.rom --headless --cycles 10000000
 ```
 
-`goamiga --help` lists every flag. `--launcher` opens the configuration
+`blitterbox --help` lists every flag. `--launcher` opens the configuration
 screen even when other flags are given.
 
 ### Machine
@@ -216,7 +216,7 @@ screen even when other flags are given.
   Kickstarts ignore the motherboard's RAM.
 
   ```bash
-  goamiga --rom ROMS/kicka4000.rom --cpu 68040 --chipset aga --fastram 0 \
+  blitterbox --rom ROMS/kicka4000.rom --cpu 68040 --chipset aga --fastram 0 \
           --motherboard a4000 --z3ram 64 --ide wb.hdf
   ```
 
@@ -249,7 +249,7 @@ screen even when other flags are given.
   way across) and reboot.
 
   ```bash
-  goamiga --rom ROMS/kick32a1200.rom --cpu 68020 --chipset aga \
+  blitterbox --rom ROMS/kick32a1200.rom --cpu 68020 --chipset aga \
           --fastram 4096 --rtg 4 --ide wb.hdf
   ```
 
@@ -301,7 +301,7 @@ more.
 With no bootable floppy in DF0:, the Amiga boots from the hard disk.
 
 ```bash
-goamiga --rom ROMS/Kick32.rom --hdf dh0.hdf --hdf-create 100 --df0 Workbench/Install3.2.adf
+blitterbox --rom ROMS/Kick32.rom --hdf dh0.hdf --hdf-create 100 --df0 Workbench/Install3.2.adf
 ```
 
 `--hdf-create MB` creates any `--hdf` file that doesn't exist yet, blank.
@@ -318,7 +318,7 @@ real machine.
 - IDE drives are interchangeable with WinUAE's A600/A1200 IDE images.
 
 ```bash
-goamiga --rom ROMS/kick32a1200.rom --chipset aga --cpu 68020 --ide a1200hd.hdf
+blitterbox --rom ROMS/kick32a1200.rom --chipset aga --cpu 68020 --ide a1200hd.hdf
 ```
 
 Writes go straight into the image file; `--write-protect` covers hardfiles
@@ -330,7 +330,7 @@ the filesystem stored in the disk's RDB, as on a real Amiga. HDToolBox
 puts it there ("Add/Update" in its filesystem list), and disks prepared
 for WinUAE or a real machine often have it already. At boot the
 filesystem is loaded from the RDB, unless Kickstart has the same one at
-least as new (most RDBs carry an older FFS than Kickstart 3.x's). goAmiga
+least as new (most RDBs carry an older FFS than Kickstart 3.x's). BlitterBox
 lists the filesystems it finds in an RDB when it starts. A plain hardfile
 has no RDB, so it can only use Kickstart's own filesystems.
 
@@ -352,7 +352,7 @@ way to move files in and out without disk image tools.
   read-only too.
 
 ```bash
-goamiga --rom ROMS/Kick32.rom --hdf dh0.hdf --dir Transfer="$HOME/Amiga/transfer"
+blitterbox --rom ROMS/Kick32.rom --hdf dh0.hdf --dir Transfer="$HOME/Amiga/transfer"
 ```
 
 Some details:
@@ -360,25 +360,25 @@ Some details:
   become UTF-8 on the host. A host name with characters the Amiga can't
   show appears with `?` in place of each.
 - **Protection bits and comments** have nowhere to go in a host folder.
-  goAmiga keeps them in a `NAME.uaem` file next to the file, the format
+  BlitterBox keeps them in a `NAME.uaem` file next to the file, the format
   WinUAE and FS-UAE use, so folders move between the three. The file exists
   only while they differ from the defaults. A file the host won't let you
   write shows as write- and delete-protected.
 - **Hidden:** the `.uaem` files, and the Finder's `.DS_Store` and `._`
   files. Deleting a drawer removes the Finder's files in it.
 - **Change the folder from the host** only when the Amiga isn't using the
-  same files. goAmiga caches nothing, but a program with a file open
+  same files. BlitterBox caches nothing, but a program with a file open
   won't expect it to change underneath it.
 - **Free space** is the host disk's, capped at 2 GB because older Amiga
   programs can't count higher.
 
 ### WHDLoad games
 
-[WHDLoad](https://whdload.de) runs floppy games from a hard disk. goAmiga
+[WHDLoad](https://whdload.de) runs floppy games from a hard disk. BlitterBox
 can boot straight into a WHDLoad game, with no Workbench installation:
 
 ```bash
-goamiga --rom ROMS/kick31a1200.rom --cpu 68020 --chipset aga --fastram 8192 \
+blitterbox --rom ROMS/kick31a1200.rom --cpu 68020 --chipset aga --fastram 8192 \
         --whdload "Games/Turrican.lha"
 ```
 
@@ -389,16 +389,16 @@ goamiga --rom ROMS/kick31a1200.rom --cpu 68020 --chipset aga --fastram 8192 \
   as WHDLoad packs set them.
 - **Installed games only.** The archives on whdload.de's game pages are
   *installers*: the slave and an Install script, without the game's
-  files, which the script copies from the original disk. goAmiga says so
+  files, which the script copies from the original disk. BlitterBox says so
   if given one. To install a game, put the installer in a shared folder,
   run its Install icon from Workbench with the original disk (an ADF or
-  IPF) in DF0:, and install into that shared folder. Then give goAmiga
+  IPF) in DF0:, and install into that shared folder. Then give BlitterBox
   the installed folder. Pre-installed WHDLoad packs work as they are.
 - **WHDLoad** itself is downloaded from whdload.de the first time, along
   with the Kickstart relocation tables (Aminet `util/boot/skick346.lha`).
   Both go in `~/.config/goamiga/whdload`.
 - **Kickstart:** WHDLoad needs Kickstart 2.0 or later. Games that emulate
-  a Kickstart ("kickemu" slaves) also need that Kickstart's image. goAmiga
+  a Kickstart ("kickemu" slaves) also need that Kickstart's image. BlitterBox
   finds images in the ROM's folder by their checksums, for example a 1.3
   A500 ROM for `kick34005.A500` or a 3.1 A1200 ROM for `kick40068.A1200`,
   and hands them over under the names WHDLoad expects.
@@ -420,11 +420,11 @@ press Right Amiga+C to copy, and Right Amiga+V to paste. This is on by
 default (`--clipboard=false` turns it off; on the configuration screen
 it's under Ports).
 
-It works through a small helper that goAmiga runs on the Amiga, the
+It works through a small helper that BlitterBox runs on the Amiga, the
 "goAmiga clipboard" process. The helper needs Kickstart 2.0 or later and
 `clipboard.device` in DEVS:, as every Workbench has. It works from a
-floppy Workbench too: the helper lives on goAmiga's hard disk board,
-which goAmiga fits for it when there are no drives.
+floppy Workbench too: the helper lives on BlitterBox's hard disk board,
+which BlitterBox fits for it when there are no drives.
 
 Text is converted between the Mac's UTF-8 and the Amiga's ISO-8859-1;
 characters the Amiga can't show become `?`.
@@ -433,7 +433,7 @@ characters the Amiga can't show become `?`.
 
 AHI is the Amiga's standard for sound beyond Paula's four 8-bit
 channels: MP3 and module players, games and Workbench programs use it.
-goAmiga has an AHI driver, `goamiga.audio`. AHI mixes on the Amiga as
+BlitterBox has an AHI driver, `goamiga.audio`. AHI mixes on the Amiga as
 usual, and the driver plays the result on the Mac, alongside Paula.
 
 1. Install AHI from Aminet (`driver/audio/m68k-amigaos-ahiusr.lha`).
@@ -466,7 +466,7 @@ df0     = Workbench/Install3.2.adf
 fastram = 8192
 ```
 
-goAmiga reads `./goamiga.conf`, else `~/.config/goamiga/goamiga.conf`, or
+BlitterBox reads `./goamiga.conf`, else `~/.config/goamiga/goamiga.conf`, or
 the file given with `--config FILE`. Flags on the command line override
 the file.
 
@@ -547,7 +547,7 @@ A joystick is always plugged into port 2, with the mouse in port 1.
 
 ## Amiga Unix
 
-goAmiga runs Amiga Unix (AMIX 2.1), Commodore's System V Release 4 for
+BlitterBox runs Amiga Unix (AMIX 2.1), Commodore's System V Release 4 for
 the A3000UX and A2500UX. It needs:
 - the 68030 with its MMU, and an FPU;
 - the A2091 SCSI controller, which the AMIX kernel drives itself;
@@ -568,7 +568,7 @@ AMIX: it isn't included.
 
 ```bash
 go run ./cmd/amixdisk -cpio AMIX/amix_2.1.cpio -o amix.hdf
-goamiga --rom ROMS/Kick32.rom --cpu 68030 --fpu 68882 --chipset ecs \
+blitterbox --rom ROMS/Kick32.rom --cpu 68030 --fpu 68882 --chipset ecs \
         --chipram 1024 --fastram 8192 --scsi 6:amix.hdf
 ```
 
@@ -696,7 +696,7 @@ format.
 
 ## Licence
 
-goAmiga is under the BSD 3-Clause licence (see [LICENSE](LICENSE)).
+BlitterBox is under the BSD 3-Clause licence (see [LICENSE](LICENSE)).
 
 ## Credits
 

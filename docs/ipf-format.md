@@ -1,4 +1,4 @@
-# The IPF disk image format, and how goAmiga decodes it
+# The IPF disk image format, and how BlitterBox decodes it
 
 IPF (Interchangeable Preservation Format) is the disk image format of the
 [Software Preservation Society](http://www.softpres.org/) (SPS). Unlike an
@@ -248,7 +248,7 @@ here. The track is one block of 65,744 cells:
 A 34,512-cell gap of $00 fills the rest. The track carries a single
 `$4489 $4489`, where an AmigaDOS track has eleven. No ADF can represent it.
 
-## How goAmiga uses it
+## How BlitterBox uses it
 
 **Parsing** (`ParseIPF`, `decodeIPFTrack`). Each track becomes a
 `bitTrack`: the cells packed eight to a byte, the number of cells, and the
@@ -281,7 +281,7 @@ on load.
 **What isn't modelled:**
 - **Variable cell timing** (density types 3 and up). Some protections
   write a track with slightly longer or shorter cells and time how long it
-  takes to read. goAmiga reads every cell at 2 µs, so protections that
+  takes to read. BlitterBox reads every cell at 2 µs, so protections that
   only check the data (most) pass, and timing checks may not.
 - **Revolution length.** The index pulse comes every 6,250 word times
   whatever the track's length, so a protection that measures a long track
@@ -290,7 +290,7 @@ on load.
 
 ## Testing
 
-- **Real image:** `TestParseIPFSupremacy` (`GOAMIGA_IPF=...`) parses an
+- **Real image:** `TestParseIPFSupremacy` (`BLITTERBOX_IPF=...`) parses an
   image and decodes AmigaDOS sectors at any bit alignment. On Supremacy
   disk 1, track 0 yields all eleven sectors with good checksums, and a
   `DOS` bootblock.
@@ -303,14 +303,14 @@ on load.
   - weak cells;
   - a corrupted stream failing its CRC;
   - read DMA finding a sync word at an odd bit offset.
-- **The game:** `TestGameDiag` with `GOAMIGA_GAME` set to the Supremacy zip
+- **The game:** `TestGameDiag` with `BLITTERBOX_GAME` set to the Supremacy zip
   boots it from the bootblock, through the game's own loader, to the title
   picture and the opponent-selection screen.
 
 Getting that far also exposed a **blitter** bug. The loader decodes each
 track's MFM with the blitter, using a B shift of 15 over a blit 4 words
 wide and 513 lines tall. The real blitter's shift history carries from the
-last word of one line into the first word of the next, but goAmiga's
+last word of one line into the first word of the next, but BlitterBox's
 cleared it at every line. So the first word of every line came out wrong,
 the loader's checksum failed, and it retried forever. The history now
 carries across lines, A's is the *masked* word (what ALWM = 0 relies on),

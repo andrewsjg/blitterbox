@@ -34,9 +34,9 @@ func ipfSectors(t *bitTrack) []mfmSector {
 }
 
 func TestParseIPFSupremacy(t *testing.T) {
-	path := os.Getenv("GOAMIGA_IPF")
+	path := os.Getenv("BLITTERBOX_IPF")
 	if path == "" {
-		t.Skip("set GOAMIGA_IPF to an IPF file")
+		t.Skip("set BLITTERBOX_IPF to an IPF file")
 	}
 	raw, err := os.ReadFile(path)
 	if err != nil {

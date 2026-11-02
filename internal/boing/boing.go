@@ -1,4 +1,4 @@
-// Package boing draws the Amiga's Boing Ball, goAmiga's icon: a sphere
+// Package boing draws the Amiga's Boing Ball, BlitterBox's icon: a sphere
 // checkered red and white in 16 segments around and 8 from pole to pole,
 // tilted as in the 1984 demo, lit from the upper left, on a transparent
 // background with a soft shadow below and to the right. Small icons get

@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* App.swift */; };
 		A10000000000000000000003 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* Keyboard.swift */; };
-		A10000000000000000000002 /* Goamiga.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* Goamiga.xcframework */; };
+		A10000000000000000000002 /* Blitterbox.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* Blitterbox.xcframework */; };
 		A10000000000000000000009 /* Pointer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* Pointer.swift */; };
 		A1000000000000000000000A /* MachineBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* MachineBar.swift */; };
 		A10000000000000000000004 /* Launcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* Launcher.swift */; };
@@ -23,16 +23,16 @@
 /* Begin PBXFileReference section */
 		A20000000000000000000001 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		A20000000000000000000005 /* Keyboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
-		A20000000000000000000002 /* Goamiga.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Goamiga.xcframework; path = ../Goamiga.xcframework; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000002 /* Blitterbox.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Blitterbox.xcframework; path = ../Blitterbox.xcframework; sourceTree = SOURCE_ROOT; };
 		A20000000000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A20000000000000000000004 /* goAmiga.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = goAmiga.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000004 /* BlitterBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlitterBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A20000000000000000000011 /* Pointer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pointer.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* MachineBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MachineBar.swift; sourceTree = "<group>"; };
 		A20000000000000000000006 /* Launcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Launcher.swift; sourceTree = "<group>"; };
-		A20000000000000000000007 /* Bridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Bridge.swift; path = ../../macos/Sources/goAmigaLauncher/Bridge.swift; sourceTree = SOURCE_ROOT; };
-		A20000000000000000000008 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Model.swift; path = ../../macos/Sources/goAmigaLauncher/Model.swift; sourceTree = SOURCE_ROOT; };
-		A20000000000000000000009 /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Views.swift; path = ../../macos/Sources/goAmigaLauncher/Views.swift; sourceTree = SOURCE_ROOT; };
-		A20000000000000000000010 /* Tabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Tabs.swift; path = ../../macos/Sources/goAmigaLauncher/Tabs.swift; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000007 /* Bridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Bridge.swift; path = ../../macos/Sources/BlitterBoxLauncher/Bridge.swift; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000008 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Model.swift; path = ../../macos/Sources/BlitterBoxLauncher/Model.swift; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000009 /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Views.swift; path = ../../macos/Sources/BlitterBoxLauncher/Views.swift; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000010 /* Tabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Tabs.swift; path = ../../macos/Sources/BlitterBoxLauncher/Tabs.swift; sourceTree = SOURCE_ROOT; };
 		A20000000000000000000013 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -41,7 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000002 /* Goamiga.xcframework in Frameworks */,
+				A10000000000000000000002 /* Blitterbox.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,7 +66,7 @@
 				A40000000000000000000004 /* Shared with the Mac launcher */,
 				A20000000000000000000003 /* Info.plist */,
 				A20000000000000000000013 /* Assets.xcassets */,
-				A20000000000000000000002 /* Goamiga.xcframework */,
+				A20000000000000000000002 /* Blitterbox.xcframework */,
 				A40000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -86,7 +86,7 @@
 		A40000000000000000000003 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A20000000000000000000004 /* goAmiga.app */,
+				A20000000000000000000004 /* BlitterBox.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -105,9 +105,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A50000000000000000000001 /* goAmiga */ = {
+		A50000000000000000000001 /* BlitterBox */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A70000000000000000000002 /* Build configuration list for PBXNativeTarget "goAmiga" */;
+			buildConfigurationList = A70000000000000000000002 /* Build configuration list for PBXNativeTarget "BlitterBox" */;
 			buildPhases = (
 				A60000000000000000000001 /* Sources */,
 				A30000000000000000000001 /* Frameworks */,
@@ -117,9 +117,9 @@
 			);
 			dependencies = (
 			);
-			name = goAmiga;
-			productName = goAmiga;
-			productReference = A20000000000000000000004 /* goAmiga.app */;
+			name = BlitterBox;
+			productName = BlitterBox;
+			productReference = A20000000000000000000004 /* BlitterBox.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -132,7 +132,7 @@
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 			};
-			buildConfigurationList = A70000000000000000000001 /* Build configuration list for PBXProject "goAmiga" */;
+			buildConfigurationList = A70000000000000000000001 /* Build configuration list for PBXProject "BlitterBox" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -145,7 +145,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A50000000000000000000001 /* goAmiga */,
+				A50000000000000000000001 /* BlitterBox */,
 			);
 		};
 /* End PBXProject section */
@@ -211,7 +211,7 @@
 				OTHER_LDFLAGS = "-lresolv";
 				PRODUCT_BUNDLE_IDENTIFIER = com.andrewsjg.goamiga;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PRODUCT_MODULE_NAME = goAmigaApp;
+				PRODUCT_MODULE_NAME = BlitterBoxApp;
 				TARGETED_DEVICE_FAMILY = 2;
 			};
 			name = Debug;
@@ -231,7 +231,7 @@
 				OTHER_LDFLAGS = "-lresolv";
 				PRODUCT_BUNDLE_IDENTIFIER = com.andrewsjg.goamiga;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PRODUCT_MODULE_NAME = goAmigaApp;
+				PRODUCT_MODULE_NAME = BlitterBoxApp;
 				TARGETED_DEVICE_FAMILY = 2;
 			};
 			name = Release;
@@ -239,7 +239,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A70000000000000000000001 /* Build configuration list for PBXProject "goAmiga" */ = {
+		A70000000000000000000001 /* Build configuration list for PBXProject "BlitterBox" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A90000000000000000000001 /* Debug */,
@@ -248,7 +248,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A70000000000000000000002 /* Build configuration list for PBXNativeTarget "goAmiga" */ = {
+		A70000000000000000000002 /* Build configuration list for PBXNativeTarget "BlitterBox" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A90000000000000000000003 /* Debug */,

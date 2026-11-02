@@ -1,4 +1,4 @@
-# goAmiga progress log
+# BlitterBox progress log
 
 Newest entries first. Each entry records what changed, why, and how it was
 verified. Longer investigations get their own write-up in `docs/`.
@@ -60,14 +60,14 @@ verified. Longer investigations get their own write-up in `docs/`.
 
 ## 2026-10-25 — A native SwiftUI configuration screen for macOS
 
-goAmiga.app now opens on a SwiftUI configuration screen (`macos/`, a Swift
+BlitterBox.app now opens on a SwiftUI configuration screen (`macos/`, a Swift
 package that `scripts/macos-app.sh` builds when Swift is installed). It has
 the Ebitengine launcher's tabs and settings, with native pop-up menus,
 toggles and file dialogs, and disks, hardfiles, folders and WHDLoad games
 can be dropped on it from the Finder.
 
-All the logic stays in Go. `goamiga --launcher-api` answers one JSON
-request per line on stdin (`cmd/goamiga/launcherapi.go`): the startup
+All the logic stays in Go. `blitterbox --launcher-api` answers one JSON
+request per line on stdin (`cmd/blitterbox/launcherapi.go`): the startup
 configuration, saved configurations (load, save, delete), model presets,
 placing a chosen file (`applyChoice`, shared with the Ebitengine launcher),
 the Kickstart ROM's identity and fit, WHDLoad's state, and `start`, which
@@ -75,12 +75,12 @@ checks the settings and writes `~/.config/goamiga/launch.conf`.
 `config.Settings` gained JSON tags for this. The Swift side is only UI
 (`Bridge.swift` talks to the API; `Model.swift` holds the screen's state).
 
-Start runs `goamiga --config launch.conf --name NAME` as a child process and
+Start runs `blitterbox --config launch.conf --name NAME` as a child process and
 hides the configuration screen and its Dock icon. Closing the machine's
 window quits the app. Cmd+, (Config) needs the screen back: with
-`GOAMIGA_RETURN_CONFIG` set, goamiga writes the running machine's settings
+`BLITTERBOX_RETURN_CONFIG` set, blitterbox writes the running machine's settings
 (disks as they are now) to that file and exits with status 3, and the
-screen shows them again. Any other exit shows the last error line goamiga
+screen shows them again. Any other exit shows the last error line blitterbox
 printed.
 
 Bugs on the way: `FileHandle.read(upToCount:)` waits for the whole count
@@ -89,9 +89,9 @@ come), and a hidden window reports `canBecomeMain` false, so the screen
 keeps the windows it hid rather than looking for them.
 
 Verified with `TestLauncherAPI` (every request against a temporary home),
-`GOAMIGA_UISHOT=DIR`, which saves each tab of the SwiftUI screen as a PNG
+`BLITTERBOX_UISHOT=DIR`, which saves each tab of the SwiftUI screen as a PNG
 as the Ebitengine launcher's does, a real start of the A4000 configuration,
-and a stand-in goamiga that exits with status 3 to check the round trip.
+and a stand-in blitterbox that exits with status 3 to check the round trip.
 
 ## 2026-10-24 — The AGS Workbench pointer
 
@@ -140,7 +140,7 @@ second: 59% of real time on an M4 Max.
 Also: hard disk and shared-folder transfers reuse one scratch buffer, in
 chunks of at most 1 MB, instead of allocating the whole transfer each
 time. A program asking the shared folder for a 2 GB read would have made
-goAmiga allocate 2 GB.
+BlitterBox allocate 2 GB.
 
 `runtime.madvise` stays at about 20% in macOS CPU profiles. With no Go
 allocation in the measured stretch, and the same frame rate with the GC
@@ -167,7 +167,7 @@ panel with five.
 
 ## 2026-10-23 — Clipboard and AHI without drives
 
-The clipboard helper and the AHI driver live on goAmiga's hard disk
+The clipboard helper and the AHI driver live on BlitterBox's hard disk
 board, which was only fitted for a hardfile or shared folder. A Workbench
 booted from floppy got neither.
 
@@ -192,7 +192,7 @@ why neither showed before.
 
 **Verified** (`TestClipboardFloppyWorkbench`): the Workbench 3.2 disk
 (given the Install disk's bootblock, as this copy has none) boots on an
-A1200 with only goAmiga's volume attached. The helper waits for CLIPS:
+A1200 with only BlitterBox's volume attached. The helper waits for CLIPS:
 (frame ~1000), opens the device, and host text makes the round trip.
 
 ## 2026-10-23 — AHI sound
@@ -204,7 +204,7 @@ own example driver, Void, from the AHI 6 developer kit on Aminet.
 
 **The library.** `AHIDriver` generates `DEVS:AHI/goamiga.audio`, a hunk
 executable with relocations, with the board's small assembler:
-- A RomTag (RTF_AUTOINIT); its init finds goAmiga's board with
+- A RomTag (RTF_AUTOINIT); its init finds BlitterBox's board with
   expansion.library's FindConfigDev(2011, 2) and keeps the address.
 - Each AHIsub function pushes its number and goes to `ahiEntry` in the
   board's ROM. That saves the registers and runs the same Go-driven loop
@@ -233,8 +233,8 @@ resamples them linearly to 48 kHz and queues them. Paula's output adds
 the queue after its filters, as a sound card's would be. It starts once
 two mixes are queued, so the bursts come out evenly.
 
-**Getting it onto the Amiga.** With the hard disk board present, goAmiga
-mounts a read-only **goAmiga** volume (`~/.config/goamiga/amiga`). It
+**Getting it onto the Amiga.** With the hard disk board present, BlitterBox
+mounts a read-only **BlitterBox** volume (`~/.config/goamiga/amiga`). It
 holds the driver, `DEVS:AudioModes/GOAMIGA` (an AHIM file with four
 modes: 16 bit and HiFi, stereo and mono, IDs $0072000x), an
 `Install-AHI-Driver` script and a ReadMe.
@@ -272,7 +272,7 @@ by default).
 
 **How.** AmigaOS keeps clips in clipboard.device unit 0 as IFF FTXT, and
 only a program on the Amiga can use the device. The hard disk board
-(which already runs goAmiga's code at boot and a handler process per
+(which already runs BlitterBox's code at boot and a handler process per
 shared folder) now also starts a helper (`amiga/clipboard.go`):
 
 - **The task.** The board's RomTag init adds a small exec task, with its
@@ -309,11 +309,11 @@ A1200 from a shared folder, with clipboard.device and ConClip, and a fake
 host clipboard.
 - `TestClipboardRoundTrip`: host text becomes the Amiga's clip, and comes
   back intact (with an é) when the helper rereads the device.
-- `TestClipboardShellCopy`: `echo goamiga` typed in a Shell, marked with
+- `TestClipboardShellCopy`: `echo blitterbox` typed in a Shell, marked with
   a mouse drag and copied with Right Amiga+C, arrives on the host. Then
   `echo pasted >SYS:pasted`, copied on the host and pasted with Right
   Amiga+V, runs and makes the file.
-- `TestMacClipboard` (with `GOAMIGA_PASTEBOARD` set, since it uses the
+- `TestMacClipboard` (with `BLITTERBOX_PASTEBOARD` set, since it uses the
   real clipboard and restores it): text set comes back, and the change
   count moves.
 
@@ -434,7 +434,7 @@ slower than it did, as on an A500.
   a CPU loop for at least 160 colour clocks.
 - `TestExactBusEvenSlotAlignment`: the loop above runs at 20 cycles a
   pass.
-- The full suite passes both ways (`GOAMIGA_EXACTBUS=0` for the forecast)
+- The full suite passes both ways (`BLITTERBOX_EXACTBUS=0` for the forecast)
   and takes 639 s instead of 581.
 - In the game sweep, every title gets as far as before. Some are behind
   at the fixed snapshot frames (SDI's cracktro, Alien Breed TA on the
@@ -823,7 +823,7 @@ Phase 3 of `docs/a4000-68040-plan.md`, with the A4000 Kickstart 3.2
 
 **Method.** A new diagnostic hook, `Mapper.OnOpenBus` (`Amiga.OnOpenBus`),
 reports every access to an unmapped address. `TestA4000ROMProbe`
-(`GOAMIGA_DIAG=1`) boots the ROM and lists them in order, so each
+(`BLITTERBOX_DIAG=1`) boots the ROM and lists them in order, so each
 missing piece showed up as the next thing the ROM touched. The code
 around each one was then disassembled with `diag/disasm68k.py`.
 
@@ -1671,12 +1671,12 @@ interrupt when it arrives.
 
 The save state (version 11) records Gayle and the IDE drives.
 
-## 2026-10-12 — The CPU joins the module; renamed github.com/andrewsjg/goamiga
+## 2026-10-12 — The CPU joins the module; renamed github.com/andrewsjg/blitterbox
 
 The CPU was a separate repository, `../go-m68k`, on a local branch that
-existed nowhere else. goAmiga used it through a `replace` directive.
+existed nowhere else. BlitterBox used it through a `replace` directive.
 - Upstream (Ryan Armstrong's go-m68k) has been dormant since 2018.
-- About 70% of the code was now goAmiga's own: 68020, FPU, trace,
+- About 70% of the code was now BlitterBox's own: 68020, FPU, trace,
   prefetch, exception frames, timing.
 - Nearly every CPU change was made for, and tested by, an emulator change.
 - The arrangement meant two commits for one feature, two repos to keep in
@@ -1686,8 +1686,8 @@ existed nowhere else. goAmiga used it through a `replace` directive.
 **The merge.** `git subtree add` brought the branch into `m68k/` with its
 whole history (Ryan's commits included).
 - The nested `go.mod` and the `replace` are gone.
-- The module is now `github.com/andrewsjg/goamiga`, and the CPU imports as
-  `github.com/andrewsjg/goamiga/m68k`.
+- The module is now `github.com/andrewsjg/blitterbox`, and the CPU imports as
+  `github.com/andrewsjg/blitterbox/m68k`.
 - go-m68k's LICENSE (BSD) stays with the code. `m68k/README.md` says
   where it came from.
 - The SingleStepTests data (~190 MB) remains git-ignored in
@@ -1734,7 +1734,7 @@ machine's configuration selected.
 
 ## 2026-10-11 — Configuration screen
 
-Started with no arguments, goAmiga opens a configuration screen instead of
+Started with no arguments, BlitterBox opens a configuration screen instead of
 printing its usage:
 - saved configurations on the left: load, save, new, delete, and
   double-click to start;
@@ -1752,7 +1752,7 @@ struct:
 - `Saved`, `LastUsed` and `Resolve` back the list, the start-up choice
   and `--config NAME`.
 
-**Startup.** `cmd/goamiga` builds the machine in `buildMachine`, which
+**Startup.** `cmd/blitterbox` builds the machine in `buildMachine`, which
 returns errors rather than exiting, so the screen can show them.
 Ebitengine runs one game per process. A small `app` game is either the
 configuration screen or a machine's `Display`:
@@ -1770,7 +1770,7 @@ the style of Workbench 2.0:
 - Go's typeface through text/v2;
 - native file dialogs (zenity), as F11 already used.
 
-`GOAMIGA_UISHOT=DIR` renders each tab to a PNG and quits, which is how the
+`BLITTERBOX_UISHOT=DIR` renders each tab to a PNG and quits, which is how the
 layout was checked and the README's screenshot made.
 
 **Verified:**
@@ -1871,7 +1871,7 @@ it never returns if called after line 304. Here the fade took 290 lines
 of a 313-line frame.
 
 The fade runs from chip RAM (no fast RAM on a stock A1200) while 8 lores
-planes take every slot during the display window. goAmiga charged two
+planes take every slot during the display window. BlitterBox charged two
 things the A1200 doesn't pay for:
 - **Instruction fetches.** The 68EC020's 256-byte instruction cache holds
   a loop like this, so its fetches don't use the bus.
@@ -1963,7 +1963,7 @@ Whether it bites depends on where the DMA is when an interrupt runs:
 
 The code is the game's, so the emulator is not at fault. A real A1200
 probably has a different layout: its Gayle chip's IDE driver allocates
-memory at boot, and goAmiga has no Gayle yet. Kickstart 3.1 may also
+memory at boot, and BlitterBox has no Gayle yet. Kickstart 3.1 may also
 differ. This is a reason to emulate Gayle next.
 
 ## 2026-10-02 — Game testing: Copylock, prefetch, strobes, NTSC
@@ -1981,7 +1981,7 @@ list of games in parallel. For each game it:
   frame count.
 
 ```
-GOAMIGA_BATCH=games.txt GOAMIGA_OUT=/tmp/sheets go test -tags noebitengine -run TestGameBatch -v ./amiga/
+BLITTERBOX_BATCH=games.txt BLITTERBOX_OUT=/tmp/sheets go test -tags noebitengine -run TestGameBatch -v ./amiga/
 ```
 
 A list line is `label | disk | rom=../ROMS/Kick13.rom,cpu=68000,chipset=ocs,chip=512,slow=512`.
@@ -2069,7 +2069,7 @@ when TypeOfMem finds no memory beyond 512 KB, so it needs `slowram 512`.
   - `TestPrefetchSelfModifyingBranch`, `TestPrefetchWriteOrder` and
     `TestPrefetchCarriesOver`.
   - `TestIllegalStacksInstructionAddress`.
-- goAmiga: `TestDMASyncAtBitOffset`, `TestCopperJumpOnRead` and
+- BlitterBox: `TestDMASyncAtBitOffset`, `TestCopperJumpOnRead` and
   `TestBootDiskName`.
 
 ## 2026-10-02 — AGA
@@ -2129,7 +2129,7 @@ Save states carry the palette and wide sprite data (version 8).
 
 **Not modelled:** scan doubling and the productivity/BEAMCON0 modes;
 sprite resolution and horizontal precision beyond lores (BPLCON3 SPRES);
-border sprites; Gayle (the A1200's IDE and PCMCIA). goAmiga's own hard
+border sprites; Gayle (the A1200's IDE and PCMCIA). BlitterBox's own hard
 disk controller works with the A1200 ROM.
 
 ## 2026-10-01 — 68881/68882 FPU
@@ -2218,7 +2218,7 @@ suite are unchanged.
 
 ## 2026-10-01 — IPF disk images; Supremacy boots
 
-`.ipf` images (also inside zips) now load. The format, and how goAmiga
+`.ipf` images (also inside zips) now load. The format, and how BlitterBox
 decodes it, are written up in [ipf-format.md](ipf-format.md).
 
 **What was built:**
@@ -2243,7 +2243,7 @@ track forever.
 
 **The cause was a blitter bug.** The loader decodes MFM with the blitter:
 B shifted by 15, a blit 4 words wide and 513 lines tall, zero modulos.
-Each word takes its top bit from the word before. goAmiga cleared the
+Each word takes its top bit from the word before. BlitterBox cleared the
 shifters' history at the start of every line, but the real blitter
 carries it from one line's last word into the next line's first word.
 That's why software widens shifted blits by a word and masks the extra
@@ -2264,7 +2264,7 @@ suite are unchanged.
 - `TestIPFReadDMAUnaligned` (a sync word at an odd bit position).
 
 Also `TestBlitShiftCarriesAcrossLines`, and `TestParseIPFSupremacy` for a
-real image (`GOAMIGA_IPF`).
+real image (`BLITTERBOX_IPF`).
 
 **Not modelled:**
 - variable cell timing (density types 3 and up: Copylock, Speedlock
@@ -2336,7 +2336,7 @@ to a compressed disk stay in memory. IPF images, which record a disk's raw
 magnetic layout to preserve copy protection, are recognised and refused
 with an explanation. Supremacy, one of the test games, only comes as IPF.
 
-**Game harness** (`TestGameDiag`, driven by `GOAMIGA_*` environment
+**Game harness** (`TestGameDiag`, driven by `BLITTERBOX_*` environment
 variables). It boots a disk headlessly and saves a screenshot every N
 frames. It can:
 - click the mouse at given frames, and move it;
@@ -2372,7 +2372,7 @@ wrong size) and `TestCustomByteReadOddAddress`.
 ## 2026-09-29 — Save states
 
 Cmd+Shift+1-9 saves the whole machine to a slot, and Cmd+1-9 loads it
-(`goamiga-N.state` in `--state-dir`). `--load-state FILE` resumes at
+(`blitterbox-N.state` in `--state-dir`). `--load-state FILE` resumes at
 startup.
 
 **Format** (`amiga/savestate.go`). A gzip file containing: a magic string
@@ -2551,7 +2551,7 @@ flag names, so there's no new vocabulary and no TOML dependency
 - `goamiga.conf.example` documents it. The personal `goamiga.conf` is
   git-ignored.
 
-**A test gotcha.** The parser first lived in `cmd/goamiga`, but that test
+**A test gotcha.** The parser first lived in `cmd/blitterbox`, but that test
 binary crashed during Ebitengine's package init on macOS. `currentMouseLocation`
 dereferences nil when there is no window-server session, for example with
 the screen locked. That's why it moved to its own package. The same crash
@@ -2559,7 +2559,7 @@ happens for `amiga` tests and the binary whenever the screen is locked, so
 `go test -tags noebitengine ./amiga/` is the way to run tests then.
 
 **`-tags noebitengine` builds the command line again.** The window code
-moved into `cmd/goamiga/display.go`. With the tag, a stub reports that
+moved into `cmd/blitterbox/display.go`. With the tag, a stub reports that
 there is no display and suggests `--headless`.
 
 ## 2026-09-29 — BPLCON0 and sprite registers changed mid-line
@@ -2746,7 +2746,7 @@ The Workbench 3.2 installer ran out of memory. The default machine had
   the fitted size.
 - Agnus still reports the OCS ID in VPOSR. Kickstart sizes chip RAM by
   probing, not from the ID. An ECS ID would make 2.0+ use BLTSIZV/BLTSIZH
-  and BEAMCON0, which goAmiga doesn't implement.
+  and BEAMCON0, which BlitterBox doesn't implement.
 - The new defaults are `--chipram 1024 --slowram 0 --fastram 2048`. On an
   A500 the trapdoor RAM is what becomes the second chip megabyte, hence no
   slow RAM.
@@ -2763,7 +2763,7 @@ hardfiles and RDB disks both work. Kickstart 1.3 and 3.2 boot from them
 with no floppy.
 
 **Approach.** I didn't emulate a real controller (A590/A2091 with a WD33C93
-SCSI chip, plus its Commodore driver ROM). goAmiga has its own Zorro II board
+SCSI chip, plus its Commodore driver ROM). BlitterBox has its own Zorro II board
 and device driver, as UAE does with uaehf.device. The board's autoboot ROM
 follows Commodore's autoboot example:
 
@@ -2929,7 +2929,7 @@ The fixes, largest first:
 - One DIVU zero-divide test stacks the instruction's own address as PC.
   Left as the single allowed failure.
 
-**Amiga.** Address errors are live, and the whole goAmiga suite passes.
+**Amiga.** Address errors are live, and the whole BlitterBox suite passes.
 `TestOpenBusReadFFFFFF`, which noted that address errors were missing, now
 expects exception 3. Boot is 2,586 frames (was 2,584); host time for the
 boot is 2.1 s (was 1.9, from the per-instruction fault handler).
@@ -2976,7 +2976,7 @@ no requesters, no swapping.
 `0`), independent motors and heads, DMA from the selected drive, and
 Kickstart 1.3 mounting a second (renamed) disk in DF1: at boot.
 `TestKS32TwoDrivesClock` covers the scenario above. The diagnostic takes
-`GOAMIGA_DF1`. Full suite passes.
+`BLITTERBOX_DF1`. Full suite passes.
 
 ## 2026-09-26 — Clock "error #8000000B"; disk swaps while the drive is busy
 
@@ -2986,13 +2986,13 @@ Utilities/Clock gave "Program failed (error #8000000B)", CPU exception 11
 
 **Reproducing it headlessly** needed new `TestKickstartDiag` options, all
 applied to in-memory copies of the images:
-- `GOAMIGA_PATCH="old|new;…"` replaces startup-sequence lines (same length
+- `BLITTERBOX_PATCH="old|new;…"` replaces startup-sequence lines (same length
   or shorter; FFS data blocks have no checksum);
-- `GOAMIGA_SWAP="disk:frame"` swaps disks at a given frame;
-- `GOAMIGA_SWAP_ON_REQUEST=disk` swaps whenever a "System Request" is up
+- `BLITTERBOX_SWAP="disk:frame"` swaps disks at a given frame;
+- `BLITTERBOX_SWAP_ON_REQUEST=disk` swaps whenever a "System Request" is up
   and the motor is off;
-- `GOAMIGA_BOOTBLOCK` borrows another disk's boot block;
-- `GOAMIGA_FRAMES`, `GOAMIGA_TRACE_VOLUMES`, and `GOAMIGA_TRACE_DRIVE`.
+- `BLITTERBOX_BOOTBLOCK` borrows another disk's boot block;
+- `BLITTERBOX_FRAMES`, `BLITTERBOX_TRACE_VOLUMES`, and `BLITTERBOX_TRACE_DRIVE`.
 
 The catcher now covers Line-A/Line-F too. `diag/adf.py` lists and extracts
 files from OFS/FFS images.
@@ -3073,11 +3073,11 @@ a Workbench window, and 2 planes still on at line 299. Full suite passes.
 ## 2026-09-26 — Kickstart 3.2 boots; wide bitplane fetches
 
 `Kick32.rom` (Hyperion Kickstart 3.2, 47.96, the A500/A600/A2000 build;
-checksum good) was run with `GOAMIGA_DIAG=1 go test -run
+checksum good) was run with `BLITTERBOX_DIAG=1 go test -run
 TestKickstartDiag ./amiga/`. The diagnostic takes any ROM via
-`GOAMIGA_KS` and a disk via `GOAMIGA_ADF`, always write-protected. It
+`BLITTERBOX_KS` and a disk via `BLITTERBOX_ADF`, always write-protected. It
 logs state and exec's alert, catches illegal instructions, and with
-`GOAMIGA_TRACE_OPEN=1` traces OpenLibrary/InitResident calls and results.
+`BLITTERBOX_TRACE_OPEN=1` traces OpenLibrary/InitResident calls and results.
 
 **No disk:** the insert screen (Boing ball, version text, disk and drive)
 renders correctly on the first try, with no alert.
@@ -3132,7 +3132,7 @@ What is wrong with it:
   gadtools.library and workbench.library have name strings but no RomTag
   at all, so the damage is more than one clean insertion.
 - Diagnosis with a scratch copy whose checksum was forced to pass
-  (`GOAMIGA_KS31=<file> GOAMIGA_DIAG=1 go test -run TestKS31Diag
+  (`BLITTERBOX_KS31=<file> BLITTERBOX_DIAG=1 go test -run TestKS31Diag
   ./amiga/`, which also catches illegal-instruction exceptions): Kickstart
   3.1 gets through exec init with ExecBase in slow RAM, then alerts
   `$80000004` (illegal instruction). The faulting opcode is `$4E21`,
@@ -3263,8 +3263,8 @@ the ROM's audio.device during boot. Checked:
 - narrator programs period 161 (22 kHz);
 - 0.34 s of speech at 18.2 s into boot, peak 0.43, the same on both sides.
 
-Offline analysis of the WAV (`GOAMIGA_DIAG=1` writes
-`/tmp/goamiga_say.wav`): the strongest autocorrelation peak of the vowel
+Offline analysis of the WAV (`BLITTERBOX_DIAG=1` writes
+`/tmp/blitterbox_say.wav`): the strongest autocorrelation peak of the vowel
 is 136 Hz (r = 0.92). That is a plausible narrator pitch with stress on
 "hel-LO" (default 110 Hz). A timing error would have shifted both pitch
 and duration.
@@ -3293,7 +3293,7 @@ which is how trackdisk detects changes: it polls by stepping the head.
 the same frame. AmigaDOS mounted the new volume but left the old one
 marked as still in the drive (`dl_Task` set), because trackdisk never saw
 the drive empty. A real swap always has a gap. `TestDiskSwapGapDiag`
-(GOAMIGA_DIAG) measured 0.4–1.1 s from eject to DOS taking the volume out,
+(BLITTERBOX_DIAG) measured 0.4–1.1 s from eject to DOS taking the volume out,
 depending on where trackdisk's poll timer is. Rather than a fixed delay,
 `DiskDrive.SwapDisk` ejects, waits for a head step with the drive empty
 (trackdisk's poll), allows 0.5 s for that poll to finish, then inserts. If
@@ -3340,7 +3340,7 @@ ignored write DMA, so AmigaDOS refused to write.
 a corrupt sector rejected, write protection (status bit and ignored data),
 saving only the written track back to a file.
 `TestAmigaDOSWritesFile` patches the first `echo` of the in-memory
-`s/startup-sequence` to `echo >df0:written "goAmiga write test"` (fixing
+`s/startup-sequence` to `echo >df0:written "BlitterBox write test"` (fixing
 the OFS block checksum), boots, and reads the file back from the image by
 walking the root directory's hash chains. It checks every block's
 checksum. Boot wrote 66 sectors (6 tracks), none bad. Full suite passes;
@@ -3364,7 +3364,7 @@ are sized for the widest view (`MaxOutputWidth`).
 
 In overscan, Workbench's standard screen sits 40 columns in and 16 rows
 down, framed by the COLOR00 border (`TestOverscanScreenshot`, a
-`GOAMIGA_DIAG` test, writes `/tmp/workbench_overscan.png`). The standard
+`BLITTERBOX_DIAG` test, writes `/tmp/workbench_overscan.png`). The standard
 view is still pixel-identical to before. `TestOverscanView` covers
 geometry, placement of playfield and sprites, a display window opened over
 the whole overscan area, and interlace. Full suite passes.
@@ -3526,7 +3526,7 @@ unchanged at 1.7 s.
 DSKSYN/DSKBLK timing from a known head position, wrap-around read,
 no-sync read never starts, index pulse only from a selected, spinning
 drive. `TestDiskDMA` now ticks the actual completion time. Full suites
-pass (goAmiga and go-m68k).
+pass (BlitterBox and go-m68k).
 
 ## 2026-09-25 — CIA address decoding
 
@@ -3692,7 +3692,7 @@ wherever the chipset sees it (`VHPOSR`, `beamHP()` in the Copper). The
 Copper runs only on its DMA slots (`CopperCyclesPerInstr = 8`) in both
 the per-cycle and per-line paths.
 
-**Measured** with `GOAMIGA_DIAG=1 go test -run TestTimingProfile -v ./amiga/`:
+**Measured** with `BLITTERBOX_DIAG=1 go test -run TestTimingProfile -v ./amiga/`:
 
 | | Before | After |
 |---|---|---|
@@ -3711,7 +3711,7 @@ asserts a hires screen. Full suite passes.
 
 ## 2026-09-25 — Housekeeping
 
-- Put goAmiga under git (`main`); CPU changes committed on the
+- Put BlitterBox under git (`main`); CPU changes committed on the
   `amiga-support` branch of `go-m68k`. ROMs, ADFs, the HRM PDF, binaries
   and generated screenshots are git-ignored.
 - **go-m68k memory semantics.** The Amiga work had changed the generic RAM,
@@ -3733,7 +3733,7 @@ asserts a hires screen. Full suite passes.
   `TestDiskIllegalOpcode` — which "failed" when no illegal instruction
   happened — with `TestDiskBootNoIllegalInstruction`, which fails if one
   does (ignoring exec's deliberate MOVEC CPU probe).
-- Six print-only diagnostic tests now require `GOAMIGA_DIAG=1`; they
+- Six print-only diagnostic tests now require `BLITTERBOX_DIAG=1`; they
   produced ~2.3M lines of output per test run.
 - Added `docs/architecture.md` and this log.
 
