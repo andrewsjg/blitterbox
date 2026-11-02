@@ -82,7 +82,7 @@ struct LauncherView: View {
                 }
                 .padding()
             }
-            .navigationTitle(model.name.isEmpty ? "goAmiga" : "goAmiga — \(model.name)")
+            .navigationTitle(model.name.isEmpty ? "BlitterBox" : "BlitterBox — \(model.name)")
         }
         #if os(macOS)
         .task { await saveTabShots(model) }

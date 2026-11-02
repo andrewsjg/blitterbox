@@ -14,7 +14,7 @@ final class Bridge {
             let json = String(decoding: try JSONEncoder().encode(req), as: UTF8.self)
             return try JSONDecoder().decode(Response.self, from: Data(GoamigaRequest(json).utf8))
         } catch {
-            return Response(error: "goAmiga: \(error.localizedDescription)")
+            return Response(error: "BlitterBox: \(error.localizedDescription)")
         }
     }
 
@@ -63,7 +63,7 @@ func chooseFile(title: String, folder: Bool, types: [String] = [], start: String
         do {
             then(try importIntoDocuments(url))
         } catch {
-            print("goAmiga: can't use \(url.lastPathComponent): \(error.localizedDescription)")
+            print("BlitterBox: can't use \(url.lastPathComponent): \(error.localizedDescription)")
             cancelled()
         }
     }

@@ -123,7 +123,7 @@ func (d *Display) renderHelp(w, h int, scale float64) {
 		text.Draw(img, str, f, op)
 	}
 	y := pad
-	put("goAmiga keys", pad, y, helpTitle, helpFace((size+3)*scale))
+	put("BlitterBox keys", pad, y, helpTitle, helpFace((size+3)*scale))
 	y += heading + 4
 	for _, sec := range helpSections {
 		put(sec.title, pad, y, helpTitle, face)

@@ -146,7 +146,7 @@ func (l *launcher) update() (start *config.Settings, quit bool) {
 	u.fill(0, 0, launcherW, launcherH, uiGrey)
 	// Title bar.
 	u.fill(0, 0, launcherW, 26, uiBlue)
-	u.textFace(12, 4, "goAmiga — Configuration", uiWhite, u.bold)
+	u.textFace(12, 4, "BlitterBox — Configuration", uiWhite, u.bold)
 	u.fill(0, 26, launcherW, 1, uiBlack)
 
 	if l.leftPanel() {
@@ -324,7 +324,7 @@ func (l *launcher) fileRow(x, y, w int, target string, path *string, filters zen
 	shown := *path
 	switch {
 	case shown == "" && dir && target != "tape", shown == ".":
-		shown = "(the folder goAmiga starts in)"
+		shown = "(the folder BlitterBox starts in)"
 	case shown == "":
 		shown = "(none)"
 	}

@@ -74,7 +74,7 @@ func (s *NetSerial) accept() {
 		s.mu.Lock()
 		if s.conn != nil {
 			s.mu.Unlock()
-			c.Write([]byte("goAmiga: the serial port is in use\r\n"))
+			c.Write([]byte("BlitterBox: the serial port is in use\r\n"))
 			c.Close()
 			continue
 		}

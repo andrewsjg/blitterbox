@@ -9,7 +9,7 @@
 //   - The root: an s5 filesystem holding the system, with /etc/vfstab
 //     naming c6d0s1, the root the kernel is built for (SCSI ID 6, the
 //     A3000's internal drive).
-//   - With -net (the default), the network set up for goAmiga's A2065 and
+//   - With -net (the default), the network set up for BlitterBox's A2065 and
 //     its user-mode network: aen0 as 10.0.2.15 with a default route to
 //     10.0.2.2 (/etc/inet/network-config, which only acts if the card is
 //     there), and DNS through 10.0.2.3 (/etc/resolv.conf, resolv.so in
@@ -57,7 +57,7 @@ func main() {
 	usrMB := flag.Int("usr", 400, "size of the UFS filesystem for the trees with long names, in MB (whole 8 MB groups; 0 for none)")
 	extraInodes := flag.Int("inodes", 8000, "free inodes to leave in the root filesystem")
 	rootSlice := flag.String("rootdev", "c6d0s1", "root device for /etc/vfstab")
-	flag.BoolVar(&netSetup, "net", true, "set the network up for goAmiga's A2065 (10.0.2.15, gateway 10.0.2.2, DNS 10.0.2.3)")
+	flag.BoolVar(&netSetup, "net", true, "set the network up for BlitterBox's A2065 (10.0.2.15, gateway 10.0.2.2, DNS 10.0.2.3)")
 	flag.Parse()
 	if err := build(*cpioPath, *out, *rootMB, *swapMB, *usrMB, *extraInodes, *rootSlice); err != nil {
 		fmt.Fprintln(os.Stderr, "amixdisk:", err)

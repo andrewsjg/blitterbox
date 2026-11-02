@@ -65,7 +65,7 @@ final class MachineRunner {
         model.running = false
         switch code {
         case 0:
-            NSApp.terminate(nil) // closing the machine's window quits goAmiga
+            NSApp.terminate(nil) // closing the machine's window quits BlitterBox
             return
         case 3: // Config (Cmd+,): the settings come back, as they are now
             let r = model.bridge.call(Request(op: "loadFile", path: returnFile.path))

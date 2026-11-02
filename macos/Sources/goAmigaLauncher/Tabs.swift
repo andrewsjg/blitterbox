@@ -408,7 +408,7 @@ struct PortsTab: View {
             Section("AHI sound") {
                 Toggle(isOn: $model.settings.amigaFiles) {
                     Text("goAmiga volume")
-                    Text("A read-only disk with goAmiga's AHI driver: run goAmiga:Install-AHI-Driver once, with AHI installed.")
+                    Text("A read-only disk with BlitterBox's AHI driver: run goAmiga:Install-AHI-Driver once, with AHI installed.")
                 }
             }
         }
@@ -421,7 +421,7 @@ struct DisplayTab: View {
 
     var body: some View {
         @Bindable var model = model
-        let here = "The folder goAmiga starts in"
+        let here = "The folder BlitterBox starts in"
         Form {
             Section {
                 Choice(title: "Window size", value: $model.settings.scale, options: [

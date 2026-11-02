@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds goAmiga.app: the goamiga binary in a macOS application bundle with
+# Builds BlitterBox.app: the goamiga binary in a macOS application bundle with
 # the Boing Ball icon, so it shows in Finder and the Dock and can be put in
 # /Applications. Run from the repository root; the app lands in the root.
 #
@@ -10,7 +10,7 @@
 #
 #   scripts/macos-app.sh
 set -e
-APP=goAmiga.app
+APP=BlitterBox.app
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
@@ -39,8 +39,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleName</key><string>goAmiga</string>
-	<key>CFBundleDisplayName</key><string>goAmiga</string>
+	<key>CFBundleName</key><string>BlitterBox</string>
+	<key>CFBundleDisplayName</key><string>BlitterBox</string>
 	<key>CFBundleIdentifier</key><string>com.github.andrewsjg.goamiga</string>
 	<key>CFBundleExecutable</key><string>$EXE</string>
 	<key>CFBundleIconFile</key><string>goamiga</string>

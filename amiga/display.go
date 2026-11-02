@@ -265,7 +265,7 @@ func (d *Display) applyGrab(grab bool) {
 // updateTitle shows the machine's name and how to take or release the
 // mouse. (The disks are in the status bar, the keys in the help overlay.)
 func (d *Display) updateTitle() {
-	title := "goAmiga"
+	title := "BlitterBox"
 	if d.Name != "" {
 		title += " — " + d.Name
 	}

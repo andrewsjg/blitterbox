@@ -1,6 +1,7 @@
 # goAmiga
 
-An Amiga emulator written in Go, from the 68000 up. It runs Kickstart and
+BlitterBox is the app; goAmiga is the project behind it. BlitterBox is an
+Amiga emulator written in Go, from the 68000 up. It runs Kickstart and
 Workbench, games and demos (copy-protected originals included), from the
 A500 to the A1200. It has its own 680x0 CPU core, in [`m68k/`](m68k/).
 
@@ -81,7 +82,7 @@ go build ./cmd/goamiga
 
 Or install it with `go install github.com/andrewsjg/goamiga/cmd/goamiga@latest`.
 
-On macOS, `scripts/macos-app.sh` builds `goAmiga.app`, an application
+On macOS, `scripts/macos-app.sh` builds `BlitterBox.app`, an application
 bundle with the Boing Ball icon, which you can put in Applications. The
 bare binary shows the icon in the Dock too, and on Windows and Linux it is
 the window's icon. With Swift installed (Xcode or its command-line tools)

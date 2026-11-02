@@ -59,7 +59,7 @@ final class RootController: UIHostingController<AnyView> {
         // The iPad locks it only for an app that fills the screen.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self, self.trapped, self.view.window?.windowScene?.pointerLockState?.isLocked == false else { return }
-            GoamigaSay("The iPad hides the pointer only with goAmiga full screen. Esc or F12 frees it")
+            GoamigaSay("The iPad hides the pointer only with BlitterBox full screen. Esc or F12 frees it")
         }
     }
 

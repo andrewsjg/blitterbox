@@ -140,7 +140,7 @@ func (a *Amiga) AttachHardfile(path string, readOnly bool) error {
 	}
 	h := a.HardDisk
 	if len(h.Files) >= HardfileLimit {
-		return fmt.Errorf("%s: goAmiga's hard disk controller takes at most %d hardfiles", filepath.Base(path), HardfileLimit)
+		return fmt.Errorf("%s: BlitterBox's hard disk controller takes at most %d hardfiles", filepath.Base(path), HardfileLimit)
 	}
 	// An unformatted plain hardfile gets the ROM's native filesystem:
 	// FFS from Kickstart 2.0 (V36) on, OFS before.

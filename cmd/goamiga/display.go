@@ -64,7 +64,7 @@ func runMachine(m *launch.Machine, s *config.Settings, name string) error {
 
 func (g *app) showLauncher(l *launcher) {
 	g.launcher = l
-	ebiten.SetWindowTitle("goAmiga")
+	ebiten.SetWindowTitle("BlitterBox")
 	ebiten.SetWindowSize(launcherW, launcherH)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetTPS(60)

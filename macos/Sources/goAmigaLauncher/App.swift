@@ -7,7 +7,7 @@ struct GoAmigaApp: App {
     @State private var model = LauncherModel()
 
     var body: some Scene {
-        Window("goAmiga", id: "launcher") {
+        Window("BlitterBox", id: "launcher") {
             LauncherView()
                 .environment(model)
                 .frame(minWidth: 860, minHeight: 560)

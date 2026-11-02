@@ -154,13 +154,13 @@ func (a *Amiga) SaveState(w io.Writer) error {
 func (a *Amiga) LoadState(r io.Reader) error {
 	zr, err := gzip.NewReader(r)
 	if err != nil {
-		return fmt.Errorf("not a goAmiga state: %w", err)
+		return fmt.Errorf("not a BlitterBox state: %w", err)
 	}
 	s := &stateCodec{load: true, r: bufio.NewReader(zr)}
 	magic := make([]byte, len(stateMagic))
 	s.raw(magic)
 	if s.err != nil || string(magic) != stateMagic {
-		return errors.New("not a goAmiga state")
+		return errors.New("not a BlitterBox state")
 	}
 	a.state(s)
 	if s.err != nil {
@@ -177,7 +177,7 @@ func (a *Amiga) state(s *stateCodec) {
 	version := int64(stateVersion)
 	num(s, &version)
 	if s.load && version != stateVersion {
-		s.err = fmt.Errorf("state version %d, this goAmiga reads version %d", version, stateVersion)
+		s.err = fmt.Errorf("state version %d, this BlitterBox reads version %d", version, stateVersion)
 		return
 	}
 	s.check("ROM checksum", int64(a.romChecksum()))

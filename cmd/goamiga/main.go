@@ -19,7 +19,7 @@ func main() {
 	loadState := flag.String("load-state", "", "Resume from a save state file")
 	verbose := flag.Bool("v", false, "Enable verbose trace output")
 	launcher := flag.Bool("launcher", false, "Open the configuration screen (as with no arguments at all)")
-	api := flag.Bool("launcher-api", false, "Answer a native configuration screen's JSON requests on stdin (goAmiga.app's launcher)")
+	api := flag.Bool("launcher-api", false, "Answer a native configuration screen's JSON requests on stdin (BlitterBox.app's launcher)")
 	name := flag.String("name", "", "Configuration name for the window title (default: --config's, if it names a saved one)")
 	configPath := flag.String("config", "", "Settings file (key = value per line, keys are these flag names) or the name of a saved configuration; default ./goamiga.conf or ~/.config/goamiga/goamiga.conf")
 	flag.Parse()
