@@ -14,6 +14,7 @@ import (
 
 	"github.com/andrewsjg/goamiga/amiga"
 	"github.com/andrewsjg/goamiga/internal/config"
+	"github.com/andrewsjg/goamiga/internal/launch"
 )
 
 // app is the window's game: the configuration screen or a running
@@ -23,7 +24,7 @@ import (
 type app struct {
 	launcher *launcher // showing the configuration screen, or nil
 
-	m    *machine
+	m    *launch.Machine
 	disp *amiga.Display
 	s    config.Settings // the running machine's settings
 	name string          // and its saved name, if any
@@ -50,7 +51,7 @@ func runLauncher() error {
 }
 
 // runMachine opens the window on a machine built from the command line.
-func runMachine(m *machine, s *config.Settings, name string) error {
+func runMachine(m *launch.Machine, s *config.Settings, name string) error {
 	g := &app{returnPath: os.Getenv(returnEnv)}
 	g.startMachine(m, s, name)
 	setIcon()
@@ -70,8 +71,8 @@ func (g *app) showLauncher(l *launcher) {
 	ebiten.SetScreenClearedEveryFrame(true)
 }
 
-func (g *app) startMachine(m *machine, s *config.Settings, name string) {
-	d := amiga.NewDisplay(m.a)
+func (g *app) startMachine(m *launch.Machine, s *config.Settings, name string) {
+	d := amiga.NewDisplay(m.A)
 	d.Mute = s.Mute
 	d.Scale = s.Scale
 	d.StatusBar = s.StatusBar
@@ -81,13 +82,13 @@ func (g *app) startMachine(m *machine, s *config.Settings, name string) {
 	d.Name = name
 	d.ScreenshotDir = s.ScreenshotDir
 	d.StateDir = s.StateDir
-	for n, list := range m.drives {
+	for n, list := range m.Drives {
 		d.Disks[n] = list
 		if len(list) > 0 {
 			d.DiskIndex[n] = 0
 		}
 	}
-	fmt.Printf("Starting display (%.2f fps %s)...\n", m.a.FrameRate(), m.a.VideoStandard())
+	fmt.Printf("Starting display (%.2f fps %s)...\n", m.A.FrameRate(), m.A.VideoStandard())
 	g.m, g.disp, g.s, g.name, g.launcher = m, d, *s, name, nil
 	d.Start()
 }
@@ -98,7 +99,7 @@ func (g *app) stopMachine() {
 		g.disp.Stop()
 	}
 	if g.m != nil {
-		g.m.close()
+		g.m.Close()
 	}
 	g.m, g.disp = nil, nil
 }
@@ -147,7 +148,7 @@ func (g *app) Update() error {
 	}
 	if start != nil {
 		s := *start
-		m, err := buildMachine(&s, "", nil, os.Stdout)
+		m, err := launch.Build(&s, "", nil, os.Stdout)
 		if err != nil {
 			g.launcher.say(true, "Can't start: %v", err)
 			return nil
@@ -172,14 +173,14 @@ func (g *app) powerCycle() {
 	// The drives as they are now (DiskIndex is -1 for an empty one).
 	if s.NumDrives < len(g.disp.Disks) {
 		for n := len(g.disp.Disks) - 1; n > 0; n-- {
-			if g.m.a.Disk.DF(n) != nil {
+			if g.m.A.Disk.DF(n) != nil {
 				s.NumDrives = max(s.NumDrives, n+1)
 				break
 			}
 		}
 	}
 	g.stopMachine()
-	m, err := buildMachine(&s, "", nil, os.Stdout)
+	m, err := launch.Build(&s, "", nil, os.Stdout)
 	if err != nil {
 		l := newLauncher(s, name)
 		l.say(true, "Can't switch it on again: %v", err)
@@ -197,7 +198,7 @@ func (g *app) startWHDLoad(path string) {
 	s.WHDLoad = path
 	g.stopMachine()
 	fmt.Printf("Starting the WHDLoad game %s\n", path)
-	m, err := buildMachine(&s, "", nil, os.Stdout)
+	m, err := launch.Build(&s, "", nil, os.Stdout)
 	if err != nil {
 		l := newLauncher(s, name)
 		l.tab = slices.Index(launcherTabs, "WHDLoad")

@@ -16,6 +16,7 @@ import (
 
 	"github.com/andrewsjg/goamiga/amiga"
 	"github.com/andrewsjg/goamiga/internal/config"
+	"github.com/andrewsjg/goamiga/internal/launch"
 	"github.com/andrewsjg/goamiga/internal/whdload"
 )
 
@@ -83,9 +84,9 @@ func (l *launcher) romMismatch() string {
 
 // applyPreset applies the named model's settings (the ROM and disks stay).
 func (l *launcher) applyPreset(name string) {
-	for _, p := range presets {
-		if p.name == name {
-			p.apply(&l.s)
+	for _, p := range launch.Presets {
+		if p.Name == name {
+			p.Apply(&l.s)
 		}
 	}
 }
@@ -346,14 +347,14 @@ func (l *launcher) machineTab(x, y int) {
 	u := l.ui
 	u.label(x-10, y, "Model")
 	bx := x
-	for _, p := range presets {
-		w := u.textWidth(p.name) + 20
+	for _, p := range launch.Presets {
+		w := u.textWidth(p.Name) + 20
 		if bx+w > launcherW-20 { // wrap onto a second row
 			bx, y = x, y+30
 		}
-		if u.button(bx, y, w, 24, p.name) {
-			p.apply(&l.s)
-			l.say(false, "%s", presetMessage(p.name))
+		if u.button(bx, y, w, 24, p.Name) {
+			p.Apply(&l.s)
+			l.say(false, "%s", launch.PresetMessage(p.Name))
 		}
 		bx += w + 6
 	}
@@ -830,7 +831,7 @@ func (l *launcher) pollChooser() {
 		l.say(true, "File dialog: %v", c.err)
 		return
 	}
-	applyChoice(&l.s, c.target, c.path)
+	launch.ApplyChoice(&l.s, c.target, c.path)
 }
 
 func (l *launcher) draw(screen *ebiten.Image) {

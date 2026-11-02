@@ -1,6 +1,6 @@
 //go:build !noebitengine
 
-package main
+package launch
 
 import (
 	"os"

@@ -1,6 +1,6 @@
-//go:build !noebitengine
+//go:build !noebitengine && !ios
 
-package main
+package launch
 
 /*
 #cgo CFLAGS: -x objective-c

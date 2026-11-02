@@ -1,4 +1,4 @@
-package main
+package launch
 
 import (
 	"fmt"
@@ -14,26 +14,26 @@ import (
 	"github.com/andrewsjg/goamiga/internal/whdload"
 )
 
-// machine is an Amiga built from settings, with what it holds open.
-type machine struct {
-	a      *amiga.Amiga
-	drives [4]config.List // the disks for each drive, zips expanded
+// Machine is an Amiga built from settings, with what it holds open.
+type Machine struct {
+	A      *amiga.Amiga
+	Drives [4]config.List // the disks for each drive, zips expanded
 	serial *amiga.NetSerial
 }
 
-// close releases the host resources the machine holds.
-func (m *machine) close() {
+// Close releases the host resources the machine holds.
+func (m *Machine) Close() {
 	if m.serial != nil {
 		m.serial.Close()
 	}
-	if m.a != nil {
-		m.a.Shutdown()
+	if m.A != nil {
+		m.A.Shutdown()
 	}
 }
 
-// buildMachine makes and resets an Amiga as the settings describe. It
+// Build makes and resets an Amiga as the settings describe. It
 // reports what it does on out.
-func buildMachine(s *config.Settings, loadState string, logger io.Writer, out io.Writer) (*machine, error) {
+func Build(s *config.Settings, loadState string, logger io.Writer, out io.Writer) (*Machine, error) {
 	if s.ROM == "" {
 		return nil, fmt.Errorf("no Kickstart ROM chosen")
 	}
@@ -54,9 +54,9 @@ func buildMachine(s *config.Settings, loadState string, logger io.Writer, out io
 	if err != nil {
 		return nil, fmt.Errorf("creating the Amiga: %w", err)
 	}
-	m := &machine{a: a}
-	fail := func(err error) (*machine, error) {
-		m.close()
+	m := &Machine{A: a}
+	fail := func(err error) (*Machine, error) {
+		m.Close()
 		return nil, err
 	}
 
@@ -144,7 +144,7 @@ func buildMachine(s *config.Settings, loadState string, logger io.Writer, out io
 			}
 			all = append(all, disks...)
 		}
-		m.drives[n] = all
+		m.Drives[n] = all
 		if len(all) == 0 {
 			continue
 		}
@@ -372,7 +372,7 @@ func parseForwards(v string) (map[int]int, error) {
 // bootWHDLoad sets the machine up to boot into a WHDLoad game: a boot
 // folder (WHDLoad, kickstart images, a Startup-Sequence that starts the
 // game) ahead of every other drive, and the game's folder as Game:.
-func (m *machine) bootWHDLoad(s *config.Settings, rom amiga.ROMInfo, out io.Writer) error {
+func (m *Machine) bootWHDLoad(s *config.Settings, rom amiga.ROMInfo, out io.Writer) error {
 	if rom.Version < 37 {
 		return fmt.Errorf("WHDLoad needs Kickstart 2.0 or later; %s is %s", filepath.Base(s.ROM), rom)
 	}
@@ -383,12 +383,12 @@ func (m *machine) bootWHDLoad(s *config.Settings, rom amiga.ROMInfo, out io.Writ
 	if err != nil {
 		return err
 	}
-	if err := m.a.AttachDirectory(g.Boot, "WHDBoot", true); err != nil {
+	if err := m.A.AttachDirectory(g.Boot, "WHDBoot", true); err != nil {
 		return err
 	}
-	dirs := m.a.HardDisk.Dirs
+	dirs := m.A.HardDisk.Dirs
 	dirs[len(dirs)-1].BootPri = 10 // ahead of hard disks and a floppy in DF0:
-	if err := m.a.AttachDirectory(g.Dir, "Game", s.WriteProtect); err != nil {
+	if err := m.A.AttachDirectory(g.Dir, "Game", s.WriteProtect); err != nil {
 		return err
 	}
 	kicks := "none"

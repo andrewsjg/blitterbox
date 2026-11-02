@@ -1,4 +1,4 @@
-package main
+package launch
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 )
 
 // apiCall sends requests to the launcher API and decodes the answers.
-func apiCall(t *testing.T, reqs ...apiRequest) []apiResponse {
+func apiCall(t *testing.T, reqs ...Request) []Response {
 	t.Helper()
 	var in bytes.Buffer
 	for _, r := range reqs {
@@ -20,13 +20,13 @@ func apiCall(t *testing.T, reqs ...apiRequest) []apiResponse {
 		in.Write(append(b, '\n'))
 	}
 	var out bytes.Buffer
-	if err := runLauncherAPI(&in, &out); err != nil {
+	if err := Serve(&in, &out); err != nil {
 		t.Fatal(err)
 	}
-	var resps []apiResponse
+	var resps []Response
 	dec := json.NewDecoder(&out)
 	for dec.More() {
-		var r apiResponse
+		var r Response
 		if err := dec.Decode(&r); err != nil {
 			t.Fatal(err)
 		}
@@ -43,7 +43,7 @@ func TestLauncherAPI(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Chdir(t.TempDir()) // no ./goamiga.conf
 
-	r := apiCall(t, apiRequest{Op: "startup"})[0]
+	r := apiCall(t, Request{Op: "startup"})[0]
 	if !r.OK || r.Settings == nil || r.Settings.CPU != "68000" || len(r.Saved) != 0 {
 		t.Fatalf("startup: %+v", r)
 	}
@@ -56,14 +56,14 @@ func TestLauncherAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 	rs := apiCall(t,
-		apiRequest{Op: "preset", Preset: "A1200", Settings: &s},
-		apiRequest{Op: "save", Name: "Test", Settings: &s},
-		apiRequest{Op: "load", Name: "Test"},
-		apiRequest{Op: "choose", Target: "hdf", Path: "/tmp/a.hdf", Settings: &s},
-		apiRequest{Op: "rom", Settings: &s},
-		apiRequest{Op: "start", Name: "Test", Settings: &s},
-		apiRequest{Op: "save", Name: "bad/name", Settings: &s},
-		apiRequest{Op: "delete", Name: "Test"},
+		Request{Op: "preset", Preset: "A1200", Settings: &s},
+		Request{Op: "save", Name: "Test", Settings: &s},
+		Request{Op: "load", Name: "Test"},
+		Request{Op: "choose", Target: "hdf", Path: "/tmp/a.hdf", Settings: &s},
+		Request{Op: "rom", Settings: &s},
+		Request{Op: "start", Name: "Test", Settings: &s},
+		Request{Op: "save", Name: "bad/name", Settings: &s},
+		Request{Op: "delete", Name: "Test"},
 	)
 	for i, r := range rs[:6] {
 		if !r.OK {
@@ -100,13 +100,13 @@ func TestLauncherAPI(t *testing.T) {
 
 	// Lists are [] rather than null, for the Swift side's decoding.
 	var out bytes.Buffer
-	runLauncherAPI(strings.NewReader(`{"op":"defaults"}`+"\n"), &out)
+	Serve(strings.NewReader(`{"op":"defaults"}`+"\n"), &out)
 	if strings.Contains(out.String(), "null") {
 		t.Errorf("defaults have nulls: %s", out.String())
 	}
 
 	// Starting needs a ROM.
-	if r := apiCall(t, apiRequest{Op: "start"})[0]; r.OK {
+	if r := apiCall(t, Request{Op: "start"})[0]; r.OK {
 		t.Error("started with no ROM")
 	}
 }

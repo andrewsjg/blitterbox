@@ -1,4 +1,4 @@
-package main
+package launch
 
 import (
 	"fmt"
@@ -7,13 +7,13 @@ import (
 	"github.com/andrewsjg/goamiga/internal/config"
 )
 
-// presets set up the common models (the ROM stays as chosen).
-type preset struct {
-	name  string
-	apply func(s *config.Settings)
+// Presets set up the common models (the ROM stays as chosen).
+type Preset struct {
+	Name  string
+	Apply func(s *config.Settings)
 }
 
-var presets = []preset{
+var Presets = []Preset{
 	{"A500", func(s *config.Settings) {
 		s.RTG, s.CPUSlotRAM = 0, 0
 		s.CPU, s.CPUSpeed, s.FPU, s.Chipset, s.ChipRAM, s.SlowRAM, s.FastRAM = "68000", 0, "auto", "ocs", 512, 512, 0
@@ -79,10 +79,10 @@ func freeSCSIID(disks []string) int {
 	return 6
 }
 
-// applyChoice puts a chosen file or folder where target says: "rom",
+// ApplyChoice puts a chosen file or folder where target says: "rom",
 // "df0".."df3", "hdf", "dir", "tape", "scsi", "ide0"/"ide1", "shots",
 // "states", "whdload" or "whdloaddir".
-func applyChoice(s *config.Settings, target, path string) {
+func ApplyChoice(s *config.Settings, target, path string) {
 	switch {
 	case target == "rom":
 		s.ROM = path
@@ -112,8 +112,8 @@ func applyChoice(s *config.Settings, target, path string) {
 	}
 }
 
-// presetMessage is the status line after choosing a model.
-func presetMessage(name string) string {
+// PresetMessage is the status line after choosing a model.
+func PresetMessage(name string) string {
 	switch name {
 	case "A3000":
 		return "A3000 settings: for Amiga Unix, add its disk as a SCSI disk (ID 6) on the Hard disks tab"

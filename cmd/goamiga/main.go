@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/andrewsjg/goamiga/internal/config"
+	"github.com/andrewsjg/goamiga/internal/launch"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 	flag.Parse()
 
 	if *api {
-		if err := runLauncherAPI(os.Stdin, os.Stdout); err != nil {
+		if err := launch.Serve(os.Stdin, os.Stdout); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
@@ -61,12 +62,12 @@ func main() {
 	if *verbose {
 		logger = os.Stdout
 	}
-	m, err := buildMachine(&s, *loadState, logger, os.Stdout)
+	m, err := launch.Build(&s, *loadState, logger, os.Stdout)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-	a := m.a
+	a := m.A
 	fmt.Printf("CPU reset: PC=$%08X SSP=$%08X\n", a.CPU.PC, a.CPU.A[7])
 
 	if *headless || *maxCycles > 0 {
@@ -80,7 +81,7 @@ func main() {
 		} else {
 			fmt.Printf("Execution complete. PC=$%08X\n", a.CPU.PC)
 		}
-		m.close()
+		m.Close()
 		return
 	}
 
