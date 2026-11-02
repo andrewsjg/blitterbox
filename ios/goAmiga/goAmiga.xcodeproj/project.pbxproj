@@ -8,11 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* App.swift */; };
+		A10000000000000000000003 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* Keyboard.swift */; };
 		A10000000000000000000002 /* Goamiga.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* Goamiga.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A20000000000000000000001 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* Keyboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* Goamiga.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Goamiga.xcframework; path = ../Goamiga.xcframework; sourceTree = SOURCE_ROOT; };
 		A20000000000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000004 /* goAmiga.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = goAmiga.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,6 +46,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000001 /* App.swift */,
+				A20000000000000000000005 /* Keyboard.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -109,6 +112,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* App.swift in Sources */,
+				A10000000000000000000003 /* Keyboard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

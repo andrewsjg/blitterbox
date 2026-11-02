@@ -77,6 +77,17 @@ func Boot(romPath, adfPath string) error {
 	return nil
 }
 
+// Key presses (down) or releases an Amiga key by its raw code, for the
+// app's on-screen keyboard. A hardware keyboard needs no help: Ebitengine
+// reports its keys to the display like a desktop one.
+func Key(code int, down bool) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.a != nil && g.a.Keyboard != nil {
+		g.a.Keyboard.EnqueueKey(byte(code), down)
+	}
+}
+
 func (g *game) Update() error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
