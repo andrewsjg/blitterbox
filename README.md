@@ -83,7 +83,7 @@ go build ./cmd/blitterbox
 Or install it with `go install github.com/andrewsjg/blitterbox/cmd/blitterbox@latest`.
 
 On macOS, `scripts/macos-app.sh` builds `BlitterBox.app`, an application
-bundle with the Boing Ball icon, which you can put in Applications. The
+bundle with its icon, which you can put in Applications. The
 bare binary shows the icon in the Dock too, and on Windows and Linux it is
 the window's icon. With Swift installed (Xcode or its command-line tools)
 the app opens on a native SwiftUI configuration screen (`macos/`): the same

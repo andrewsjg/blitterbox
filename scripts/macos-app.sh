@@ -1,6 +1,6 @@
 #!/bin/sh
 # Builds BlitterBox.app: the blitterbox binary in a macOS application bundle with
-# the Boing Ball icon, so it shows in Finder and the Dock and can be put in
+# its icon (icons/macOS), so it shows in Finder and the Dock and can be put in
 # /Applications. Run from the repository root; the app lands in the root.
 #
 # With Swift (Xcode or its command-line tools) the app opens on the native
@@ -23,8 +23,6 @@ if [ -z "$BLITTERBOX_NO_SWIFTUI" ] && command -v swift >/dev/null 2>&1; then
 	EXE=BlitterBoxLauncher
 	MINOS=14.0
 fi
-go run ./internal/boing/mkiconset "$WORK/blitterbox.iconset"
-iconutil -c icns -o "$WORK/blitterbox.icns" "$WORK/blitterbox.iconset"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -32,7 +30,7 @@ cp "$WORK/blitterbox" "$APP/Contents/MacOS/blitterbox"
 if [ "$EXE" = BlitterBoxLauncher ]; then
 	cp "$WORK/BlitterBoxLauncher" "$APP/Contents/MacOS/BlitterBoxLauncher"
 fi
-cp "$WORK/blitterbox.icns" "$APP/Contents/Resources/blitterbox.icns"
+cp icons/macOS/BlitterBox.icns "$APP/Contents/Resources/BlitterBox.icns"
 VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -43,7 +41,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 	<key>CFBundleDisplayName</key><string>BlitterBox</string>
 	<key>CFBundleIdentifier</key><string>com.github.andrewsjg.blitterbox</string>
 	<key>CFBundleExecutable</key><string>$EXE</string>
-	<key>CFBundleIconFile</key><string>blitterbox</string>
+	<key>CFBundleIconFile</key><string>BlitterBox</string>
 	<key>CFBundlePackageType</key><string>APPL</string>
 	<key>CFBundleShortVersionString</key><string>$VERSION</string>
 	<key>CFBundleVersion</key><string>$VERSION</string>

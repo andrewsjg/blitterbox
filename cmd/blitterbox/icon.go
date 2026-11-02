@@ -3,20 +3,17 @@
 package main
 
 import (
-	"bytes"
-	"image/png"
-
 	"github.com/hajimehoshi/ebiten/v2"
 
-	"github.com/andrewsjg/blitterbox/internal/boing"
+	"github.com/andrewsjg/blitterbox/icons"
 )
 
-// setIcon gives the window the Boing Ball (Windows and Linux use it).
+// setIcon gives the window BlitterBox's icon (Windows and Linux use it).
 func setIcon() {
-	ebiten.SetWindowIcon(boing.Icons())
+	ebiten.SetWindowIcon(icons.Window())
 }
 
-// setDockIconOnce puts the ball in the macOS Dock, which ignores window
+// setDockIconOnce puts the icon in the macOS Dock, which ignores window
 // icons. It is called from the first Update, once the game loop (and so
 // the application) is running: touching AppKit before Ebitengine has set
 // it up can leave the window blank.
@@ -25,8 +22,5 @@ func (g *app) setDockIconOnce() {
 		return
 	}
 	g.dockIconSet = true
-	var b bytes.Buffer
-	if png.Encode(&b, boing.Ball(512)) == nil {
-		setDockIcon(b.Bytes())
-	}
+	setDockIcon(icons.Dock())
 }
