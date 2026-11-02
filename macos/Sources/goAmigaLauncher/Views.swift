@@ -14,44 +14,7 @@ struct LauncherView: View {
     var body: some View {
         @Bindable var model = model
         NavigationSplitView {
-            List(model.saved, id: \.self, selection: $model.selection) { name in
-                Text(name)
-                    #if !os(macOS)
-                    // A tap starts a configuration rather than selecting
-                    // it, and the List can clear the selection after: the
-                    // one loaded is marked instead.
-                    .fontWeight(name == model.name ? .semibold : .regular)
-                    .listRowBackground(name == model.name
-                        ? Capsule().fill(Color.accentColor.opacity(0.2)).padding(.horizontal, 10).padding(.vertical, 2)
-                        : nil)
-                    #endif
-            }
-            .contextMenu(forSelectionType: String.self) { names in
-                if let n = names.first {
-                    Button("Start", systemImage: "play.fill") {
-                        model.load(n)
-                        model.start()
-                    }
-                    #if !os(macOS)
-                    // A tap starts it on iOS (primaryAction), rather than
-                    // selecting it as a click does on the Mac.
-                    Button("Edit", systemImage: "pencil") { model.load(n) }
-                    #endif
-                    Button("Delete…", systemImage: "trash", role: .destructive) {
-                        model.selection = n
-                        deleting = n
-                        confirmDelete = true
-                    }
-                }
-            } primaryAction: { names in
-                if let n = names.first { // double-click: load and start
-                    model.load(n)
-                    model.start()
-                }
-            }
-            .onChange(of: model.selection) { _, n in
-                if let n { model.load(n) }
-            }
+            configurations
             .safeAreaInset(edge: .bottom) {
                 VStack(alignment: .leading, spacing: 8) {
                     TextField("Name", text: $model.name)
@@ -61,8 +24,7 @@ struct LauncherView: View {
                         Button("New", systemImage: "plus") { model.newConfiguration() }
                         Spacer()
                         Button("Delete…", systemImage: "trash") {
-                            deleting = model.current
-                            confirmDelete = true
+                            if let n = model.current { confirmDeleting(n) }
                         }
                         .disabled(model.current == nil)
                         #if !os(macOS)
@@ -77,7 +39,7 @@ struct LauncherView: View {
                     Text("Double-click a configuration to start it.")
                         .font(.caption).foregroundStyle(.secondary)
                     #else
-                    Text("Tap a configuration to start it; touch and hold to edit it.")
+                    Text("Tap a configuration to load it, then Start it.")
                         .font(.caption).foregroundStyle(.secondary)
                     #endif
                 }
@@ -136,6 +98,72 @@ struct LauncherView: View {
                 if let n = deleting { model.delete(n) }
             }
         }
+    }
+}
+
+extension LauncherView {
+    #if os(macOS)
+    // configurations is the saved configurations: a click loads one, a
+    // double-click starts it.
+    private var configurations: some View {
+        @Bindable var model = model
+        return List(model.saved, id: \.self, selection: $model.selection) { name in
+            Text(name)
+        }
+        .contextMenu(forSelectionType: String.self) { names in
+            if let n = names.first {
+                Button("Start", systemImage: "play.fill") {
+                    model.load(n)
+                    model.start()
+                }
+                Button("Delete…", systemImage: "trash", role: .destructive) {
+                    model.selection = n
+                    confirmDeleting(n)
+                }
+            }
+        } primaryAction: { names in
+            if let n = names.first { // double-click: load and start
+                model.load(n)
+                model.start()
+            }
+        }
+        .onChange(of: model.selection) { _, n in
+            if let n { model.load(n) }
+        }
+    }
+    #else
+    // configurations is the saved configurations: a tap loads one, to be
+    // started with Start. The one loaded is marked with a capsule (the
+    // List's own selection is a squared-off highlight, and comes and goes).
+    private var configurations: some View {
+        List(model.saved, id: \.self) { name in
+            let loaded = name == model.name
+            Button { model.load(name) } label: {
+                Text(name)
+                    .fontWeight(loaded ? .semibold : .regular)
+                    .padding(.leading, 8) // clear of the capsule's curve
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(loaded ? .isSelected : [])
+            .listRowBackground(loaded
+                ? Capsule().fill(Color.accentColor.opacity(0.2)).padding(.horizontal, 10).padding(.vertical, 2)
+                : nil)
+            .contextMenu {
+                Button("Start", systemImage: "play.fill") {
+                    model.load(name)
+                    model.start()
+                }
+                Button("Delete…", systemImage: "trash", role: .destructive) { confirmDeleting(name) }
+            }
+        }
+    }
+    #endif
+
+    private func confirmDeleting(_ n: String) {
+        deleting = n
+        confirmDelete = true
     }
 }
 

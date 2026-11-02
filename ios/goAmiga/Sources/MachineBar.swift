@@ -27,6 +27,7 @@ struct MachineStatus: Decodable, Equatable {
 final class MachineBarModel {
     private(set) var status: MachineStatus?
     private(set) var shown = true
+    private(set) var fading = false // the controls fading out, before the handle replaces them
     var keyboardShown = false
     var toggleKeyboard: () -> Void = {}
     var holding = false { // a dialog is up: stay
@@ -54,7 +55,7 @@ final class MachineBarModel {
     }
 
     func show() {
-        withAnimation(.snappy) { shown = true }
+        withAnimation(.snappy) { (shown, fading) = (true, false) }
         stayAWhile()
     }
 
@@ -64,7 +65,15 @@ final class MachineBarModel {
         hide = Task { [weak self] in
             try? await Task.sleep(for: .seconds(5))
             guard !Task.isCancelled, let self, !self.holding else { return }
-            withAnimation(.easeInOut(duration: 0.4)) { self.shown = false }
+            // The controls fade where they are; only then does the handle
+            // take their place, as the bar's size changing mid-fade made
+            // them jump.
+            withAnimation(.easeInOut(duration: 0.4)) {
+                self.fading = true
+            } completion: {
+                guard self.fading else { return } // shown again meanwhile
+                withAnimation(.easeIn(duration: 0.2)) { (self.shown, self.fading) = (false, false) }
+            }
         }
     }
 }
@@ -86,7 +95,10 @@ struct MachineBar: View {
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
                 if bar.shown {
-                    controls(s).transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottom)))
+                    controls(s)
+                        .opacity(bar.fading ? 0 : 1)
+                        .scaleEffect(bar.fading ? 0.95 : 1, anchor: .bottom)
+                        .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottom)))
                 } else {
                     Button { bar.show() } label: {
                         Image(systemName: "chevron.compact.up")
@@ -101,6 +113,9 @@ struct MachineBar: View {
                 }
             }
         }
+        // Centred at the foot of the space it is given, while that is
+        // catching up with its size.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         .buttonStyle(.plain)
         .foregroundStyle(.white)
         .environment(\.colorScheme, .dark)
