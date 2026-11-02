@@ -9,6 +9,7 @@
 package goamiga
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,11 +27,11 @@ import (
 // called on the emulation's thread and must not call back into this
 // package before returning.
 type Host interface {
-	// SettingsRequested: the status bar's Config button switched the
-	// machine off, to change its settings.
+	// SettingsRequested: the machine was switched off (ChangeSettings),
+	// to change its settings.
 	SettingsRequested()
-	// ChooseDisk asks for a disk image for DFunit: (a drive's light was
-	// tapped); the app answers with DiskChosen.
+	// ChooseDisk asks for a disk image for DFunit: (InsertDisk); the app
+	// answers with DiskChosen.
 	ChooseDisk(unit int)
 	// PointerLock: the pointer was trapped (locked: hide and hold it) or
 	// freed.
@@ -159,12 +160,75 @@ func PointerButton(button int, down bool) {
 	}
 }
 
-// Say shows a note in the status bar.
+// Say shows a note in the status bar (Status's message).
 func Say(text string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	if g.disp != nil {
 		g.disp.Say(text)
+	}
+}
+
+// The app's own status bar: what to show (Status), and its buttons.
+
+// Status is the machine's status bar as JSON (amiga.Status): its
+// activity lights and message. "" while the machine is off.
+func Status() string {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp == nil {
+		return ""
+	}
+	b, err := json.Marshal(g.disp.Status())
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
+
+// Reset is the keyboard reset: Kickstart restarts.
+func Reset() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.Reset()
+	}
+}
+
+// PowerCycle switches the machine off and on again, the disks still in.
+func PowerCycle() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.PowerRequested = true
+	}
+}
+
+// ChangeSettings switches the machine off for its settings to be changed
+// (Host.SettingsRequested follows).
+func ChangeSettings() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.ConfigRequested = true
+	}
+}
+
+// InsertDisk asks for a disk for DFunit: (Host.ChooseDisk).
+func InsertDisk(unit int) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.InsertDisk(unit)
+	}
+}
+
+// Eject takes the disk out of DFunit:.
+func Eject(unit int) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.Eject(unit)
 	}
 }
 
@@ -183,7 +247,8 @@ func (g *game) start(s config.Settings, name string) error {
 	if err != nil {
 		return err
 	}
-	s.Scale = 1 // the window is the screen
+	s.Scale = 1         // the window is the screen
+	s.StatusBar = false // the app draws its own (Status)
 	d := m.NewDisplay(&s, name)
 	d.ChooseDiskFile = g.chooseDisk
 	d.GrabChanged = g.pointerLock

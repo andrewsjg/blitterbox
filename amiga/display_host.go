@@ -55,7 +55,7 @@ func (d *Display) pollHostKeys() {
 	case inpututil.IsKeyJustPressed(ebiten.KeyR) && ebiten.IsKeyPressed(ebiten.KeyShift):
 		d.PowerRequested = true
 	case inpututil.IsKeyJustPressed(ebiten.KeyR):
-		d.reset()
+		d.Reset()
 	case inpututil.IsKeyJustPressed(ebiten.KeyP):
 		d.paused = !d.paused
 		if out := d.amiga.Paula.Output; out != nil {
@@ -74,8 +74,8 @@ func (d *Display) pollHostKeys() {
 	}
 }
 
-// reset is the keyboard reset (Ctrl+Amiga+Amiga): Kickstart restarts.
-func (d *Display) reset() {
+// Reset is the keyboard reset (Ctrl+Amiga+Amiga): Kickstart restarts.
+func (d *Display) Reset() {
 	if err := d.amiga.Reset(); err != nil {
 		d.message("reset failed: %v", err)
 	} else {
@@ -95,7 +95,7 @@ type statusButton struct {
 func (d *Display) statusButtons(w int) []statusButton {
 	bs := []statusButton{
 		{id: "power", label: "Power", confirm: true, act: func() { d.PowerRequested = true }},
-		{id: "reset", label: "Reset", act: d.reset},
+		{id: "reset", label: "Reset", act: d.Reset},
 		{id: "config", label: "Config", confirm: true, act: func() { d.ConfigRequested = true }},
 	}
 	x := w - 5
@@ -131,9 +131,9 @@ func (d *Display) statusClick(mx, my int, right bool) bool {
 	}
 	if unit := d.hoveredDrive(mx, my, h); unit >= 0 {
 		if right {
-			d.eject(unit)
+			d.Eject(unit)
 		} else {
-			d.openChooser(unit)
+			d.InsertDisk(unit)
 		}
 		return true
 	}

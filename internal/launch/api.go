@@ -61,6 +61,7 @@ type Response struct {
 	ROM      *ROMReport       `json:"rom,omitempty"`
 	WHDLoad  *WHDLoadReport   `json:"whdload,omitempty"`
 	Config   string           `json:"config,omitempty"` // start: the settings file to run
+	Model    string           `json:"model,omitempty"`  // model: the preset the settings are (MatchPreset)
 	Limits   map[string]int   `json:"limits,omitempty"`
 }
 
@@ -172,6 +173,8 @@ func Handle(req Request) (resp Response) {
 	case "choose":
 		ApplyChoice(&s, req.Target, req.Path)
 		resp.Settings = &s
+	case "model":
+		resp.Model = MatchPreset(s)
 	case "rom":
 		resp.ROM = apiROMInfo(&s)
 	case "whdload":

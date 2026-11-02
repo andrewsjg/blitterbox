@@ -87,6 +87,7 @@ struct Response: Decodable {
     var rom: ROMDescription?
     var whdload: WHDLoadInfo?
     var config: String?
+    var model: String?
     var limits: [String: Int]?
 }
 

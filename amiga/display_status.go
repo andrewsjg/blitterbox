@@ -88,6 +88,7 @@ type statusLight struct {
 	label string
 	on    color.Color
 	unit  int
+	track int // a drive's head's
 	x, w  float64
 }
 
@@ -116,7 +117,7 @@ func (d *Display) statusLights() []statusLight {
 		if dr.MotorOn() {
 			c = ledDrive
 		}
-		ls = append(ls, statusLight{label: fmt.Sprintf("DF%d %02d", n, dr.Cylinder()), on: c, unit: n})
+		ls = append(ls, statusLight{label: fmt.Sprintf("DF%d %02d", n, dr.Cylinder()), on: c, unit: n, track: dr.Cylinder()})
 	}
 	activity := func(label string, active, write bool) {
 		var c color.Color
@@ -172,12 +173,9 @@ func (d *Display) hoveredDrive(mx, my, y int) int {
 func (d *Display) statusNoteText(y int) string {
 	mx, my := ebiten.CursorPosition()
 	if unit := d.hoveredDrive(mx, my, y); unit >= 0 {
-		disk := "empty"
-		if i := d.DiskIndex[unit]; i >= 0 && i < len(d.Disks[unit]) && d.amiga.Disk.DF(unit).Inserted() {
-			disk = filepath.Base(d.Disks[unit][i])
-			if _, inner, ok := strings.Cut(disk, "#"); ok {
-				disk = inner // a disk inside a zip
-			}
+		disk := d.diskName(unit)
+		if disk == "" {
+			disk = "empty"
 		}
 		return disk + " · click: change, right-click: eject"
 	}
@@ -185,10 +183,74 @@ func (d *Display) statusNoteText(y int) string {
 	if d.paused {
 		notes = append(notes, "Paused (Cmd+P)")
 	}
-	if d.msg != "" && time.Now().Before(d.msgUntil) {
-		notes = append(notes, d.msg)
+	if m := d.note(); m != "" {
+		notes = append(notes, m)
 	}
 	return strings.Join(notes, "   ")
+}
+
+// diskName is the name of the disk in a floppy drive, or "" if empty.
+func (d *Display) diskName(unit int) string {
+	i := d.DiskIndex[unit]
+	if i < 0 || i >= len(d.Disks[unit]) || !d.amiga.Disk.DF(unit).Inserted() {
+		return ""
+	}
+	disk := filepath.Base(d.Disks[unit][i])
+	if _, inner, ok := strings.Cut(disk, "#"); ok {
+		disk = inner // a disk inside a zip
+	}
+	return disk
+}
+
+// note is the last message, while it lasts.
+func (d *Display) note() string {
+	if d.msg != "" && time.Now().Before(d.msgUntil) {
+		return d.msg
+	}
+	return ""
+}
+
+// Light is an activity light, for an app that draws its own status bar
+// (Status) in place of this one.
+type Light struct {
+	Label string `json:"label"`           // POWER, DF0, HD, IDE, SCSI, NET
+	Unit  int    `json:"unit"`            // the floppy drive, or -1
+	Track int    `json:"track"`           // a floppy drive's head's
+	Disk  string `json:"disk,omitempty"`  // the disk in a floppy drive
+	State string `json:"state,omitempty"` // lit: "power", "dim" (power, filter off), "read", "write"; "" off
+}
+
+// Status is what the status bar shows.
+type Status struct {
+	Lights  []Light `json:"lights"`
+	Message string  `json:"message,omitempty"`
+	Paused  bool    `json:"paused"`
+	Warp    bool    `json:"warp"`
+}
+
+// Status is what the status bar shows now.
+func (d *Display) Status() Status {
+	st := Status{Message: d.note(), Paused: d.paused, Warp: d.warp}
+	for _, l := range d.statusLights() {
+		light := Light{Label: l.label, Unit: l.unit}
+		if l.unit >= 0 {
+			light.Label = fmt.Sprintf("DF%d", l.unit)
+			light.Track, light.Disk = l.track, d.diskName(l.unit)
+		}
+		switch l.on {
+		case nil:
+		case ledPower:
+			light.State = "power"
+		case ledPowerDim:
+			light.State = "dim"
+		case ledWrite:
+			light.State = "write"
+		default:
+			light.State = "read"
+		}
+		st.Lights = append(st.Lights, light)
+	}
+	return st
 }
 
 // The bar's own image, drawn at the window's resolution (statusScale

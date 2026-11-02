@@ -12,7 +12,14 @@ struct MachineTab: View {
                 LabeledContent("Model") {
                     HStack {
                         ForEach(model.presets, id: \.self) { p in
-                            Button(p) { model.applyPreset(p) }
+                            // The model the settings are stands out.
+                            if p == model.preset {
+                                Button(p) { model.applyPreset(p) }
+                                    .buttonStyle(.borderedProminent)
+                                    .accessibilityAddTraits(.isSelected)
+                            } else {
+                                Button(p) { model.applyPreset(p) }
+                            }
                         }
                     }
                 }
@@ -405,7 +412,9 @@ struct DisplayTab: View {
                     ("1×", 1), ("2×", 2), ("3×", 3), ("4×", 4),
                 ], other: { "\($0)×" })
                 Toggle("Show the overscan area (720×284)", isOn: $model.settings.overscan)
+                #if os(macOS) // the iPad's machine has its own controls (MachineBar)
                 Toggle("Status bar with the activity lights", isOn: $model.settings.statusBar)
+                #endif
                 Toggle("Start in warp mode (Cmd+W toggles)", isOn: $model.settings.warp)
                 Toggle("No sound", isOn: $model.settings.mute)
             }

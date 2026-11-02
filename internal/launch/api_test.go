@@ -153,3 +153,29 @@ func TestSetDir(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestMatchPreset(t *testing.T) {
+	for _, p := range Presets {
+		s := config.Defaults()
+		p.Apply(&s)
+		if got := MatchPreset(s); got != p.Name {
+			t.Errorf("%s settings: MatchPreset = %q", p.Name, got)
+		}
+	}
+	s := config.Defaults()
+	Presets[len(Presets)-1].Apply(&s) // A4000
+	s.Z3RAM, s.RTG = 65536, 16
+	if got := MatchPreset(s); got != "A4000" {
+		t.Errorf("an A4000 with more memory: MatchPreset = %q", got)
+	}
+	s.CPU = "68030"
+	if got := MatchPreset(s); got != "" {
+		t.Errorf("an A4000 with a 68030: MatchPreset = %q", got)
+	}
+}
+
+func TestMatchPresetDefaults(t *testing.T) {
+	if got := MatchPreset(config.Defaults()); got == "" {
+		t.Error("the default settings match no model")
+	}
+}

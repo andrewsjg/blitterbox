@@ -99,19 +99,30 @@ struct LauncherView: View {
                 .padding([.horizontal, .top])
                 Divider().padding(.top, 10)
                 HStack(alignment: .center) {
-                    Text(model.status)
-                        .foregroundStyle(model.statusIsError ? Color.red : Color.primary)
-                        .lineLimit(3)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    // The status is a quiet note, unless it is an error.
+                    Group {
+                        if model.statusIsError {
+                            Label(model.status, systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.red)
+                        } else {
+                            Text(model.status).foregroundStyle(.secondary)
+                        }
+                    }
+                    .font(.callout)
+                    .lineLimit(3)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     #if os(macOS)
                     Button("Quit", systemImage: "power") { NSApp.terminate(nil) }
                         .controlSize(.large)
                     #endif
-                    Button("Start", systemImage: "play.fill") { model.start() }
-                        .keyboardShortcut(.defaultAction)
-                        .controlSize(.large)
-                        .disabled(model.running)
+                    Button { model.start() } label: {
+                        Label("Start", systemImage: "play.fill").padding(.horizontal, 8)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+                    .controlSize(.large)
+                    .disabled(model.running)
                 }
                 .padding()
             }

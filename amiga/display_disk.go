@@ -52,19 +52,19 @@ func (d *Display) pollDiskKeys() {
 	}
 	switch {
 	case ebiten.IsKeyPressed(ebiten.KeyShift):
-		d.eject(unit)
+		d.Eject(unit)
 	case ebiten.IsKeyPressed(ebiten.KeyMeta):
 		disks := d.Disks[unit]
 		if len(disks) > 0 {
 			d.insert(unit, (d.DiskIndex[unit]+1)%len(disks))
 		}
 	default:
-		d.openChooser(unit)
+		d.InsertDisk(unit)
 	}
 }
 
-// eject takes the disk out of a drive.
-func (d *Display) eject(unit int) {
+// Eject takes the disk out of a drive.
+func (d *Display) Eject(unit int) {
 	dr := d.amiga.Disk.DF(unit)
 	if dr == nil {
 		return
@@ -74,9 +74,9 @@ func (d *Display) eject(unit int) {
 	d.message("DF%d: ejected", unit)
 }
 
-// openChooser shows the file dialog for a drive, starting in the folder
+// InsertDisk shows the file dialog for a drive, starting in the folder
 // of its current (or last listed) disk.
-func (d *Display) openChooser(unit int) {
+func (d *Display) InsertDisk(unit int) {
 	if d.chooser != nil {
 		return // one dialog at a time
 	}

@@ -42,11 +42,13 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 /// AmigaViewController shows the Amiga's display (Ebitengine's view
 /// controller, as a child) with the on-screen keyboard docked below it
-/// when shown; the picture shrinks to fit above the keyboard.
+/// when shown, and the machine's controls (MachineBar) floating over the
+/// picture's foot; the picture shrinks to fit above the keyboard.
 final class AmigaViewController: UIViewController {
     private let amiga = EbitenController()
     private let keyboard = AmigaKeyboardView()
-    private let keyboardButton = UIButton(type: .system)
+    private let bar = MachineBarModel()
+    private lazy var barHost = UIHostingController(rootView: MachineBar(bar: bar))
     private var keyboardShown: NSLayoutConstraint!
     private var keyboardHidden: NSLayoutConstraint!
 
@@ -60,17 +62,15 @@ final class AmigaViewController: UIViewController {
         view.addSubview(keyboard)
         keyboard.onKey = { code, down in GoamigaKey(code, down) }
 
-        var config = UIButton.Configuration.filled()
-        config.image = UIImage(systemName: "keyboard")
-        config.baseBackgroundColor = UIColor(white: 0.2, alpha: 0.7)
-        config.baseForegroundColor = .white
-        config.cornerStyle = .capsule
-        keyboardButton.configuration = config
-        keyboardButton.accessibilityLabel = "Keyboard"
-        keyboardButton.addAction(UIAction { [weak self] _ in self?.toggleKeyboard() }, for: .primaryActionTriggered)
-        view.addSubview(keyboardButton)
+        bar.toggleKeyboard = { [weak self] in self?.toggleKeyboard() }
+        barHost.sizingOptions = .intrinsicContentSize
+        barHost.view.backgroundColor = .clear
+        addChild(barHost)
+        view.addSubview(barHost.view)
+        barHost.didMove(toParent: self)
+        bar.start()
 
-        for v in [amiga.view!, keyboard, keyboardButton] {
+        for v in [amiga.view!, keyboard, barHost.view!] {
             v.translatesAutoresizingMaskIntoConstraints = false
         }
         let safe = view.safeAreaLayoutGuide
@@ -85,8 +85,17 @@ final class AmigaViewController: UIViewController {
             keyboard.trailingAnchor.constraint(equalTo: safe.trailingAnchor),
             keyboard.heightConstraint(),
             keyboardHidden,
-            keyboardButton.topAnchor.constraint(equalTo: safe.topAnchor, constant: 8),
-            keyboardButton.trailingAnchor.constraint(equalTo: safe.trailingAnchor, constant: -8),
+            // The controls: centred above the keyboard, clear of the home
+            // indicator.
+            barHost.view.centerXAnchor.constraint(equalTo: safe.centerXAnchor),
+            barHost.view.widthAnchor.constraint(lessThanOrEqualTo: safe.widthAnchor, constant: -16),
+            barHost.view.bottomAnchor.constraint(lessThanOrEqualTo: keyboard.topAnchor, constant: -8),
+            barHost.view.bottomAnchor.constraint(lessThanOrEqualTo: safe.bottomAnchor, constant: -8),
+            {
+                let c = barHost.view.bottomAnchor.constraint(equalTo: keyboard.topAnchor, constant: -8)
+                c.priority = .defaultHigh
+                return c
+            }(),
         ])
         if UserDefaults.standard.bool(forKey: "keyboardShown") {
             showKeyboard(true)
@@ -109,6 +118,7 @@ final class AmigaViewController: UIViewController {
         }
         keyboardHidden.isActive = !show
         keyboardShown.isActive = show
+        bar.keyboardShown = show
         UserDefaults.standard.set(show, forKey: "keyboardShown")
     }
 }

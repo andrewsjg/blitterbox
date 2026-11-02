@@ -18,6 +18,7 @@ final class LauncherModel {
     var tab = Tab.machine
 
     var presets: [String] = []
+    var preset = "" // the model the settings are, of presets ("" none)
     var limits: [String: Int] = [:]
     var rom = ROMDescription()
     var whdload = WHDLoadInfo()
@@ -44,6 +45,7 @@ final class LauncherModel {
             apply(r)
         }
         refreshROM()
+        refreshPreset() // didSet doesn't run in init
     }
 
     func say(_ message: String, error: Bool = false) {
@@ -70,9 +72,14 @@ final class LauncherModel {
     }
 
     private func settingsChanged(from old: Settings) {
+        refreshPreset()
         if settings.rom != old.rom || settings.cpu != old.cpu || settings.motherboard != old.motherboard {
             refreshROM()
         }
+    }
+
+    func refreshPreset() {
+        preset = bridge.call(Request(op: "model", settings: settings)).model ?? ""
     }
 
     func refreshROM() {

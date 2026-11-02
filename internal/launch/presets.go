@@ -2,6 +2,7 @@ package launch
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/andrewsjg/goamiga/internal/config"
@@ -56,6 +57,31 @@ var Presets = []Preset{
 		s.Gayle, s.Motherboard, s.MBRAM, s.Z3RAM = "auto", "a4000", 16384, 0
 		s.Clock, s.ClockY2K = true, false
 	}},
+}
+
+// MatchPreset is the model settings s are: the preset that changes the
+// fewest of them, without changing the processor, chipset (unless
+// automatic) or motherboard; "" if none keeps all three.
+func MatchPreset(s config.Settings) string {
+	best, fewest := "", -1
+	for _, p := range Presets {
+		t := s
+		p.Apply(&t)
+		if t.CPU != s.CPU || (t.Chipset != s.Chipset && s.Chipset != "" && s.Chipset != "auto") || t.Motherboard != s.Motherboard {
+			continue
+		}
+		a, b := reflect.ValueOf(s), reflect.ValueOf(t)
+		n := 0
+		for i := range a.NumField() {
+			if !reflect.DeepEqual(a.Field(i).Interface(), b.Field(i).Interface()) {
+				n++
+			}
+		}
+		if fewest < 0 || n < fewest {
+			best, fewest = p.Name, n
+		}
+	}
+	return best
 }
 
 // freeSCSIID is the ID for a new SCSI disk: 6 (the A3000's internal
