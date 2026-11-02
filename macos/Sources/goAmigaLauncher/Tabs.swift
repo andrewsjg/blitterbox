@@ -72,7 +72,7 @@ struct MachineTab: View {
                 }
             }
         }
-        .formStyle(.grouped)
+        .settingsForm()
     }
 }
 
@@ -125,7 +125,7 @@ struct MemoryTab: View {
                 Note("Chip RAM is shared with the custom chips; slow RAM is the A500 trapdoor expansion at $C00000; fast RAM is a Zorro II board. Some old games refuse to run with fast RAM under Kickstart 1.3 — turn it off for them. The RTG card is the uaegfx graphics card for Picasso96: install Picasso96 with its uaegfx driver.")
             }
         }
-        .formStyle(.grouped)
+        .settingsForm()
         .onChange(of: model.settings.motherboard) { _, _ in
             // The RTG card is on Zorro III with a motherboard, Zorro II without.
             if model.settings.hasMotherboard && model.settings.rtg > 0 && model.settings.rtg < 16 {
@@ -163,7 +163,7 @@ struct FloppyTab: View {
                 Note("Drop a disk image on a drive to put it in. A zip of several disks inserts the boot disk; the rest go to Cmd+F11.")
             }
         }
-        .formStyle(.grouped)
+        .settingsForm()
     }
 }
 
@@ -257,13 +257,13 @@ struct HardDiskTab: View {
                 Note("Plain hardfiles and RDB images both work. A new, empty hardfile can be made with --hdf-create from the command line and formatted from Workbench. A folder appears as a volume named after it, and boots if it has S/Startup-Sequence. SCSI disks go on an A2091 for Amiga Unix (the first at ID 6, where it looks for its root); AmigaOS sees them too.")
             }
         }
-        .formStyle(.grouped)
+        .settingsForm()
     }
 
     private func add(_ target: String, folder: Bool) {
         let title = ["hdf": "Choose a hardfile", "dir": "Choose a folder to use as an Amiga drive",
                      "scsi": "Choose a hardfile for the SCSI disk"][target]!
-        if let url = openPanel(title: title, folder: folder, types: folder ? [] : hdfTypes) {
+        chooseFile(title: title, folder: folder, types: folder ? [] : hdfTypes) { url in
             model.choose(target, url)
         }
     }
@@ -284,12 +284,12 @@ struct WHDLoadTab: View {
                             .lineLimit(1).truncationMode(.middle)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Button("Archive…") {
-                            if let url = openPanel(title: "Choose a WHDLoad game (.lha or .slave)", folder: false, types: whdloadTypes, start: s.whdload) {
+                            chooseFile(title: "Choose a WHDLoad game (.lha or .slave)", folder: false, types: whdloadTypes, start: s.whdload) { url in
                                 model.choose("whdload", url)
                             }
                         }
                         Button("Folder…") {
-                            if let url = openPanel(title: "Choose a WHDLoad game's folder", folder: true, start: s.whdload) {
+                            chooseFile(title: "Choose a WHDLoad game's folder", folder: true, start: s.whdload) { url in
                                 model.choose("whdloaddir", url)
                             }
                         }
@@ -321,7 +321,7 @@ struct WHDLoadTab: View {
                 Note("A WHDLoad game boots straight in, with no Workbench needed: its .lha archive (unpacked once into \(w.home)/games, where its saves and high scores stay), its folder or its .slave. Dropping an .lha on the running Amiga starts it too. F10 quits the game. Most games want fast RAM and many AGA: the A1200 + fast preset suits them, with a Kickstart 3.x ROM.")
             }
         }
-        .formStyle(.grouped)
+        .settingsForm()
     }
 }
 
@@ -389,7 +389,7 @@ struct PortsTab: View {
                 }
             }
         }
-        .formStyle(.grouped)
+        .settingsForm()
     }
 }
 
@@ -420,6 +420,6 @@ struct DisplayTab: View {
                 }
             }
         }
-        .formStyle(.grouped)
+        .settingsForm()
     }
 }

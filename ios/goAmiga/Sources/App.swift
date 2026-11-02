@@ -1,8 +1,10 @@
 // goAmiga for iPadOS: the Go emulator (../../mobile, built into
 // Goamiga.xcframework by scripts/ios-framework.sh) runs inside Ebitengine's
-// view controller. It boots the first .rom and .adf in the app's Documents
-// folder, which the Files app shows as "On My iPad > goAmiga".
+// view controller, set up on the configuration screen it shares with the
+// Mac (Launcher.swift). ROMs, disks and hardfiles live in the app's
+// Documents folder, which the Files app shows as "On My iPad > goAmiga".
 import Goamiga
+import SwiftUI
 import UIKit
 
 @main
@@ -12,12 +14,24 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {}
 // the scene life cycle (Info.plist's UIApplicationSceneManifest names it).
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
+    private var host: AppHost?
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession,
                options connectionOptions: UIScene.ConnectionOptions) {
         guard let scene = scene as? UIWindowScene else { return }
+        // Settings name files relative to Documents; Go must be there
+        // before the model asks it anything.
+        var error: NSError?
+        if !GoamigaSetDocuments(Documents.url.path, &error) {
+            print("goAmiga: \(error?.localizedDescription ?? "can't use Documents")")
+        }
+        let model = MainActor.assumeIsolated { LauncherModel() }
+        let host = AppHost(model: model)
+        GoamigaSetHost(host)
+        self.host = host
+
         let window = UIWindow(windowScene: scene)
-        window.rootViewController = AmigaViewController()
+        window.rootViewController = UIHostingController(rootView: RootView().environment(model))
         window.makeKeyAndVisible()
         self.window = window
     }
@@ -30,7 +44,6 @@ final class AmigaViewController: UIViewController {
     private let amiga = GoamigaEbitenViewController()
     private let keyboard = AmigaKeyboardView()
     private let keyboardButton = UIButton(type: .system)
-    private let message = UILabel()
     private var keyboardShown: NSLayoutConstraint!
     private var keyboardHidden: NSLayoutConstraint!
 
@@ -54,12 +67,7 @@ final class AmigaViewController: UIViewController {
         keyboardButton.addAction(UIAction { [weak self] _ in self?.toggleKeyboard() }, for: .primaryActionTriggered)
         view.addSubview(keyboardButton)
 
-        message.textColor = .white
-        message.numberOfLines = 0
-        message.textAlignment = .center
-        view.addSubview(message)
-
-        for v in [amiga.view!, keyboard, keyboardButton, message] {
+        for v in [amiga.view!, keyboard, keyboardButton] {
             v.translatesAutoresizingMaskIntoConstraints = false
         }
         let safe = view.safeAreaLayoutGuide
@@ -76,14 +84,10 @@ final class AmigaViewController: UIViewController {
             keyboardHidden,
             keyboardButton.topAnchor.constraint(equalTo: safe.topAnchor, constant: 8),
             keyboardButton.trailingAnchor.constraint(equalTo: safe.trailingAnchor, constant: -8),
-            message.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            message.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            message.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -40),
         ])
         if UserDefaults.standard.bool(forKey: "keyboardShown") {
             showKeyboard(true)
         }
-        boot()
     }
 
     override var prefersStatusBarHidden: Bool { true }
@@ -103,22 +107,5 @@ final class AmigaViewController: UIViewController {
         keyboardHidden.isActive = !show
         keyboardShown.isActive = show
         UserDefaults.standard.set(show, forKey: "keyboardShown")
-    }
-
-    private func boot() {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let files = ((try? FileManager.default.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil)) ?? [])
-            .sorted { $0.lastPathComponent < $1.lastPathComponent }
-        guard let rom = files.first(where: { $0.pathExtension.lowercased() == "rom" }) else {
-            message.text = "Put a Kickstart .rom (and optionally an .adf) in\nOn My iPad › goAmiga, then reopen the app."
-            return
-        }
-        let adf = files.first(where: { ["adf", "zip"].contains($0.pathExtension.lowercased()) })
-        var error: NSError?
-        if GoamigaBoot(rom.path, adf?.path ?? "", &error) {
-            print("goAmiga: booted \(rom.lastPathComponent) with \(adf?.lastPathComponent ?? "no disk")")
-        } else {
-            message.text = "Could not start the Amiga:\n\(error?.localizedDescription ?? "unknown error")"
-        }
     }
 }

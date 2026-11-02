@@ -90,7 +90,9 @@ struct Response: Decodable {
     var limits: [String: Int]?
 }
 
+#if os(macOS)
 // Bridge talks to goamiga --launcher-api: one JSON line out, one back.
+// (The iPad app's Bridge asks the Go code in-process.)
 final class Bridge {
     let goamiga: URL
     private var process: Process?
@@ -152,4 +154,8 @@ final class Bridge {
             return Response(error: "goamiga (\(goamiga.path)): \(error.localizedDescription)")
         }
     }
+
+    // settingsPath is how settings name a chosen file: its full path.
+    func settingsPath(_ url: URL) -> String { url.path }
 }
+#endif

@@ -1,4 +1,6 @@
+#if os(macOS)
 import AppKit
+#endif
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -20,6 +22,11 @@ struct LauncherView: View {
                         model.load(n)
                         model.start()
                     }
+                    #if !os(macOS)
+                    // A tap starts it on iOS (primaryAction), rather than
+                    // selecting it as a click does on the Mac.
+                    Button("Edit") { model.load(n) }
+                    #endif
                     Button("Delete…", role: .destructive) {
                         model.selection = n
                         confirmDelete = true
@@ -45,8 +52,13 @@ struct LauncherView: View {
                         Button("Delete…") { confirmDelete = true }
                             .disabled(model.selection == nil)
                     }
+                    #if os(macOS)
                     Text("Double-click a configuration to start it.")
                         .font(.caption).foregroundStyle(.secondary)
+                    #else
+                    Text("Tap a configuration to start it; touch and hold to edit it.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    #endif
                 }
                 .padding(10)
             }
@@ -71,8 +83,10 @@ struct LauncherView: View {
                         .lineLimit(3)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                    #if os(macOS)
                     Button("Quit") { NSApp.terminate(nil) }
                         .controlSize(.large)
+                    #endif
                     Button("Start") { model.start() }
                         .keyboardShortcut(.defaultAction)
                         .controlSize(.large)
@@ -82,7 +96,9 @@ struct LauncherView: View {
             }
             .navigationTitle(model.name.isEmpty ? "goAmiga" : "goAmiga — \(model.name)")
         }
+        #if os(macOS)
         .task { await saveTabShots(model) }
+        #endif
         .confirmationDialog("Delete the configuration \(model.selection ?? "")?", isPresented: $confirmDelete) {
             Button("Delete", role: .destructive) {
                 if let n = model.selection { model.delete(n) }
@@ -92,6 +108,19 @@ struct LauncherView: View {
 }
 
 // MARK: - Controls
+
+extension View {
+    // settingsForm is how each tab's Form looks. On iOS a row's buttons
+    // need a style of their own to be tapped one at a time (plain ones
+    // all fire together: Choose… with Clear, every model at once).
+    func settingsForm() -> some View {
+        #if os(macOS)
+        formStyle(.grouped)
+        #else
+        formStyle(.grouped).buttonStyle(.bordered)
+        #endif
+    }
+}
 
 // Choice is a pop-up menu of values with their labels. A value from a
 // settings file that isn't on the menu is shown as it is.
@@ -134,7 +163,7 @@ struct FileRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .help(path)
                 Button("Choose…") {
-                    if let url = openPanel(title: title, folder: folder, types: types, start: path) {
+                    chooseFile(title: title, folder: folder, types: types, start: path) { url in
                         model.choose(target, url)
                     }
                 }
@@ -153,6 +182,20 @@ let romTypes = ["rom", "bin"]
 let diskTypes = ["adf", "ipf", "zip", "adz", "gz"]
 let hdfTypes = ["hdf", "hdz"]
 let whdloadTypes = ["lha", "lzh", "slave"]
+
+#if os(macOS)
+// chooseFile asks for a file (of these extensions) or a folder, and gives
+// it to then, or calls cancelled. (The iPad app's shows the document
+// picker.)
+@MainActor
+func chooseFile(title: String, folder: Bool, types: [String] = [], start: String = "",
+                cancelled: () -> Void = {}, then: (URL) -> Void) {
+    if let url = openPanel(title: title, folder: folder, types: types, start: start) {
+        then(url)
+    } else {
+        cancelled()
+    }
+}
 
 // openPanel asks for a file (of these extensions) or a folder.
 @MainActor
@@ -173,6 +216,7 @@ func openPanel(title: String, folder: Bool, types: [String] = [], start: String 
     }
     return p.runModal() == .OK ? p.url : nil
 }
+#endif
 
 struct Note: View {
     let text: String

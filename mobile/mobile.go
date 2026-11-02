@@ -1,80 +1,96 @@
 // Package goamiga is goAmiga for iPadOS: ebitenmobile binds it into an
 // xcframework (scripts/ios-framework.sh) that the app in ios/ hosts.
 //
-// This is a spike. It boots one fixed machine, an A500 with 1 MB of chip
-// RAM and 2 MB of fast RAM, from a Kickstart ROM and an optional ADF that
-// the app names. The full settings live in cmd/goamiga's buildMachine,
-// which a real port would move out of package main to share.
+// The app's settings screen asks Request (the launcher API, as the macOS
+// one asks goamiga --launcher-api), then Starts the machine from the file
+// "start" wrote. Paths in settings are relative to the app's Documents
+// folder (SetDocuments), which the Files app shows, so they survive the
+// app moving container on an update.
 package goamiga
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/mobile"
 
 	"github.com/andrewsjg/goamiga/amiga"
+	"github.com/andrewsjg/goamiga/internal/config"
+	"github.com/andrewsjg/goamiga/internal/launch"
 )
 
-// game shows nothing until Boot gives it a machine, then the machine's
-// display. Ebitengine calls Update, Draw and Layout on its own thread;
-// Boot is called from the app's main thread, hence the lock.
-type game struct {
-	mu   sync.Mutex
-	a    *amiga.Amiga
-	disp *amiga.Display
+// Host is the app, for what the machine asks of it. Its methods are
+// called on the emulation's thread and must not call back into this
+// package before returning.
+type Host interface {
+	// SettingsRequested: the status bar's Config button switched the
+	// machine off, to change its settings.
+	SettingsRequested()
+	// ChooseDisk asks for a disk image for DFunit: (a drive's light was
+	// tapped); the app answers with DiskChosen.
+	ChooseDisk(unit int)
 }
 
-var g = &game{}
+// game is the running machine and its display, or nothing (black) while
+// the settings screen shows. Ebitengine calls Update, Draw and Layout on
+// its own thread; the app calls in on its main thread, hence the lock.
+type game struct {
+	mu   sync.Mutex
+	m    *launch.Machine
+	disp *amiga.Display
+	s    config.Settings // the running machine's settings
+	name string          // and its configuration's name, if saved
+	host Host
+}
+
+var (
+	g         = &game{}
+	diskReply = make(chan string, 1) // DiskChosen's answer to ChooseDisk
+)
 
 func init() {
 	mobile.SetGame(g)
 }
 
-// Boot builds the A500, inserts adfPath (if not empty) in DF0: and starts
-// it. A second call replaces the running machine.
-func Boot(romPath, adfPath string) error {
-	rom, err := amiga.LoadROM(romPath)
+// SetDocuments makes dir, the app's Documents folder, where relative
+// paths in settings are found.
+func SetDocuments(dir string) error {
+	return os.Chdir(dir)
+}
+
+// SetHost gives the machine the app to ask for things.
+func SetHost(h Host) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.host = h
+}
+
+// Request answers one launcher API request (JSON, see launch.Handle).
+func Request(json string) string {
+	return string(launch.HandleJSON([]byte(json)))
+}
+
+// Start builds the machine from the settings file the launcher API's
+// "start" wrote and runs it, in place of any running one. name is the
+// configuration's, if saved.
+func Start(configPath, name string) error {
+	s, err := config.Load(configPath)
 	if err != nil {
 		return err
 	}
-	a, err := amiga.New(rom, nil)
-	if err != nil {
-		return fmt.Errorf("creating the Amiga: %w", err)
-	}
-	for _, step := range []func() error{
-		func() error { return a.SetChipRAM(1024) },
-		func() error { return a.SetCPU("68000", 0) },
-		func() error { return a.SetFPU("auto") },
-		func() error { return a.SetChipset("ecs-agnus") },
-		func() error { return a.SetVideoStandard("pal") },
-		func() error { return a.ConfigureMemory(0, 2048) },
-		func() error {
-			if adfPath == "" {
-				return nil
-			}
-			return a.LoadDiskUnit(0, adfPath)
-		},
-		a.Reset,
-	} {
-		if err := step(); err != nil {
-			a.Shutdown()
-			return err
-		}
-	}
-
-	d := amiga.NewDisplay(a)
-	d.Scale = 1
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	if g.disp != nil {
-		g.disp.Stop()
-		g.a.Shutdown()
-	}
-	g.a, g.disp = a, d
-	d.Start()
-	return nil
+	g.stop()
+	return g.start(*s, name)
+}
+
+// Stop switches the machine off.
+func Stop() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.stop()
 }
 
 // Key presses (down) or releases an Amiga key by its raw code, for the
@@ -83,9 +99,61 @@ func Boot(romPath, adfPath string) error {
 func Key(code int, down bool) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	if g.a != nil && g.a.Keyboard != nil {
-		g.a.Keyboard.EnqueueKey(byte(code), down)
+	if g.m != nil && g.m.A.Keyboard != nil {
+		g.m.A.Keyboard.EnqueueKey(byte(code), down)
 	}
+}
+
+// DiskChosen answers ChooseDisk: the disk image's path, or "" if none
+// was chosen.
+func DiskChosen(path string) {
+	select {
+	case diskReply <- path:
+	default: // nobody asked
+	}
+}
+
+// start builds and runs a machine from s. g.mu is held.
+func (g *game) start(s config.Settings, name string) error {
+	m, err := launch.Build(&s, "", nil, os.Stdout)
+	if err != nil {
+		return err
+	}
+	s.Scale = 1 // the window is the screen
+	d := m.NewDisplay(&s, name)
+	d.ChooseDiskFile = g.chooseDisk
+	fmt.Printf("Starting display (%.2f fps %s)...\n", m.A.FrameRate(), m.A.VideoStandard())
+	g.m, g.disp, g.s, g.name = m, d, s, name
+	d.Start()
+	return nil
+}
+
+// stop switches the machine off. g.mu is held.
+func (g *game) stop() {
+	if g.disp != nil {
+		g.disp.Stop()
+	}
+	if g.m != nil {
+		g.m.Close()
+	}
+	g.m, g.disp = nil, nil
+}
+
+// chooseDisk is the display's disk dialog: the app's picker, waited for
+// on the display's chooser goroutine.
+func (g *game) chooseDisk(unit int, _ string) (string, error) {
+	g.mu.Lock()
+	h := g.host
+	g.mu.Unlock()
+	if h == nil {
+		return "", nil
+	}
+	select {
+	case <-diskReply: // a stale answer
+	default:
+	}
+	h.ChooseDisk(unit)
+	return <-diskReply, nil
 }
 
 func (g *game) Update() error {
@@ -94,7 +162,28 @@ func (g *game) Update() error {
 	if g.disp == nil {
 		return nil
 	}
-	return g.disp.Update()
+	if err := g.disp.Update(); err != nil {
+		return err
+	}
+	switch {
+	case g.disp.PowerRequested:
+		s := g.m.PowerCycleSettings(g.s, g.disp)
+		g.stop()
+		if err := g.start(s, g.name); err != nil {
+			fmt.Printf("Can't switch it on again: %v\n", err)
+			g.settingsRequested()
+		}
+	case g.disp.ConfigRequested:
+		g.stop()
+		g.settingsRequested()
+	}
+	return nil
+}
+
+func (g *game) settingsRequested() {
+	if g.host != nil {
+		g.host.SettingsRequested()
+	}
 }
 
 func (g *game) Draw(screen *ebiten.Image) {

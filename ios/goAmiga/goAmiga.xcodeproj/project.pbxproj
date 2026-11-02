@@ -10,6 +10,11 @@
 		A10000000000000000000001 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* App.swift */; };
 		A10000000000000000000003 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* Keyboard.swift */; };
 		A10000000000000000000002 /* Goamiga.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* Goamiga.xcframework */; };
+		A10000000000000000000004 /* Launcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* Launcher.swift */; };
+		A10000000000000000000005 /* Bridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* Bridge.swift */; };
+		A10000000000000000000006 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* Model.swift */; };
+		A10000000000000000000007 /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* Views.swift */; };
+		A10000000000000000000008 /* Tabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* Tabs.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,6 +23,11 @@
 		A20000000000000000000002 /* Goamiga.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Goamiga.xcframework; path = ../Goamiga.xcframework; sourceTree = SOURCE_ROOT; };
 		A20000000000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000004 /* goAmiga.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = goAmiga.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000006 /* Launcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Launcher.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* Bridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Bridge.swift; path = ../../macos/Sources/goAmigaLauncher/Bridge.swift; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000008 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Model.swift; path = ../../macos/Sources/goAmigaLauncher/Model.swift; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000009 /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Views.swift; path = ../../macos/Sources/goAmigaLauncher/Views.swift; sourceTree = SOURCE_ROOT; };
+		A20000000000000000000010 /* Tabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Tabs.swift; path = ../../macos/Sources/goAmigaLauncher/Tabs.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -36,6 +46,7 @@
 			isa = PBXGroup;
 			children = (
 				A40000000000000000000002 /* Sources */,
+				A40000000000000000000004 /* Shared with the Mac launcher */,
 				A20000000000000000000003 /* Info.plist */,
 				A20000000000000000000002 /* Goamiga.xcframework */,
 				A40000000000000000000003 /* Products */,
@@ -47,6 +58,7 @@
 			children = (
 				A20000000000000000000001 /* App.swift */,
 				A20000000000000000000005 /* Keyboard.swift */,
+				A20000000000000000000006 /* Launcher.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -57,6 +69,17 @@
 				A20000000000000000000004 /* goAmiga.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000004 /* Shared with the Mac launcher */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000007 /* Bridge.swift */,
+				A20000000000000000000008 /* Model.swift */,
+				A20000000000000000000009 /* Views.swift */,
+				A20000000000000000000010 /* Tabs.swift */,
+			);
+			name = "Shared with the Mac launcher";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -113,6 +136,11 @@
 			files = (
 				A10000000000000000000001 /* App.swift in Sources */,
 				A10000000000000000000003 /* Keyboard.swift in Sources */,
+				A10000000000000000000004 /* Launcher.swift in Sources */,
+				A10000000000000000000005 /* Bridge.swift in Sources */,
+				A10000000000000000000006 /* Model.swift in Sources */,
+				A10000000000000000000007 /* Views.swift in Sources */,
+				A10000000000000000000008 /* Tabs.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
