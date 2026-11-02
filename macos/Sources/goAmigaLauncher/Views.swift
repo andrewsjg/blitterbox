@@ -14,38 +14,23 @@ struct LauncherView: View {
     var body: some View {
         @Bindable var model = model
         NavigationSplitView {
-            configurations
-            .safeAreaInset(edge: .bottom) {
-                VStack(alignment: .leading, spacing: 8) {
-                    TextField("Name", text: $model.name)
-                        .onSubmit { model.save() }
-                    HStack {
-                        Button("Save", systemImage: "square.and.arrow.down") { model.save() }
-                        Button("New", systemImage: "plus") { model.newConfiguration() }
-                        Spacer()
-                        Button("Delete…", systemImage: "trash") {
-                            if let n = model.current { confirmDeleting(n) }
+            // The footer is below the list rather than inset into it,
+            // where the list's styling took the buttons' bezels.
+            VStack(spacing: 0) {
+                configurations
+                    .overlay {
+                        if model.saved.isEmpty {
+                            ContentUnavailableView("No Configurations", systemImage: "tray",
+                                                   description: Text("Set up a machine, name it below and Save it."))
                         }
-                        .disabled(model.current == nil)
-                        #if !os(macOS)
-                        .labelStyle(.iconOnly) // no room for its title
-                        #endif
                     }
-                    .lineLimit(1)
-                    #if !os(macOS)
-                    .controlSize(.small) // the sidebar is narrow
-                    #endif
-                    #if os(macOS)
-                    Text("Double-click a configuration to start it.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    #else
-                    Text("Tap a configuration to load it, then Start it.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    #endif
-                }
-                .padding(10)
+                configurationFooter
             }
+            #if os(macOS)
             .navigationSplitViewColumnWidth(min: 190, ideal: 220)
+            #else
+            .navigationSplitViewColumnWidth(min: 240, ideal: 270)
+            #endif
             .navigationTitle("Configurations")
         } detail: {
             VStack(spacing: 0) {
@@ -161,6 +146,64 @@ extension LauncherView {
     }
     #endif
 
+    // configurationFooter is below the list: the configuration's name,
+    // Save, New and Delete.
+    private var configurationFooter: some View {
+        @Bindable var model = model
+        return VStack(spacing: 0) {
+            Divider()
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Name").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    Spacer()
+                    if model.unsaved && !model.name.isEmpty {
+                        Text("Unsaved changes").font(.caption).foregroundStyle(.orange)
+                    }
+                }
+                TextField("Name", text: $model.name, prompt: Text("Untitled"))
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit { if canSave { model.save() } }
+                    #if !os(macOS)
+                    .submitLabel(.done)
+                    #endif
+                HStack(spacing: 8) {
+                    Button { model.save() } label: {
+                        Label("Save", systemImage: "square.and.arrow.down").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(FooterButton(prominent: true))
+                    .disabled(!canSave)
+                    Button { model.newConfiguration() } label: {
+                        Label("New", systemImage: "plus").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(FooterButton())
+                    Button(role: .destructive) {
+                        if let n = model.current { confirmDeleting(n) }
+                    } label: {
+                        Label("Delete…", systemImage: "trash").labelStyle(.iconOnly) // no room for its title
+                    }
+                    .buttonStyle(FooterButton())
+                    .help("Delete the configuration")
+                    .accessibilityLabel("Delete the configuration")
+                    .disabled(model.current == nil)
+                }
+                .lineLimit(1)
+                .fixedSize(horizontal: false, vertical: true)
+                #if os(macOS)
+                Text("Double-click a configuration to start it.")
+                    .font(.caption).foregroundStyle(.secondary)
+                #else
+                Text("Tap a configuration to load it, then Start it.")
+                    .font(.caption).foregroundStyle(.secondary)
+                #endif
+            }
+            .padding(12)
+        }
+        .background(.bar)
+    }
+
+    /// canSave: there is a name, and something to save under it.
+    private var canSave: Bool { !model.name.isEmpty && model.unsaved }
+
     private func confirmDeleting(_ n: String) {
         deleting = n
         confirmDelete = true
@@ -168,6 +211,26 @@ extension LauncherView {
 }
 
 // MARK: - Controls
+
+// FooterButton is the sidebar footer's buttons: a capsule, filled with
+// the accent colour when prominent, else tinted. (The iPad's sidebar
+// drew .bordered buttons with no bezel at all.)
+struct FooterButton: ButtonStyle {
+    var prominent = false
+    @Environment(\.isEnabled) private var enabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        let tint: Color = configuration.role == .destructive ? .red : .accentColor
+        configuration.label
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(prominent ? .white : tint)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(prominent ? tint : tint.opacity(0.12), in: Capsule())
+            .opacity(enabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
+            .contentShape(Capsule())
+    }
+}
 
 extension View {
     // settingsForm is how each tab's Form looks. On iOS a row's buttons

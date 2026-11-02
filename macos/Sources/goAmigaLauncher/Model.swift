@@ -25,6 +25,14 @@ final class LauncherModel {
 
     var running = false
 
+    /// savedAs is the name and settings as last loaded or saved, to tell
+    /// unsaved changes by (nil: not a saved configuration).
+    private var savedAs: (name: String, settings: Settings)?
+    var unsaved: Bool {
+        guard let b = savedAs else { return true }
+        return b.name != name || b.settings != settings
+    }
+
     let bridge = Bridge()
     private let runner = MachineRunner()
 
@@ -43,6 +51,7 @@ final class LauncherModel {
         let r = bridge.call(Request(op: "startup"))
         if r.ok {
             apply(r)
+            markSaved()
         }
         refreshROM()
         refreshPreset() // didSet doesn't run in init
@@ -95,12 +104,21 @@ final class LauncherModel {
 
     func load(_ n: String) {
         guard n != name || !saved.contains(n) else { return }
-        apply(bridge.call(Request(op: "load", name: n)))
+        let r = bridge.call(Request(op: "load", name: n))
+        apply(r)
+        if r.ok { markSaved() }
     }
 
     func save() {
         let r = bridge.call(Request(op: "save", name: name, settings: settings))
         apply(r)
+        if r.ok { markSaved() }
+    }
+
+    /// markSaved notes the settings are their saved configuration's, if
+    /// they are one.
+    private func markSaved() {
+        savedAs = saved.contains(name) ? (name, settings) : nil
     }
 
     func newConfiguration() {
@@ -110,6 +128,7 @@ final class LauncherModel {
         }
         name = ""
         selection = nil
+        savedAs = nil
         say("New configuration: the default A500 settings")
     }
 
@@ -117,6 +136,7 @@ final class LauncherModel {
         let r = bridge.call(Request(op: "delete", name: n))
         if r.ok, name == n {
             name = ""
+            savedAs = nil
         }
         apply(r)
     }
