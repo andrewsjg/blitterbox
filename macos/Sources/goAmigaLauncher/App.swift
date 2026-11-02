@@ -16,11 +16,11 @@ struct GoAmigaApp: App {
         .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .newItem) {
-                Button("New Configuration") { model.newConfiguration() }
+                Button("New Configuration", systemImage: "plus") { model.newConfiguration() }
                     .keyboardShortcut("n")
             }
             CommandGroup(replacing: .saveItem) {
-                Button("Save Configuration") { model.save() }
+                Button("Save Configuration", systemImage: "square.and.arrow.down") { model.save() }
                     .keyboardShortcut("s")
             }
         }

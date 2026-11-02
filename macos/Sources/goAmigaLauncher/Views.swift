@@ -26,16 +26,16 @@ struct LauncherView: View {
             }
             .contextMenu(forSelectionType: String.self) { names in
                 if let n = names.first {
-                    Button("Start") {
+                    Button("Start", systemImage: "play.fill") {
                         model.load(n)
                         model.start()
                     }
                     #if !os(macOS)
                     // A tap starts it on iOS (primaryAction), rather than
                     // selecting it as a click does on the Mac.
-                    Button("Edit") { model.load(n) }
+                    Button("Edit", systemImage: "pencil") { model.load(n) }
                     #endif
-                    Button("Delete…", role: .destructive) {
+                    Button("Delete…", systemImage: "trash", role: .destructive) {
                         model.selection = n
                         deleting = n
                         confirmDelete = true
@@ -55,15 +55,22 @@ struct LauncherView: View {
                     TextField("Name", text: $model.name)
                         .onSubmit { model.save() }
                     HStack {
-                        Button("Save") { model.save() }
-                        Button("New") { model.newConfiguration() }
+                        Button("Save", systemImage: "square.and.arrow.down") { model.save() }
+                        Button("New", systemImage: "plus") { model.newConfiguration() }
                         Spacer()
-                        Button("Delete…") {
+                        Button("Delete…", systemImage: "trash") {
                             deleting = model.current
                             confirmDelete = true
                         }
                         .disabled(model.current == nil)
+                        #if !os(macOS)
+                        .labelStyle(.iconOnly) // no room for its title
+                        #endif
                     }
+                    .lineLimit(1)
+                    #if !os(macOS)
+                    .controlSize(.small) // the sidebar is narrow
+                    #endif
                     #if os(macOS)
                     Text("Double-click a configuration to start it.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -96,10 +103,10 @@ struct LauncherView: View {
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     #if os(macOS)
-                    Button("Quit") { NSApp.terminate(nil) }
+                    Button("Quit", systemImage: "power") { NSApp.terminate(nil) }
                         .controlSize(.large)
                     #endif
-                    Button("Start") { model.start() }
+                    Button("Start", systemImage: "play.fill") { model.start() }
                         .keyboardShortcut(.defaultAction)
                         .controlSize(.large)
                         .disabled(model.running)
@@ -112,7 +119,7 @@ struct LauncherView: View {
         .task { await saveTabShots(model) }
         #endif
         .confirmationDialog("Delete the configuration \(deleting ?? "")?", isPresented: $confirmDelete) {
-            Button("Delete", role: .destructive) {
+            Button("Delete", systemImage: "trash", role: .destructive) {
                 if let n = deleting { model.delete(n) }
             }
         }
@@ -124,15 +131,30 @@ struct LauncherView: View {
 extension View {
     // settingsForm is how each tab's Form looks. On iOS a row's buttons
     // need a style of their own to be tapped one at a time (plain ones
-    // all fire together: Choose… with Clear, every model at once).
+    // all fire together: Choose… with Clear, every model at once), and
+    // their icons one too (InlineLabel).
     func settingsForm() -> some View {
         #if os(macOS)
         formStyle(.grouped)
         #else
-        formStyle(.grouped).buttonStyle(.bordered)
+        formStyle(.grouped).buttonStyle(.bordered).labelStyle(InlineLabel())
         #endif
     }
 }
+
+#if !os(macOS)
+// InlineLabel is a button's icon and title side by side. An iOS Form lays
+// out a row holding a standard Label as a list item with an icon: the row
+// grew tall, and a disabled button's title stayed dark.
+struct InlineLabel: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 6) {
+            configuration.icon
+            configuration.title
+        }
+    }
+}
+#endif
 
 // Choice is a pop-up menu of values with their labels. A value from a
 // settings file that isn't on the menu is shown as it is.
@@ -174,12 +196,12 @@ struct FileRow: View {
                     .lineLimit(1).truncationMode(.middle)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .help(path)
-                Button("Choose…") {
+                Button("Choose…", systemImage: "folder") {
                     chooseFile(title: title, folder: folder, types: types, start: path) { url in
                         model.choose(target, url)
                     }
                 }
-                Button("Clear", action: clear).disabled(path.isEmpty)
+                Button("Clear", systemImage: "xmark.circle", action: clear).disabled(path.isEmpty)
             }
         }
         .dropDestination(for: URL.self) { urls, _ in

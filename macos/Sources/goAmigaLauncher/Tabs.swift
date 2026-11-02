@@ -25,7 +25,7 @@ struct MachineTab: View {
                     HStack {
                         Warning(m)
                         if let preset = model.rom.model {
-                            Button("Use \(preset) settings") { model.applyPreset(preset) }
+                            Button("Use \(preset) settings", systemImage: "wand.and.stars") { model.applyPreset(preset) }
                         }
                     }
                 } else if let d = model.rom.description {
@@ -232,16 +232,16 @@ struct HardDiskTab: View {
                             Text(d.path).lineLimit(1).truncationMode(.middle)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .help(d.path)
-                            Button("Remove") { d.remove(&model.settings) }
+                            Button("Remove", systemImage: "minus.circle") { d.remove(&model.settings) }
                         }
                     }
                 }
                 HStack {
-                    Button("Add Hardfile…") { add("hdf", folder: false) }
+                    Button("Add Hardfile…", systemImage: "externaldrive.badge.plus") { add("hdf", folder: false) }
                         .disabled(s.hardfiles.count >= (model.limits["hardfiles"] ?? 28) || partitions >= 64)
-                    Button("Add Folder…") { add("dir", folder: true) }
+                    Button("Add Folder…", systemImage: "folder.badge.plus") { add("dir", folder: true) }
                         .disabled(partitions >= 64)
-                    Button("Add SCSI Disk…") { add("scsi", folder: false) }
+                    Button("Add SCSI Disk…", systemImage: "opticaldiscdrive") { add("scsi", folder: false) }
                         .disabled(s.scsi.count >= 7)
                 }
             }
@@ -283,17 +283,17 @@ struct WHDLoadTab: View {
                             .foregroundStyle(s.whdload.isEmpty ? .secondary : .primary)
                             .lineLimit(1).truncationMode(.middle)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Button("Archive…") {
+                        Button("Archive…", systemImage: "archivebox") {
                             chooseFile(title: "Choose a WHDLoad game (.lha or .slave)", folder: false, types: whdloadTypes, start: s.whdload) { url in
                                 model.choose("whdload", url)
                             }
                         }
-                        Button("Folder…") {
+                        Button("Folder…", systemImage: "folder") {
                             chooseFile(title: "Choose a WHDLoad game's folder", folder: true, start: s.whdload) { url in
                                 model.choose("whdloaddir", url)
                             }
                         }
-                        Button("Clear") { model.settings.whdload = "" }.disabled(s.whdload.isEmpty)
+                        Button("Clear", systemImage: "xmark.circle") { model.settings.whdload = "" }.disabled(s.whdload.isEmpty)
                     }
                 }
                 .dropDestination(for: URL.self) { urls, _ in
