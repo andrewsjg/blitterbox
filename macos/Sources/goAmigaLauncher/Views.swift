@@ -21,7 +21,9 @@ struct LauncherView: View {
                     // it, and the List can clear the selection after: the
                     // one loaded is marked instead.
                     .fontWeight(name == model.name ? .semibold : .regular)
-                    .listRowBackground(name == model.name ? Color.accentColor.opacity(0.2) : nil)
+                    .listRowBackground(name == model.name
+                        ? Capsule().fill(Color.accentColor.opacity(0.2)).padding(.horizontal, 10).padding(.vertical, 2)
+                        : nil)
                     #endif
             }
             .contextMenu(forSelectionType: String.self) { names in
