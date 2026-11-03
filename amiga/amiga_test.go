@@ -195,6 +195,7 @@ func TestCopperJumpOnRead(t *testing.T) {
 		{0x088, 2, 1}, {0x08A, 2, 2}, {0x086, 4, 1}, {0x088, 4, 2},
 	} {
 		a := createTestAmiga(t)
+		a.Custom.Write(0x096, []byte{0x82, 0x80}) // DMAEN + COPEN
 		a.Copper.cop1lc, a.Copper.cop2lc = 0x1000, 0x2000
 		a.Copper.pc = 0x3000
 		a.Custom.Read(0xDFF000+tc.addr, make([]byte, tc.n))
@@ -208,6 +209,29 @@ func TestCopperJumpOnRead(t *testing.T) {
 		if a.Copper.pc != want {
 			t.Errorf("%d-byte read of $%03X: copper at $%X, want $%X", tc.n, tc.addr, a.Copper.pc, want)
 		}
+	}
+}
+
+// A restart made with Copper DMA off (here VBLANK's) loads the pointer
+// when the DMA comes on, from COP1LC as it is then: B.C. Kid's title
+// writes COP1LC at line 257 of a frame that began with Copper DMA off.
+func TestCopperRestartWaitsForDMA(t *testing.T) {
+	a := createTestAmiga(t)
+	a.Copper.cop1lc, a.Copper.pc = 0x1000, 0x3000
+	a.startFrame() // VBLANK, Copper DMA off
+	a.Copper.cop1lc = 0x2000
+	if a.Copper.pc != 0x3000 {
+		t.Fatalf("Copper at $%X with its DMA off, want it left at $3000", a.Copper.pc)
+	}
+	a.Custom.Write(0x096, []byte{0x82, 0x80}) // DMAEN + COPEN
+	if a.Copper.pc != 0x2000 {
+		t.Fatalf("Copper at $%X when its DMA came on, want COP1LC $2000", a.Copper.pc)
+	}
+	a.Copper.cop1lc = 0x4000
+	a.Custom.Write(0x096, []byte{0x00, 0x80})
+	a.Custom.Write(0x096, []byte{0x82, 0x80})
+	if a.Copper.pc != 0x2000 {
+		t.Fatalf("Copper at $%X after DMA off and on, want it left at $2000", a.Copper.pc)
 	}
 }
 

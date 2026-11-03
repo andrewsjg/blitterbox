@@ -17,7 +17,13 @@ type Copper struct {
 
 	// halted is set when a MOVE targets a register the Copper may not
 	// write; it stops until restarted (VBLANK or a COPJMP strobe).
-	halted  bool
+	halted bool
+	// strobe is a restart (VBLANK, COPJMPx: 1 or 2) made while Copper DMA
+	// was off. The Copper loads its pointer from COPxLC in its first DMA
+	// cycle after a restart, so it takes the COPxLC of that moment: B.C.
+	// Kid, with Copper DMA off over VBLANK, writes COP1LC at line 257 and
+	// turns the DMA on, and its new list starts there.
+	strobe  int
 	wait    bool // True if waiting for beam position
 	compare int  // a WAIT was fetched: compare the beam in this many cycles
 	second  bool // the first word (ir1) of an instruction has been fetched
@@ -51,15 +57,26 @@ func (c *Copper) GetCop1LC() uint32 { return c.cop1lc }
 // GetCop2LC returns the Copper list 2 pointer.
 func (c *Copper) GetCop2LC() uint32 { return c.cop2lc }
 
-// Restart sets the Copper PC to COP1LC (which=1) or COP2LC (which=2).
+// Restart sets the Copper PC to COP1LC (which=1) or COP2LC (which=2), at
+// once with Copper DMA on, or else when it comes on (see strobe).
 func (c *Copper) Restart(which int) {
 	c.wait, c.compare, c.second = false, 0, false
 	c.halted = false
-	if which == 1 {
+	c.strobe = which
+	if c.amiga == nil || c.amiga.Custom == nil || c.amiga.Custom.ReadReg16(0x096)&0x0280 == 0x0280 {
+		c.dmaOn()
+	}
+}
+
+// dmaOn carries out a pending restart: Copper DMA is on.
+func (c *Copper) dmaOn() {
+	switch c.strobe {
+	case 1:
 		c.pc = c.cop1lc
-	} else {
+	case 2:
 		c.pc = c.cop2lc
 	}
+	c.strobe = 0
 }
 
 // beamHP converts the beam tracker's hpos (CPU cycles) to the value the
@@ -148,6 +165,9 @@ func (c *Copper) idleCycles(hpos, vpos int) int {
 // hpos is the beam tracker's position in CPU cycles (0..Amiga.lineCycles);
 // see beamHP for the conversion to Copper horizontal positions.
 func (c *Copper) Step(hpos, vpos int) {
+	if c.strobe != 0 {
+		c.dmaOn()
+	}
 	if c.halted || hpos/CPUCyclesPerColorClock+1 >= c.amiga.lineCycles/CPUCyclesPerColorClock {
 		return
 	}

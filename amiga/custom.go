@@ -375,8 +375,12 @@ func (c *CustomChips) Write(addr int, p []byte) (int, error) {
 			// clear bits
 			oldDmacon &^= val & 0x7FFF
 		}
+		was := uint16(c.regs[0x096])<<8 | uint16(c.regs[0x097])
 		c.regs[0x096] = byte(oldDmacon >> 8)
 		c.regs[0x097] = byte(oldDmacon)
+		if was&0x0280 != 0x0280 && oldDmacon&0x0280 == 0x0280 && c.amiga != nil && c.amiga.Copper != nil {
+			c.amiga.Copper.dmaOn()
+		}
 
 	case 0x02A: // VPOSW: only LOF (bit 15) is honoured; the beam counters
 		// are not writable here. graphics.library sets LOF when it turns

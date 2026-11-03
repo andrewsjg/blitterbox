@@ -33,7 +33,7 @@ import (
 const (
 	stateMagic   = "BlitterBox state\n"
 	oldMagic     = "goAmiga state\n" // states saved before the rename
-	stateVersion = 21                // 20: the RTG pointer, the clipboard helper; 21: AHI
+	stateVersion = 22                // 20: the RTG pointer, the clipboard helper; 21: AHI; 22: the Copper's pending restart
 )
 
 // stateCodec writes or reads the fields of a state in order.
@@ -648,6 +648,7 @@ func (c *Copper) state(s *stateCodec) {
 	num(s, &c.waitHP)
 	num(s, &c.waitVM)
 	num(s, &c.waitHM)
+	num(s, &c.strobe)
 }
 
 func (b *Blitter) state(s *stateCodec) {

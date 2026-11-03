@@ -61,6 +61,25 @@ verified. Longer investigations get their own write-up in `docs/`.
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
 
+## 2026-11-03 — B.C. Kid: a Copper restart waits for Copper DMA
+
+B.C. Kid's title screen was torn into noise on its odd planes. Setting
+up the screen, the game turns Copper DMA off, and in a later frame (the
+Copper still off over its VBLANK) writes COP1LC at line 257 and turns
+Copper DMA on, with no COPJMP. The Copper loads its pointer from COPxLC
+in its first DMA cycle after a restart, not at the restart itself
+(WinUAE's `getstrobecopip`), so on the real chips the new list starts
+there. The emulator had loaded the pointer at VBLANK, so the Copper ran
+on from the old list's address, now other data, whose "MOVEs" set
+BPL1MOD to $0807.
+
+A restart (VBLANK, COPJMPx) made with Copper DMA off now waits for the
+DMA (`Copper.strobe`), and takes COPxLC as it is then. The state format
+is version 22 with the pending restart.
+
+Verified by `TestCopperRestartWaitsForDMA` and the title from the AGS
+menu: 1,178 flashed frames in 100 s before, none after.
+
 ## 2026-11-03 — Switchblade 2: audio DMA switched off still interrupts
 
 Switchblade 2 (AGS Top 200, WHDLoad) stopped with WHDLoad's "Illegal
