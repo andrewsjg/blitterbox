@@ -61,6 +61,21 @@ verified. Longer investigations get their own write-up in `docs/`.
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
 
+## 2026-11-03 — Pac-Mania: DDFSTOP stops at $D8
+
+Pac-Mania (AGS Top 200) showed its maze as horizontal noise. Its
+background playfield is an 880×848 bitmap, 110-byte rows, shown with
+DDFSTRT $28, DDFSTOP $E0 and BPL1MOD 64: on the real chips the fetch
+stops at $D8 whatever DDFSTOP says, so a line is 23 words (46 bytes),
+and 46 + 64 is the 110-byte row. The emulator fetched 24 words up to $E0,
+drifting 2 bytes a line. DDFSTOP now acts as at most $D8 (`hardDDFStop`)
+in every fetch-length calculation.
+
+Verified by the plane pointers (the three background planes are exactly
+848 rows of 110 bytes apart, the foreground's 272 rows of 44), by
+`TestFetchWords`, and by the game from the AGS menu now matching
+Codetapper's captures of round 1.
+
 ## 2026-11-03 — Rainbow Islands: a stopped CPU wakes for the Copper
 
 Rainbow Islands (AGS Top 200, WHDLoad) showed every other frame black,

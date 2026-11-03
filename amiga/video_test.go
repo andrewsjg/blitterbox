@@ -322,6 +322,8 @@ func TestFetchWords(t *testing.T) {
 		{true, 0x3C, 0xD0, 40},  // Kickstart 1.3 Workbench
 		{true, 0x38, 0xD8, 42},  // Kickstart 3.x Workbench (with BPLxMOD -4)
 		{true, 0x18, 0xD8, 50},  // widest overscan
+		{false, 0x28, 0xE0, 23}, // Pac-Mania: DDFSTOP past the hardware stop
+		{true, 0x18, 0xE0, 50},  // ... in hires
 	} {
 		if got := fetchWords(c.hires, c.start, c.stop); got != c.want {
 			t.Errorf("hires=%v DDF $%02X/$%02X: %d words, want %d", c.hires, c.start, c.stop, got, c.want)

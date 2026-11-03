@@ -286,6 +286,18 @@ func (v *Video) outputRow(vpos int) int {
 // $18 to $D8 in hires.
 const maxFetchWords = 50
 
+// hardDDFStop is where Agnus stops fetching whatever DDFSTOP says: a
+// later DDFSTOP acts as $D8. Pac-Mania sets $28-$E0 in lores, which
+// fetches 23 words a line, not 24 (its planes are 110-byte rows with
+// BPL1MOD 64).
+const hardDDFStop = 0xD8
+
+// ddfRange is DDFSTRT/DDFSTOP as Agnus uses them: fetch-unit aligned,
+// and stopped at the hardware stop.
+func ddfRange(ddfstrt, ddfstop uint16) (start, stop int) {
+	return int(ddfstrt & 0xFC), min(int(ddfstop&0xFC), hardDDFStop)
+}
+
 // maxShresFetchWords: super-hires fetches twice as many words (ECS).
 const maxShresFetchWords = 2 * maxFetchWords
 
@@ -314,7 +326,7 @@ func fetchWordsRes(hires, shres bool, ddfstrt, ddfstop uint16, factor int) int {
 	if factor <= 1 && !shres {
 		return fetchWords(hires, ddfstrt, ddfstop)
 	}
-	start, stop := int(ddfstrt&0xFC), int(ddfstop&0xFC)
+	start, stop := ddfRange(ddfstrt, ddfstop)
 	if stop <= start {
 		stop = start
 	}
@@ -325,7 +337,7 @@ func fetchWordsRes(hires, shres bool, ddfstrt, ddfstop uint16, factor int) int {
 }
 
 func fetchWords(hires bool, ddfstrt, ddfstop uint16) int {
-	start, stop := int(ddfstrt&0xFC), int(ddfstop&0xFC)
+	start, stop := ddfRange(ddfstrt, ddfstop)
 	if start == 0 || stop <= start {
 		start, stop = 0x38, 0xD0
 		if hires {
