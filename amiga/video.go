@@ -519,7 +519,7 @@ func (v *Video) lineModulos(last int) (bpl1mod, bpl2mod int32) {
 			}
 		}
 	}
-	return int32(int16(m1)), int32(int16(m2))
+	return int32(int16(m1 &^ 1)), int32(int16(m2 &^ 1)) // no bit 0, as for the blitter
 }
 
 type regChange struct {

@@ -563,21 +563,22 @@ func (c *CustomChips) Write(addr int, p []byte) (int, error) {
 		if c.amiga != nil && c.amiga.ECSAgnus && c.amiga.Video != nil {
 			c.amiga.Video.diwHigh = true
 		}
+	// The modulo registers have no bit 0: a blit's pointers stay on words.
 	case 0x060: // BLTCMOD
 		if c.amiga != nil && c.amiga.Blitter != nil {
-			c.amiga.Blitter.cmod = int16(uint16(p[0])<<8 | uint16(p[1]))
+			c.amiga.Blitter.cmod = int16((uint16(p[0])<<8 | uint16(p[1])) &^ 1)
 		}
 	case 0x062: // BLTBMOD
 		if c.amiga != nil && c.amiga.Blitter != nil {
-			c.amiga.Blitter.bmod = int16(uint16(p[0])<<8 | uint16(p[1]))
+			c.amiga.Blitter.bmod = int16((uint16(p[0])<<8 | uint16(p[1])) &^ 1)
 		}
 	case 0x064: // BLTAMOD
 		if c.amiga != nil && c.amiga.Blitter != nil {
-			c.amiga.Blitter.amod = int16(uint16(p[0])<<8 | uint16(p[1]))
+			c.amiga.Blitter.amod = int16((uint16(p[0])<<8 | uint16(p[1])) &^ 1)
 		}
 	case 0x066: // BLTDMOD
 		if c.amiga != nil && c.amiga.Blitter != nil {
-			c.amiga.Blitter.dmod = int16(uint16(p[0])<<8 | uint16(p[1]))
+			c.amiga.Blitter.dmod = int16((uint16(p[0])<<8 | uint16(p[1])) &^ 1)
 		}
 	// Sprite pointer registers ($120-$13E)
 	case 0x120, 0x124, 0x128, 0x12C, 0x130, 0x134, 0x138, 0x13C: // SPRxPTH

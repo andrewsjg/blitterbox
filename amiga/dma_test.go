@@ -153,11 +153,19 @@ func TestBlitterBusContention(t *testing.T) {
 		t.Errorf("D-only blit: wait %d, want 0", got)
 	}
 
-	// Nasty mode: the first chip access waits for the blit; none if the
-	// instruction stays off the chip bus.
+	// Nasty mode leaves the CPU the idle cycles of the blit's pattern:
+	// a D-only blit still doesn't hold it up.
 	a.Custom.Write(0x096, []byte{0x84, 0x00}) // + BLTPRI
+	if got := a.chipBusWait(1); got != 0 {
+		t.Errorf("nasty D-only blit: wait %d, want 0", got)
+	}
+
+	// A nasty blit using every slot: the first chip access waits for the
+	// blit; none if the instruction stays off the chip bus.
+	a.Blitter.con0 = 0x0FF0
+	a.Blitter.Execute(10<<6 | 10)
 	if got := a.chipBusWait(1); got != a.Blitter.completionCycles {
-		t.Errorf("nasty blit: wait %d, want %d", got, a.Blitter.completionCycles)
+		t.Errorf("nasty ABCD blit: wait %d, want %d", got, a.Blitter.completionCycles)
 	}
 	if got := a.chipBusWait(0); got != 0 {
 		t.Errorf("nasty blit, no chip access: wait %d, want 0", got)

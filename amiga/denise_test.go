@@ -606,3 +606,13 @@ func TestModuloWrittenAfterLastFetch(t *testing.T) {
 		t.Errorf("BPL1PT = $%X, want $%X (20 words and the modulo of 40 in force at the last fetch)", got, want)
 	}
 }
+
+// BPLxMOD has no bit 0, like the blitter's modulos: a modulo of 41 adds 40.
+func TestOddBitplaneModulo(t *testing.T) {
+	a := deniseAmiga(t, 0x1200, make([]byte, 64))
+	writeCustom16(a, 0x108, 41)
+	a.Video.RenderLine(DisplayTop)
+	if got, want := a.Video.bplpt[0], uint32(0x1000+40+40); got != want {
+		t.Errorf("BPL1PT = $%X, want $%X", got, want)
+	}
+}

@@ -101,8 +101,9 @@ func (a *Amiga) chipSlot() {
 	dmacon := a.Custom.ReadReg16(0x096)
 	blit := a.Blitter != nil && a.Blitter.busy && dmacon&0x0240 == 0x0240
 	switch {
-	case blit && dmacon&0x0400 != 0:
-		// Nasty mode: the blitter keeps the bus until it is done.
+	case blit && dmacon&0x0400 != 0 && a.Blitter.hogsBus():
+		// Nasty mode: a blitter using every slot keeps the bus until it is
+		// done. (The idle cycles of other blits are the CPU's.)
 		for a.Blitter.busy && a.Custom.ReadReg16(0x096)&0x0640 == 0x0640 {
 			step(CPUCyclesPerColorClock * 2)
 		}

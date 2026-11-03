@@ -227,10 +227,12 @@ func (a *Amiga) chipBusWait(n int) int {
 	dmacon := a.Custom.ReadReg16(0x096)
 	blit := a.Blitter != nil && a.Blitter.busy && dmacon&0x0240 == 0x0240
 
-	// Nasty mode: the blitter never yields, so the first chip access waits
-	// for the whole blit. The blitter's own contention with bitplanes
-	// stretches it further; approximating with its remaining time.
-	if blit && dmacon&0x0400 != 0 {
+	// Nasty mode: the blitter never yields a slot it uses, so with a blit
+	// that uses every slot the first chip access waits for the whole blit
+	// (its contention with bitplanes stretches it further; approximated by
+	// its remaining time). The idle cycles of other blits stay the CPU's,
+	// as without BLTPRI.
+	if blit && dmacon&0x0400 != 0 && a.Blitter.hogsBus() {
 		return a.Blitter.completionCycles
 	}
 

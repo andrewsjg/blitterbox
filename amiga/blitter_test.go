@@ -337,3 +337,31 @@ func blitNow(a *Amiga, size uint16) {
 	a.Blitter.Execute(size)
 	a.Blitter.completeRun()
 }
+
+// The modulo registers have no bit 0. F/A-18 Interceptor copies its
+// screens with BLTAMOD = BLTDMOD = 1: a blitter adding the 1 drifted a
+// byte a row and wrote past the screen into the Copper list after it.
+func TestBlitterOddModulo(t *testing.T) {
+	a := newTestAmigaBlitter()
+	a.ChipRAM.Write(0x1000, []byte{0x11, 0x22, 0x33, 0x44, 0x55, 0x66})
+	reg := func(off int, v uint16) { a.Custom.Write(off, []byte{byte(v >> 8), byte(v)}) }
+	reg(0x064, 0x0001) // BLTAMOD
+	reg(0x066, 0x0001) // BLTDMOD
+	if a.Blitter.amod != 0 || a.Blitter.dmod != 0 {
+		t.Fatalf("modulos %d, %d: want 0, 0", a.Blitter.amod, a.Blitter.dmod)
+	}
+	reg(0x062, 0xFFFF) // BLTBMOD: -1 is -2
+	if a.Blitter.bmod != -2 {
+		t.Errorf("BLTBMOD $FFFF: %d, want -2", a.Blitter.bmod)
+	}
+
+	a.Blitter.con0 = 0x09F0 // A to D
+	a.Blitter.afwm, a.Blitter.alwm = 0xFFFF, 0xFFFF
+	a.Blitter.aptL, a.Blitter.dptL = 0x1000, 0x2000
+	blitNow(a, 3<<6|1) // 3 rows of a word
+	dst := make([]byte, 8)
+	a.ChipRAM.Read(0x2000, dst)
+	if want := []byte{0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0, 0}; string(dst) != string(want) {
+		t.Errorf("copied % X, want % X", dst, want)
+	}
+}
