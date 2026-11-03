@@ -24,10 +24,42 @@ func enableAudioDMA(a *Amiga, bits uint16) {
 	a.Custom.Write(0x096, []byte{0x82, byte(bits)}) // SET | DMAEN | AUDxEN
 }
 
+// startAudioDMA enables channel n's DMA and runs Paula to its first word.
+func startAudioDMA(a *Amiga, n int) {
+	enableAudioDMA(a, 1<<n)
+	a.Paula.checkDMA()
+	a.Paula.Tick(a.Paula.ch[n].periodLeft * CPUCyclesPerColorClock)
+}
+
+// A channel started by DMACON gets its first word in its audio DMA slot
+// (colour clock $0F+2n), and the interrupt a colour clock after: not with
+// the DMACON write (WinUAE's state 1).
+func TestAudioDMAStartsInSlot(t *testing.T) {
+	a := paulaAmiga(t, 3, 200, 0x10, 0x20)
+	a.hpos = 0x40 * CPUCyclesPerColorClock // past channel 3's slot
+	enableAudioDMA(a, 0x08)
+	a.Paula.Tick(0)
+	if a.Paula.Interrupts[3] != 0 {
+		t.Fatal("AUD3 interrupt raised with the DMACON write")
+	}
+	line := a.lineCycles / CPUCyclesPerColorClock
+	want := line - 0x40 + 0x15 + 1 // the next line's slot $15, plus one
+	if got := a.Paula.CyclesToNextInterrupt(); got != want*CPUCyclesPerColorClock {
+		t.Fatalf("interrupt due in %d cycles, want %d", got, want*CPUCyclesPerColorClock)
+	}
+	a.Paula.Tick((want - 1) * CPUCyclesPerColorClock)
+	if a.Paula.Interrupts[3] != 0 {
+		t.Fatal("AUD3 interrupt before the channel's slot")
+	}
+	a.Paula.Tick(CPUCyclesPerColorClock)
+	if a.Paula.Interrupts[3] != 1 || a.Paula.ch[3].sample != 0x10 {
+		t.Fatalf("after the slot: %d interrupts, sample $%02X; want 1, $10", a.Paula.Interrupts[3], a.Paula.ch[3].sample)
+	}
+}
+
 func TestAudioDMAPlayback(t *testing.T) {
 	a := paulaAmiga(t, 0, 200, 0x10, 0x20, 0x30, 0x40)
-	enableAudioDMA(a, 0x01)
-	a.Paula.Tick(0)
+	startAudioDMA(a, 0)
 	if a.Paula.Interrupts[0] != 1 || a.Custom.ReadReg16(0x09C)&0x0080 == 0 {
 		t.Fatal("no AUD0 interrupt when the buffer started")
 	}
@@ -57,10 +89,19 @@ func TestAudioDMAPlayback(t *testing.T) {
 		t.Errorf("after reload sample = $%02X, want $55 from the new buffer", got)
 	}
 
+	// Cleared AUD0EN: the channel plays out its word ($55, $66), then
+	// interrupts and idles. Switchblade 2 relies on that interrupt: its
+	// handler masks the channel's interrupt, and without it a stale AUD3
+	// enable sent the next sound's start to a handler since overwritten.
+	irqs := a.Paula.Interrupts[0]
 	a.Custom.Write(0x096, []byte{0x00, 0x01}) // clear AUD0EN
 	a.Paula.Tick(2)
-	if a.Paula.ch[0].dma || a.Paula.ch[0].sample != 0 {
-		t.Error("channel still playing after AUD0EN cleared")
+	if a.Paula.ch[0].dma || a.Paula.ch[0].sample != 0x55 {
+		t.Errorf("after AUD0EN cleared: dma %v, sample $%02X; want the word played out", a.Paula.ch[0].dma, a.Paula.ch[0].sample)
+	}
+	a.Paula.Tick(400 * CPUCyclesPerColorClock)
+	if c := a.Paula.ch[0]; c.manual || c.sample != 0 || a.Paula.Interrupts[0] != irqs+1 {
+		t.Errorf("after the word: manual %v, sample $%02X, %d interrupts; want idle, silent, %d", c.manual, c.sample, a.Paula.Interrupts[0], irqs+1)
 	}
 }
 
@@ -115,8 +156,7 @@ func TestAudioMixOutput(t *testing.T) {
 func TestAudioVolumeModulation(t *testing.T) {
 	a := paulaAmiga(t, 0, 300, 0x00, 0x10, 0x00, 0x30)
 	a.Disk.WriteADKCON(0x8001) // SET | USE0V1
-	enableAudioDMA(a, 0x01)
-	a.Paula.Tick(0)
+	startAudioDMA(a, 0)
 	if a.Paula.ch[1].vol != 0x10 || a.Paula.ch[0].sample != 0 {
 		t.Fatalf("after first word: AUD1VOL=%d, ch0 sample %d; want 16, silent", a.Paula.ch[1].vol, a.Paula.ch[0].sample)
 	}
@@ -130,8 +170,7 @@ func TestAudioVolumeModulation(t *testing.T) {
 // exact.
 func TestAudioNextInterrupt(t *testing.T) {
 	a := paulaAmiga(t, 2, 250, make([]byte, 8)...) // 4 words
-	enableAudioDMA(a, 0x04)
-	a.Paula.Tick(0)
+	startAudioDMA(a, 2)
 	want := 8 * 250 * CPUCyclesPerColorClock // 8 samples until the reload
 	if got := a.Paula.CyclesToNextInterrupt(); got != want {
 		t.Fatalf("next interrupt in %d cycles, want %d", got, want)

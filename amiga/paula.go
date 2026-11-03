@@ -14,7 +14,9 @@ import (
 // AUDxLEN (words) into its own counters, fetches words until the length
 // runs out, then reloads them and starts again. It raises its interrupt
 // (INTREQ bit 7+n, level 4) each time it starts a buffer, which is when
-// software may write the next buffer's AUDxLC/AUDxLEN. Without DMA, the CPU
+// software may write the next buffer's AUDxLC/AUDxLEN. Started by DMACON,
+// it waits for its audio DMA slot for the first word, so the interrupt
+// comes up to a line after the write, not with it. Without DMA, the CPU
 // can write AUDxDAT directly; the interrupt then asks for the next word.
 //
 // Channels 0 and 3 are on the left, 1 and 2 on the right. ADKCON can make a
@@ -162,7 +164,8 @@ func (p *Paula) modulates(n int) (vol, per bool) {
 // nextRequest is when channel n next asks Agnus for a DMA word, in colour
 // clocks from now, and how often it asks: when the low byte of the
 // current word has played (a modulating channel uses one word a period).
-// A channel DMACON has just started asks at once.
+// A channel DMACON has just started asks for its first word at once,
+// and gets it in its next slot.
 func (p *Paula) nextRequest(n int) (due, every int) {
 	c := &p.ch[n]
 	every = 2 * c.period()
@@ -241,6 +244,7 @@ func (p *Paula) endSample(n int) {
 	}
 	switch {
 	case c.dma:
+		c.modWord = max(c.modWord, 0)
 		p.fetch(n)
 		p.startWord(n)
 	case c.manual && c.datFull:
@@ -248,8 +252,11 @@ func (p *Paula) endSample(n int) {
 		p.startWord(n)
 		p.irq(n)
 	default:
+		// The last word has played and none follows (DMA switched off,
+		// or no AUDxDAT written): the channel interrupts and idles.
 		c.manual = false
 		c.sample = 0
+		p.irq(n)
 	}
 }
 
@@ -274,16 +281,44 @@ func (p *Paula) checkDMA() {
 		on := dmacon&0x0200 != 0 && dmacon&(1<<n) != 0
 		switch {
 		case on && !c.dma:
+			// The channel asks for its first word, which Agnus brings
+			// in its audio slot; that fetch loads LC/LEN and raises the
+			// interrupt a colour clock later (WinUAE's state 1). Until
+			// then the channel is silent, as if between two words.
 			c.dma, c.manual = true, false
-			c.count = 0 // first fetch loads LC/LEN and interrupts
-			c.modWord = 0
-			p.fetch(n)
-			p.startWord(n)
+			c.count = 0    // first fetch loads LC/LEN and interrupts
+			c.modWord = -1 // waiting for the first word
+			c.word, c.sample, c.lowByte = 0, 0, true
+			c.periodLeft = p.cckToSlot(n) + 1
 		case !on && c.dma:
-			c.dma = false
-			c.sample = 0
+			// Switched off, a channel plays out the word it holds and
+			// interrupts at its end (WinUAE's state 3 with DMA off), then
+			// idles. Switchblade 2's sound handler, run by that
+			// interrupt, is what masks the channel's interrupt again. A
+			// channel still waiting for its first word just stops.
+			c.dma, c.datFull = false, false
+			if c.modWord < 0 {
+				c.modWord, c.sample = 0, 0
+			} else {
+				c.manual = true
+			}
 		}
 	}
+}
+
+// cckToSlot is the colour clocks from the beam to channel n's next audio
+// DMA slot ($0F, $11, $13, $15).
+func (p *Paula) cckToSlot(n int) int {
+	if p.amiga == nil || p.amiga.lineCycles == 0 {
+		return 0
+	}
+	a := p.amiga
+	line := a.lineCycles / CPUCyclesPerColorClock
+	d := 0x0F + 2*n - a.hpos/CPUCyclesPerColorClock
+	if d <= 0 {
+		d += line
+	}
+	return d
 }
 
 // Tick advances audio by cpuCycles CPU cycles (two per colour clock).

@@ -61,6 +61,29 @@ verified. Longer investigations get their own write-up in `docs/`.
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
 
+## 2026-11-03 — Switchblade 2: audio DMA switched off still interrupts
+
+Switchblade 2 (AGS Top 200, WHDLoad) stopped with WHDLoad's "Illegal
+Instruction at $20ED2" as soon as fire started the game. Its title music
+plays one-shot notes: an AUDx interrupt runs a handler at $20E58 that
+masks the channel's interrupt and stops its DMA. Before loading the game
+it switches all audio DMA off; on the real Paula a channel switched off
+plays out the word it holds and then interrupts (WinUAE's state 3 with
+DMA off), so the handler masks every channel once more. Our channels
+went silent at once with no interrupt, AUD3's stayed enabled, the load
+overwrote $20E58, and the game's first sound effect sent its start
+interrupt to garbage.
+
+- **DMA off:** a channel plays out its word, interrupts, then idles.
+  Manual mode that runs out of AUDxDAT words interrupts too.
+- **DMA on:** the first word (and with it the interrupt) comes in the
+  channel's audio slot ($0F+2n), a colour clock later, not with the
+  DMACON write, as WinUAE's state 1 has it. Both are encoded in the
+  existing channel state, so the save-state format is unchanged.
+
+Verified by the game from the AGS menu reaching play, and by
+`TestAudioDMAPlayback` and `TestAudioDMAStartsInSlot`.
+
 ## 2026-11-03 — Pac-Mania: DDFSTOP stops at $D8
 
 Pac-Mania (AGS Top 200) showed its maze as horizontal noise. Its
