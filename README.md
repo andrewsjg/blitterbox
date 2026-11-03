@@ -125,6 +125,49 @@ bottom of the screen instead.
 BlitterBox opens with the configuration you started last. While the Amiga
 runs, the **Config** button (or Cmd+,) switches it off and returns here.
 
+## The iPad
+
+BlitterBox also runs on the iPad (`ios/BlitterBox`), with the same
+emulator and the Mac's SwiftUI configuration screen.
+
+**Building it.** You need Xcode and ebitenmobile:
+
+```bash
+go install github.com/hajimehoshi/ebiten/v2/cmd/ebitenmobile@v2.10.4
+scripts/ios-framework.sh   # builds ios/Blitterbox.xcframework from ./mobile
+open ios/BlitterBox/BlitterBox.xcodeproj
+```
+
+Then build and run the BlitterBox scheme on your iPad or a simulator.
+
+**Your files.** ROMs, disks, hardfiles and WHDLoad games live in the app's
+Documents folder: in the Files app, *On My iPad > BlitterBox*. Copy them
+there, or pick them from anywhere with Choose…, which copies a file from
+outside that folder into it. Settings name files relative to the folder,
+so they keep working when iOS moves the app.
+
+**Touch.** The screen works like a laptop's trackpad for the Amiga's
+mouse:
+- Slide one finger to move the pointer. It moves from where it is, not to
+  where you touch.
+- Tap to click. Tap, then touch again and slide, to drag.
+- Hold two fingers down for the right button: press with two fingers,
+  slide to a menu item and lift. A two-finger tap is a right click.
+
+**The controls** float at the foot of the picture and fade to a small
+handle after a few seconds; tap the handle to bring them back. They hold:
+- the activity lights, with each drive's disk: tap a drive to insert a
+  disk, or touch and hold it for Insert Disk… and Eject;
+- the on-screen keyboard, an A500's, docked below the picture. Keys can be
+  held, and several at once. Shift, Ctrl, Alt and the Amiga keys latch
+  for the next key;
+- Reset, Power (a cold start) and Settings (back to the configuration
+  screen). Power and Settings ask first.
+
+**A Magic Keyboard** (or any hardware keyboard) types on the Amiga as a
+desktop one does. Its trackpad, or a mouse, is the iPad's pointer until
+you click in the picture; then the Amiga has it, until Esc or F12.
+
 ## Command line
 
 Flags skip the configuration screen and boot straight away:

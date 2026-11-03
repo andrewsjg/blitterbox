@@ -1,4 +1,4 @@
-// BlitterBox (BlitterBox) for iPadOS: the Go emulator (../../mobile, built into
+// BlitterBox for iPadOS: the Go emulator (../../mobile, built into
 // Blitterbox.xcframework by scripts/ios-framework.sh) runs inside Ebitengine's
 // view controller, set up on the configuration screen it shares with the
 // Mac (Launcher.swift). ROMs, disks and hardfiles live in the app's

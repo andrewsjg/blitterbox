@@ -27,6 +27,9 @@ verified. Longer investigations get their own write-up in `docs/`.
   III RAM.
 - RTG: the uaegfx card for Picasso96 2.0 (`--rtg MB`), on Zorro II or III.
   Workbench runs on it in 8-, 16- and 32-bit modes.
+- The iPad: the same emulator in an iPadOS app (`ios/BlitterBox`), with
+  the Mac's configuration screen, touch as a trackpad, an on-screen A500
+  keyboard and the Magic Keyboard's trackpad as the mouse.
 
 **Not yet implemented / known gaps** (roughly in planned order):
 
@@ -57,6 +60,92 @@ verified. Longer investigations get their own write-up in `docs/`.
 5. **Safety nets.** CPU access violations are dropped rather than raised
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
+
+## 2026-11-03 — F/A-18 Interceptor: modulos without bit 0, nasty blits
+
+F/A-18 Interceptor (the AGS WHDLoad install, on the A4000 with a 68040)
+showed its title screen every other frame, black between, and in flight
+a half-drawn frame now and then.
+
+- **The modulo registers have no bit 0.** The game copies its screens with
+  BLTAMOD = BLTDMOD = 1. Adding the 1 drifted the copy a byte a row, past
+  the screen and over the start of the second buffer's Copper list, whose
+  first words then read as a WAIT for line $F1: that buffer never showed.
+  The blitter's four modulos and BPL1MOD/BPL2MOD now drop bit 0, as
+  WinUAE's do.
+- **Nasty blits leave the CPU their idle cycles.** With BLTPRI the
+  emulator locked the CPU out for the whole of any blit. Only a blit that
+  uses every slot does that; the idle cycles of the others (a C+D clear,
+  a D-only fill) stay the CPU's, as WinUAE gives the CPU any slot DMA
+  doesn't take. Locked out through the game's clears, the 68040 took the
+  vertical blank interrupt late, after the Copper had run the old list,
+  and showed the buffer being drawn.
+
+Verified by running the game from the AGS menu (on a clone of the hard
+disk image) through the title, menus and map into the cockpit at full
+throttle with no bad frame, `TestBlitterOddModulo`,
+`TestOddBitplaneModulo` and `TestBlitterBusContention` (each failing
+without its fix), and Alien Breed 2 still reaching play.
+
+## 2026-11-02 — AGA: Alien Breed 2's playfield
+
+Alien Breed 2 (AGA) had a black strip down the playfield's left and a black
+band above the bottom panel; the panels sat off centre. Three fixes, checked
+against WinUAE and screenshots of the real game:
+
+- **The AGA scroll wraps at the fetch width.** BPLCON1's delay counts
+  modulo the fetch unit (16, 32 or 64 lores pixels), less DDFSTRT's
+  misalignment within the unit. The game scrolls by 63 in a 32-pixel
+  fetch.
+- **Modulos are those in force at each plane's last fetch.** A write
+  later in the line (the game changes BPL1MOD for one line to wrap its
+  map) waits for the next line.
+- **The Copper compares a WAIT two cycles after reading it**, and has no
+  cycle at $E2 on a 227-clock line. Its WAIT for a line past 255 was met
+  while still on 255, which ended the playfield 33 lines early.
+
+Verified with `TestAGAMisalignedDDFSTRT`, `TestCopperWaitAfterLine255`
+and `TestModuloWrittenAfterLastFetch` (each failing without its fix), and
+the game from boot into level 1 matching the reference screenshots.
+
+## 2026-11-02 — BlitterBox: the name, its icons, a launch screen
+
+goAmiga is now BlitterBox: the apps, the Go module
+(`github.com/andrewsjg/blitterbox`), the command (`cmd/blitterbox`) and
+its files. What the Amiga sees keeps its old names (goamiga.device,
+goamiga.audio, the goAmiga volume), so installed systems still find them.
+`~/.config/goamiga` moves to `~/.config/blitterbox` the first time, and
+old save states (magic `goAmiga state`, `goamiga-N.state`) still load.
+
+The Mac and iPad apps use the icons in `icons/` (`icons.Dock`,
+`icons.Window` for the desktop binary's window). The iPad's launch screen
+shows the icon's artwork, scaled by whole pixels and rounded, in the
+middle of the system background, and fades into the configuration screen.
+
+## 2026-11-02 — The iPad app
+
+BlitterBox runs on iPadOS (`ios/BlitterBox`, with the Go side in `mobile/`
+built into `ios/Blitterbox.xcframework` by `scripts/ios-framework.sh`).
+
+- **The configuration screen** is the Mac's SwiftUI one; its bridge calls
+  the launcher API in-process (`internal/launch`, shared with the
+  desktop), and machines run in the app rather than as a child process.
+  ROMs, disks and hardfiles live in Documents (Files: *On My iPad >
+  BlitterBox*); settings name them relative to it. The serial port and
+  clipboard settings, which the iPad can't use, are left out.
+- **Touch is a trackpad** (`amiga/touchpad.go`): one finger moves the
+  pointer, a tap clicks, tap-and-slide drags, two fingers hold the right
+  button. The app hands Go every touch itself, as Ebitengine misses a tap
+  that begins and ends between two slow frames.
+- **The Magic Keyboard's trackpad**, read through GCMouse, is the iPad's
+  pointer until a click in the picture traps it for the Amiga, till Esc
+  or F12, as the desktop mouse is.
+- **An on-screen A500 keyboard** docks below the picture: keys go down and
+  up with the finger, modifiers latch, Caps Lock has its light.
+- **Native machine controls** float over the picture's foot in place of the
+  status bar: the activity lights (tap a drive to insert a disk), the
+  keyboard, Reset, Power and Settings. They fade to a handle when left
+  alone.
 
 ## 2026-10-25 — A native SwiftUI configuration screen for macOS
 
