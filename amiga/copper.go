@@ -101,6 +101,27 @@ func (c *Copper) canWake(hposEnd, vpos int) bool {
 	return vp > wantVP || vp == wantVP && beamHP(hposEnd-1)&c.waitHM >= c.waitHP
 }
 
+// idleCycles is how long the machine can run with the CPU stopped before
+// the Copper next does anything (and so might raise an interrupt): the
+// cycles to the start of the first line on which its WAIT can end, 0 while
+// it runs or can wake on this line, and -1 when it does nothing more this
+// frame (halted, no DMA, or a WAIT that only VBLANK ends).
+func (c *Copper) idleCycles(hpos, vpos int) int {
+	a := c.amiga
+	if c.halted || a.Custom.ReadReg16(0x096)&0x0280 != 0x0280 {
+		return -1
+	}
+	if !c.wait {
+		return 0
+	}
+	for l := vpos; l < a.linesThisFrame(); l++ {
+		if c.canWake(a.lineCycles, l) {
+			return max(0, (l-vpos)*a.lineCycles-hpos)
+		}
+	}
+	return -1
+}
+
 // Step runs one Copper bus cycle at beam position (hpos, vpos). The Copper
 // owns the even colour clocks, one every CopperCyclesPerWord CPU cycles, and
 // in each it either fetches one instruction word or does its internal work:

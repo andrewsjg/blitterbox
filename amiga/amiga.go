@@ -492,7 +492,8 @@ func (a *Amiga) Step() error {
 	if a.cpuStopped {
 		// CPU is halted (STOP instruction). Do not execute any instruction.
 		// Fast-idle: skip ahead to the next interesting event (CIA timer
-		// underflow or VBL) instead of ticking 4 cycles at a time.
+		// underflow, VBL, the Copper's next move ...) instead of ticking 4
+		// cycles at a time.
 		skip := CyclesPerFrame // upper bound: one full frame
 		// Cycles until next VBL (line 0 wrap)
 		cyclesToVBL := (a.linesThisFrame()-a.vpos)*a.lineCycles - a.hpos
@@ -520,6 +521,11 @@ func (a *Amiga) Step() error {
 			if c := a.Disk.CyclesToNextEvent(); c > 0 && c < skip {
 				skip = c
 			}
+		}
+		// The Copper can raise an interrupt too (Rainbow Islands ends
+		// its display with a MOVE to INTREQ and STOPs until then).
+		if c := a.Copper.idleCycles(a.hpos, a.vpos); c >= 0 && c < skip {
+			skip = c
 		}
 		if a.Paula != nil {
 			if c := a.Paula.CyclesToNextInterrupt(); c > 0 && c < skip {

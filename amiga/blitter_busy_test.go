@@ -249,3 +249,33 @@ func TestLineBlitIsIncremental(t *testing.T) {
 		t.Error("line not finished")
 	}
 }
+
+// Nor past the Copper's next move: Rainbow Islands STOPs until its Copper
+// list ends the display with a MOVE to INTREQ, and its handler must run
+// then, not at the next VBLANK (which left every other frame black).
+func TestStoppedCPUWakesForCopper(t *testing.T) {
+	a := createTestAmiga(t)
+	list := []byte{
+		0xC8, 0x01, 0xFF, 0xFE, // WAIT (200, 0)
+		0x00, 0x9C, 0x80, 0x10, // MOVE INTREQ = SET|COPER
+		0xFF, 0xFF, 0xFF, 0xFE, // end
+	}
+	a.ChipRAM.Write(0x1000, list)
+	a.Custom.Write(0x080, []byte{0x00, 0x00, 0x10, 0x00}) // COP1LC
+	a.Custom.Write(0x096, []byte{0x82, 0x80})             // DMAEN + COPEN
+	a.Copper.Restart(1)
+	a.vpos, a.hpos = 100, 0
+	a.cpuStopped = true
+
+	for i := 0; i < 1000 && a.Custom.ReadReg16(0x09C)&0x0010 == 0; i++ {
+		if err := a.Step(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if a.Custom.ReadReg16(0x09C)&0x0010 == 0 {
+		t.Fatal("COPER never raised")
+	}
+	if a.vpos != 200 {
+		t.Fatalf("stopped CPU idled to line %d before seeing the Copper's interrupt (line 200)", a.vpos)
+	}
+}

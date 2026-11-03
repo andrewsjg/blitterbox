@@ -61,6 +61,22 @@ verified. Longer investigations get their own write-up in `docs/`.
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
 
+## 2026-11-03 — Rainbow Islands: a stopped CPU wakes for the Copper
+
+Rainbow Islands (AGS Top 200, WHDLoad) showed every other frame black,
+from the title screen into play. Its Copper list ends the display at
+line 255 by pointing COP1LC at an empty list and raising COPER; the
+handler points COP1LC back at the real list before the vertical blank.
+The CPU waits for that in STOP, and the emulator's STOP fast-idle skipped
+ahead to the next VBLANK, CIA, blitter, disk or Paula event, but not past
+the Copper: the handler ran at line 0, after the Copper had already
+restarted on the empty list. Fast-idle now also stops where the
+Copper's WAIT can next end (`Copper.idleCycles`).
+
+Verified by `TestStoppedCPUWakesForCopper` (failing without the fix) and
+by rerunning the game from the AGS menu: 988 flashed frames in 100 s
+before, none after. F/A-18 Interceptor is still clean.
+
 ## 2026-11-03 — F/A-18 Interceptor: modulos without bit 0, nasty blits
 
 F/A-18 Interceptor (the AGS WHDLoad install, on the A4000 with a 68040)
