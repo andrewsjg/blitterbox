@@ -9,6 +9,7 @@ import (
 // It performs boolean logic operations on up to 3 source bitplanes (A, B, C)
 // and writes the result to a destination (D) in chip RAM.
 type Blitter struct {
+	buf    [2]byte // scratch for chip RAM words: a local escapes to the heap through the ChipRAM interface
 	amiga  *Amiga
 	logger io.Writer
 
@@ -300,7 +301,7 @@ func (b *Blitter) blitWord() {
 	inclusiveFill := r.con1&0x0008 != 0
 	exclusiveFill := r.con1&0x0010 != 0
 	fillEnable := inclusiveFill || exclusiveFill
-	var buf [2]byte
+	buf := &b.buf
 	x, width := r.x, r.width
 
 	// The barrel shifters' history is not cleared between lines: the bits
@@ -585,7 +586,7 @@ type lineRun struct {
 // clears b.lrun. The registers follow the line.
 func (b *Blitter) linePixel() {
 	r := b.lrun
-	var buf [2]byte
+	buf := &b.buf
 	stepX := func(dir int) {
 		if dir > 0 {
 			r.pixelBit++

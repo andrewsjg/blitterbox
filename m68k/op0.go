@@ -84,11 +84,11 @@ func opMovep(c *Processor) (t stepTrace) {
 			t.dst = fmt.Sprintf("(%d,A%d)", disp, an)
 		}
 		val := uint16(c.D[dn])
-		if _, err := c.M.Write(addr, []byte{byte(val >> 8)}); err != nil {
+		if _, err := c.M.PutByte(addr, byte(val>>8)); err != nil {
 			t.err = err
 			return t
 		}
-		if _, err := c.M.Write(addr+2, []byte{byte(val)}); err != nil {
+		if _, err := c.M.PutByte(addr+2, byte(val)); err != nil {
 			t.err = err
 			return t
 		}
@@ -104,7 +104,7 @@ func opMovep(c *Processor) (t stepTrace) {
 		val := c.D[dn]
 		bytes := [4]byte{byte(val >> 24), byte(val >> 16), byte(val >> 8), byte(val)}
 		for i := 0; i < 4; i++ {
-			if _, err := c.M.Write(addr+i*2, []byte{bytes[i]}); err != nil {
+			if _, err := c.M.PutByte(addr+i*2, bytes[i]); err != nil {
 				t.err = err
 				return t
 			}

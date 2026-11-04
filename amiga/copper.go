@@ -41,6 +41,7 @@ type Copper struct {
 	amiga  *Amiga
 	logger io.Writer
 	buf    [4]byte
+	scan   [2]byte // busyWords' scratch (a local escapes through the ChipRAM interface)
 }
 
 // NewCopper creates a new Copper coprocessor.
@@ -284,7 +285,7 @@ func (c *Copper) busyWords() int {
 		}
 		pc = ir2Addr + 2
 	}
-	var b [2]byte
+	b := &c.scan
 	for words < 64 {
 		c.amiga.ChipRAM.Read(int(pc), b[:])
 		words += 2

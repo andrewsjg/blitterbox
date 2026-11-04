@@ -1228,13 +1228,13 @@ func (c *Processor) writeByte(ea uint16, b byte) (opr string, err error) {
 		}
 
 	case 0x02: // memory address
-		_, err = c.M.Write(int(c.A[reg]), []byte{b})
+		_, err = c.M.PutByte(int(c.A[reg]), b)
 		if c.TraceWriter != nil {
 			opr = fmt.Sprintf("(A%d)", reg)
 		}
 
 	case 0x03: // memory address with post-increment
-		_, err = c.M.Write(int(c.A[reg]), []byte{b})
+		_, err = c.M.PutByte(int(c.A[reg]), b)
 		c.A[reg]++
 		if reg == 7 {
 			c.A[reg]++ // align stack pointer to 16-bit
@@ -1248,7 +1248,7 @@ func (c *Processor) writeByte(ea uint16, b byte) (opr string, err error) {
 		if reg == 7 {
 			c.A[reg]-- // align stack pointer to 16-bit
 		}
-		_, err = c.M.Write(int(c.A[reg]), []byte{b})
+		_, err = c.M.PutByte(int(c.A[reg]), b)
 		if c.TraceWriter != nil {
 			opr = fmt.Sprintf("-(A%d)", reg)
 		}
@@ -1261,7 +1261,7 @@ func (c *Processor) writeByte(ea uint16, b byte) (opr string, err error) {
 		}
 		c.PC += 2
 		addr := int(c.A[reg]) + int(d)
-		_, err = c.M.Write(int(addr), []byte{b})
+		_, err = c.M.PutByte(int(addr), b)
 		if c.TraceWriter != nil {
 			opr = fmt.Sprintf("(%d,A%d)", d, reg)
 		}
@@ -1272,7 +1272,7 @@ func (c *Processor) writeByte(ea uint16, b byte) (opr string, err error) {
 		if err != nil {
 			return
 		}
-		_, err = c.M.Write(int(addr), []byte{b})
+		_, err = c.M.PutByte(int(addr), b)
 
 	case 0x07: // other
 		switch reg {
@@ -1287,7 +1287,7 @@ func (c *Processor) writeByte(ea uint16, b byte) (opr string, err error) {
 				return
 			}
 			c.PC += 2
-			_, err = c.M.Write(int(int16(addr)), []byte{b})
+			_, err = c.M.PutByte(int(int16(addr)), b)
 			if c.TraceWriter != nil {
 				opr = fmt.Sprintf("$%X", addr)
 			}
@@ -1299,7 +1299,7 @@ func (c *Processor) writeByte(ea uint16, b byte) (opr string, err error) {
 				return
 			}
 			c.PC += 4
-			_, err = c.M.Write(int(addr), []byte{b})
+			_, err = c.M.PutByte(int(addr), b)
 			if c.TraceWriter != nil {
 				opr = fmt.Sprintf("$%X", addr)
 			}
@@ -1663,7 +1663,7 @@ func (c *Processor) writeAt(addr uint32, v Int) error {
 	var err error
 	switch v.Size() {
 	case SizeByte:
-		_, err = c.M.Write(int(addr), []byte{v.Byte()})
+		_, err = c.M.PutByte(int(addr), v.Byte())
 	case SizeWord:
 		binary.BigEndian.PutUint16(c.buf[:2], v.Word())
 		_, err = c.M.Write(int(addr), c.buf[:2])

@@ -70,7 +70,7 @@ func (c *Processor) bcdOperands(t *stepTrace) (src, dst uint8, store func(uint8)
 	src, _ = c.M.Byte(int(c.predecByte(ry)))
 	addr := c.predecByte(rx)
 	dst, _ = c.M.Byte(int(addr))
-	return src, dst, func(v uint8) { c.M.Write(int(addr), []byte{v}) }
+	return src, dst, func(v uint8) { c.M.PutByte(int(addr), v) }
 }
 
 func (c *Processor) extendBit() uint8 {

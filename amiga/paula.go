@@ -76,6 +76,7 @@ func (c *audioChannel) volume() int {
 // Paula is the audio part of the Paula chip.
 type Paula struct {
 	amiga *Amiga
+	buf   [2]byte // scratch for chip RAM words (a local escapes through the ChipRAM interface)
 	ch    [4]audioChannel
 
 	// Output receives mixed samples; nil skips mixing (the channels, DMA
@@ -194,7 +195,7 @@ func (p *Paula) fetch(n int) {
 		}
 		p.irq(n)
 	}
-	var buf [2]byte
+	buf := &p.buf
 	if p.amiga != nil && p.amiga.ChipRAM != nil {
 		p.amiga.ChipRAM.Read(int(c.ptr), buf[:])
 	}

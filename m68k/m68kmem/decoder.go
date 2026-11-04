@@ -35,7 +35,8 @@ type Decoder struct {
 	// instruction.
 	OnBusError func(addr, n int, write bool)
 
-	buf [4]byte
+	buf  [4]byte
+	wbuf [1]byte // PutByte's: a []byte{v} literal would be allocated on every write
 }
 
 func (m *Decoder) checkOdd(addr int, size int, write bool) {
@@ -129,6 +130,12 @@ func (m *Decoder) writePhys(addr int, p []byte) (int, error) {
 // Reset resets the underlying Memory interface.
 func (m *Decoder) Reset() (err error) {
 	return m.M.Reset()
+}
+
+// PutByte writes a single byte to the underlying Memory interface.
+func (m *Decoder) PutByte(addr int, v byte) (int, error) {
+	m.wbuf[0] = v
+	return m.Write(addr, m.wbuf[:])
 }
 
 // Byte reads a single byte from the underlying Memory interface.
