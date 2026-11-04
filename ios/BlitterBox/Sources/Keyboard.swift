@@ -42,6 +42,13 @@ final class AmigaKeyboardView: UIView {
         [k("Alt", 0x64, 1.25), k("Amiga", 0x66, 1.25), k("", 0x40, 6), k("Amiga", 0x67, 1.25), k("Alt", 0x65, 1.25), gap(1),
          k("←", 0x4F), k("↓", 0x4D), k("→", 0x4E)],
     ]
+    // What Shift gives the digit and punctuation keys (the US keymap,
+    // as the keycaps show).
+    private static let shifted: [Int: String] = [
+        0x00: "~", 0x01: "!", 0x02: "@", 0x03: "#", 0x04: "$", 0x05: "%", 0x06: "^", 0x07: "&",
+        0x08: "*", 0x09: "(", 0x0A: ")", 0x0B: "_", 0x0C: "+", 0x0D: "|", 0x1A: "{", 0x1B: "}",
+        0x29: ":", 0x2A: "\"", 0x38: "<", 0x39: ">", 0x3A: "?",
+    ]
     private static let across: CGFloat = 15
     private static let modifiers: Set<Int> = [0x60, 0x61, 0x63, 0x64, 0x65, 0x66, 0x67]
     private static let capsLock = 0x62
@@ -165,7 +172,28 @@ final class AmigaKeyboardView: UIView {
     private func refresh() {
         for (b, key) in buttons {
             b.isDown = held.contains(key.code)
+            let text = legend(key)
+            if b.title(for: .normal) != text {
+                b.setTitle(text, for: .normal)
+            }
         }
+        if let code = previewing, let key = buttons.first(where: { $0.1.code == code })?.1 {
+            preview.setText(legend(key))
+        }
+    }
+
+    /// legend is what a key's cap shows with the modifiers as they are:
+    /// letters in lower case unless Shift or Caps Lock is down, digits and
+    /// punctuation their shifted character while Shift is.
+    private func legend(_ key: Key) -> String {
+        let shift = held.contains(0x60) || held.contains(0x61)
+        if key.label.count == 1, let c = key.label.first, c.isLetter {
+            return shift || held.contains(Self.capsLock) ? key.label.uppercased() : key.label.lowercased()
+        }
+        if shift, let s = Self.shifted[key.code] {
+            return s
+        }
+        return key.label
     }
 
     /// showPreview pops a character key up above the finger.
@@ -173,7 +201,7 @@ final class AmigaKeyboardView: UIView {
         guard !Self.isSpecial(key), key.code != 0x40,
               let cap = buttons.first(where: { $0.1.code == key.code })?.0 else { return }
         previewing = key.code
-        preview.show(key.label, above: cap.frame, in: bounds)
+        preview.show(legend(key), above: cap.frame, in: bounds)
         bringSubviewToFront(preview)
     }
 
@@ -294,6 +322,9 @@ private final class KeyPreview: UIView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
+
+    /// setText changes the character shown.
+    func setText(_ text: String) { label.text = text }
 
     /// show puts the label in a bubble above key (in the keyboard, whose
     /// bounds keep it on screen).
