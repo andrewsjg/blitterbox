@@ -445,9 +445,10 @@ func (c *CustomChips) Write(addr int, p []byte) (int, error) {
 		if c.amiga != nil && c.amiga.Copper != nil {
 			c.amiga.Copper.cop1lc = (c.amiga.Copper.cop1lc & 0x0000FFFF) | uint32(p[0])<<24 | uint32(p[1])<<16
 		}
-	case 0x082: // COP1LCL
+	case 0x082: // COP1LCL (bit 0 isn't wired: RoboCop 3 sets an odd
+		// address for a list at the even one below it)
 		if c.amiga != nil && c.amiga.Copper != nil {
-			c.amiga.Copper.cop1lc = (c.amiga.Copper.cop1lc & 0xFFFF0000) | uint32(p[0])<<8 | uint32(p[1])
+			c.amiga.Copper.cop1lc = (c.amiga.Copper.cop1lc & 0xFFFF0000) | uint32(p[0])<<8 | uint32(p[1]&0xFE)
 		}
 	case 0x084: // COP2LCH
 		if c.amiga != nil && c.amiga.Copper != nil {
@@ -455,7 +456,7 @@ func (c *CustomChips) Write(addr int, p []byte) (int, error) {
 		}
 	case 0x086: // COP2LCL
 		if c.amiga != nil && c.amiga.Copper != nil {
-			c.amiga.Copper.cop2lc = (c.amiga.Copper.cop2lc & 0xFFFF0000) | uint32(p[0])<<8 | uint32(p[1])
+			c.amiga.Copper.cop2lc = (c.amiga.Copper.cop2lc & 0xFFFF0000) | uint32(p[0])<<8 | uint32(p[1]&0xFE)
 		}
 	case 0x0E0, 0x0E4, 0x0E8, 0x0EC, 0x0F0, 0x0F4, 0x0F8, 0x0FC: // BPLxPTH (high word)
 		if c.amiga != nil && c.amiga.Video != nil {

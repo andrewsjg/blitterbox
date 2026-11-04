@@ -235,6 +235,27 @@ func TestCopperRestartWaitsForDMA(t *testing.T) {
 	}
 }
 
+// Bit 0 of COPxLC isn't wired: a list set at an odd address runs from the
+// even one below. (RoboCop 3 sets COP1LC to $11927 for its list at
+// $11926; read from $11927 the list was garbage and the screen black.)
+func TestCopperLocationIsEven(t *testing.T) {
+	a := createTestAmiga(t)
+	a.ChipRAM.Write(0x2000, []byte{0x01, 0x80, 0x0F, 0xFF}) // MOVE COLOR00 = $0FFF
+	a.Custom.Write(0x080, []byte{0x00, 0x00, 0x20, 0x01})   // COP1LC = $2001
+	a.Custom.Write(0x084, []byte{0x00, 0x00, 0x30, 0x03})   // COP2LC = $3003
+	if got := a.Copper.GetCop2LC(); got != 0x3002 {
+		t.Errorf("COP2LC = $%X, want $3002", got)
+	}
+	a.Custom.Write(0x096, []byte{0x82, 0x80}) // DMAEN + COPEN
+	a.Copper.Restart(1)
+	for h := 0; h < 40; h += 4 {
+		a.Copper.Step(h, 100)
+	}
+	if got := a.Custom.ReadReg16(0x180); got != 0x0FFF {
+		t.Errorf("COLOR00 = $%03X, want $FFF from the MOVE at $2000", got)
+	}
+}
+
 func TestCopperWAIT(t *testing.T) {
 	a := createTestAmiga(t)
 

@@ -61,6 +61,27 @@ verified. Longer investigations get their own write-up in `docs/`.
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
 
+## 2026-11-04 — RoboCop 3: COPxLC bit 0 isn't wired
+
+RoboCop 3 (AGS) stayed black. It sets COP1LC to $11927 for a list at
+$11926 (a WAIT for line 16, then BPLCON0, the window, the bitplane
+pointers and the colours). The Copper reads words, and bit 0 of its
+location registers isn't wired (WinUAE masks it as COPxLCL is written),
+so on the real machine the list runs from $11926. The emulator kept the
+odd address, read the list a byte out, and halted on the garbage.
+
+COP1LCL and COP2LCL now drop bit 0. The game shows its intro and its
+manual protection prompt.
+
+The full Top 200 sweep on the new chip bus timing (next entry), against
+the last one: no regressions. Brian the Lion, Bubba 'n' Stix, Cruise
+for a Corpse, Indianapolis 500, Midwinter, Formula 1 Grand Prix,
+Populous and Superfrog do more, and Pinball Fantasies CD32 is no
+longer dimmed. Switchblade 2 stays on its title only because the
+sweep's fire presses now fall in its logo animation, which ignores
+fire. It Came from the Desert shows its panel torn more often (111
+frames to 245); the tear was there before.
+
 ## 2026-11-04 — Cruise for a Corpse: a fast CPU's chip accesses take bus time
 
 Cruise for a Corpse (AGS, A4000/040) stayed black. Its main loop polls
