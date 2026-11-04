@@ -102,6 +102,9 @@ final class AmigaViewController: UIViewController {
         }
     }
 
+    /// takeKeys gives the hardware keyboard to the Amiga.
+    func takeKeys() { amiga.takeKeys() }
+
     override var prefersStatusBarHidden: Bool { true }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
 

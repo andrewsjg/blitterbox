@@ -78,9 +78,27 @@ final class RootController: UIHostingController<AnyView> {
 /// EbitenController is Ebitengine's view controller with its touches
 /// given to Go by the app: fingers as touches (every event, so none is
 /// missed between frames), the pointer's as clicks.
+///
+/// It takes the hardware keyboard by being first responder: UIKit gives
+/// key presses to the first responder and its parents, and Ebitengine
+/// reads them in its pressesBegan. Nested under SwiftUI's hosting
+/// controller, it was never in that chain, so a Magic Keyboard typed
+/// nothing on the Amiga.
 final class EbitenController: BlitterboxEbitenViewController {
     private var ids: [ObjectIdentifier: Int] = [:]
     private var nextID = 1
+
+    override var canBecomeFirstResponder: Bool { true }
+
+    /// takeKeys makes the hardware keyboard the Amiga's.
+    func takeKeys() {
+        if !isFirstResponder { becomeFirstResponder() }
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        takeKeys()
+    }
 
     private func handle(_ touches: Set<UITouch>, _ event: UIEvent?) {
         for touch in touches {
@@ -103,7 +121,10 @@ final class EbitenController: BlitterboxEbitenViewController {
         }
     }
 
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) { handle(touches, event) }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        takeKeys() // back from wherever the settings or controls took them
+        handle(touches, event)
+    }
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) { handle(touches, event) }
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) { handle(touches, event) }
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { handle(touches, event) }

@@ -160,7 +160,7 @@ struct RootView: View {
 
     var body: some View {
         ZStack {
-            AmigaScreen()
+            AmigaScreen(running: model.running)
                 .ignoresSafeArea()
             if !model.running {
                 LauncherView()
@@ -175,8 +175,15 @@ struct RootView: View {
 }
 
 /// AmigaScreen is AmigaViewController (Ebitengine's view and the
-/// keyboard) in SwiftUI.
+/// keyboard) in SwiftUI. A machine starting takes the hardware keyboard
+/// back from the configuration screen.
 struct AmigaScreen: UIViewControllerRepresentable {
+    var running: Bool
+
     func makeUIViewController(context: Context) -> AmigaViewController { AmigaViewController() }
-    func updateUIViewController(_ vc: AmigaViewController, context: Context) {}
+    func updateUIViewController(_ vc: AmigaViewController, context: Context) {
+        if running {
+            DispatchQueue.main.async { vc.takeKeys() }
+        }
+    }
 }

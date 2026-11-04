@@ -108,7 +108,8 @@ func Stop() {
 
 // Key presses (down) or releases an Amiga key by its raw code, for the
 // app's on-screen keyboard. A hardware keyboard needs no help: Ebitengine
-// reports its keys to the display like a desktop one.
+// reports its keys to the display like a desktop one, once the app has
+// made its view controller first responder.
 func Key(code int, down bool) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
