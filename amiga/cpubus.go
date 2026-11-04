@@ -2,7 +2,7 @@ package amiga
 
 import m68k "github.com/andrewsjg/blitterbox/m68k"
 
-// Exact chip bus timing for the 68000 (ExactBus).
+// Exact chip bus timing (ExactBus).
 //
 // Normally an instruction runs whole and its chip accesses are charged
 // afterwards (chipBusWait) against a forecast of the slots DMA will take,
@@ -17,8 +17,14 @@ import m68k "github.com/andrewsjg/blitterbox/m68k"
 // before it and before anything after it. What remains of the
 // instruction's time runs after it.
 //
-// It covers a 68000 at its own speed, where this timing matters (OCS and
-// ECS games and demos); faster CPUs keep the forecast.
+// A faster CPU (a 68000 above 7 MHz, the 68020 and up) runs its
+// instructions in less time than the chip bus takes, so only its chip
+// accesses are placed: each waits for a free slot as above and then
+// takes its bus cycle, and a read gets the chips' state at the end of
+// it. Accesses elsewhere take no bus time. A CPU polling a custom
+// register so gets one read per bus cycle, and sees a change made during
+// the read before it takes the interrupt that change raises (Cruise for
+// a Corpse polls INTREQR for VERTB with the VERTB interrupt on).
 
 // cpuBus is the CPU's view of memory: the Mapper, with each access timed
 // first. Emulator code reads and writes through the Mapper directly, so
@@ -41,13 +47,16 @@ func (b *cpuBus) Reset() error { return b.a.Mapper.Reset() }
 // cycles from its start.
 type instrTiming struct {
 	on     bool
-	busT   int // when the next bus cycle can start
-	synced int // how far the rest of the machine has been run
-	waits  int // cycles spent waiting for the chip bus
-	chip   int // chip accesses timed so (not to be charged again)
+	fast   bool // a faster CPU than the 68000: only chip accesses take time
+	busT   int  // when the next bus cycle can start
+	synced int  // how far the rest of the machine has been run
+	waits  int  // cycles spent waiting for the chip bus
+	chip   int  // chip accesses timed so (not to be charged again)
 }
 
-// exactBus reports whether instructions are timed access by access.
+// exactBus reports whether instructions are timed access by access (the
+// 68000 at its own speed). Under ExactBus a faster CPU has its chip
+// accesses timed alone.
 func (a *Amiga) exactBus() bool {
 	return a.ExactBus && a.CPU.Model == m68k.Model68000 && a.CPUSpeed <= 100 // 0: not set, 100%
 }
@@ -68,20 +77,25 @@ func (a *Amiga) chipBusAddr(addr int) bool {
 }
 
 // cpuAccess times a CPU access of n bytes at addr: a word is one bus
-// cycle, a longword two.
+// cycle, a longword two (one in the AGA machines' 32-bit chip RAM).
 func (a *Amiga) cpuAccess(addr, n int) {
 	in := &a.instr
 	if !in.on {
 		return
 	}
-	words := (n + 1) / 2
 	if !a.chipBusAddr(addr) {
-		in.busT += 4 * words
+		if !in.fast {
+			in.busT += 4 * ((n + 1) / 2)
+		}
 		return
 	}
-	for range words {
+	for range a.busCycles(n, addr&0xFFFFFF < ChipRAMBase+a.ChipRAMSize()) {
 		a.chipSlot()
 		in.chip++
+		if in.fast {
+			a.advance(in.busT - in.synced)
+			in.synced = in.busT
+		}
 	}
 }
 

@@ -185,7 +185,7 @@ type Amiga struct {
 	// carries the helper). Set it before Reset.
 	HostClipboard HostClipboard
 
-	// ExactBus places the 68000's chip accesses in time within each
+	// ExactBus places the CPU's chip accesses in time within each
 	// instruction, against the Copper and the other DMA (cpubus.go).
 	ExactBus      bool
 	instr         instrTiming
@@ -549,7 +549,7 @@ func (a *Amiga) Step() error {
 		a.FastIdleSkips += uint64(skip)
 		a.FastIdleCount++
 	} else {
-		a.instr = instrTiming{on: a.exactBus()}
+		a.instr = instrTiming{on: a.ExactBus, fast: !a.exactBus()}
 		err = a.CPU.Step()
 		a.instr.on = false
 		// Detect transition into stopped state (STOP instruction just executed).

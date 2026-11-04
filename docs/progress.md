@@ -61,6 +61,35 @@ verified. Longer investigations get their own write-up in `docs/`.
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
 
+## 2026-11-04 — Cruise for a Corpse: a fast CPU's chip accesses take bus time
+
+Cruise for a Corpse (AGS, A4000/040) stayed black. Its main loop polls
+INTREQR for VERTB (`MOVE.W $DFF01E,D0` / `BTST #5,D0` / `BEQ`), with
+the VERTB interrupt on and a handler that clears the bit. On the real
+machine the 68040's loop is almost all that read's bus cycle, so VERTB
+rises during a read, the read returns it, and the CPU takes the
+interrupt after the instruction, with the bit already in D0.
+
+Only the 68000 had its chip accesses placed in time (ExactBus). A
+faster CPU's read came at the start of the instruction, its bus cycle
+took no time (the forecast only charged waits for DMA), and the
+interrupt was taken one instruction later: the read never saw a VERTB
+of its own bus cycle, and here, frame after frame, the bit rose after
+the read and the handler cleared it before the next.
+
+Under ExactBus a faster CPU's chip accesses are now placed too: each
+waits for a free even colour clock, takes its bus cycle, and a read
+gets the chips' state at the end of it. Accesses elsewhere take no bus
+time (the instruction's scaled time covers them). A 68040 so gets at
+most one chip access per two colour clocks (in a loop, one per four),
+about the A4000's measured chip bus speed, where before chip accesses
+were free when no DMA wanted the slot. The game now runs to its
+protection screen.
+
+AGS on the 68040 now takes longer over each keypress in its list, and
+drops presses 10 frames apart, so the sweep scripts space them 30
+frames apart.
+
 ## 2026-11-04 — Bubba 'n' Stix: a 68040's short steps give the blitter its slots
 
 Bubba 'n' Stix (AGS, 68040) sat on a dark "Press fire" screen over
@@ -72,12 +101,11 @@ about 500 cycles of blitter time per frame, over half a minute.
 
 `blitterSlots` now counts the colour clocks the beam starts in during
 the step, from the beam position, so short steps add up to the whole
-line. The game gets to its options menu and into play.
+line. The game gets to its options menu and into play, and Brian the
+Lion AGA, black before, to its title menu.
 
-Still open: a fast CPU's chip bus access takes no minimum time (here
-about 250 DMACONR reads a line; the real bus gives a CPU at most one
-access per two colour clocks). That is a wider timing change, left for
-now.
+The CPU also made about 250 DMACONR reads a line, where the real bus
+gives it at most one per two colour clocks: see the next entry.
 
 ## 2026-11-03 — B.C. Kid: a Copper restart waits for Copper DMA
 

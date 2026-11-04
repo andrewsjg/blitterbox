@@ -38,7 +38,16 @@ type busCounter struct {
 }
 
 func (c *busCounter) count(n int) int {
-	if a := c.a; a != nil && a.CPU.Model >= m68k.Model68020 {
+	if c.a != nil {
+		return c.a.busCycles(n, true)
+	}
+	return (n + 1) / 2
+}
+
+// busCycles is how many chip bus cycles a CPU access of n bytes takes, in
+// chip RAM or elsewhere on the chip bus (see busCounter).
+func (a *Amiga) busCycles(n int, chipRAM bool) int {
+	if chipRAM && a.CPU.Model >= m68k.Model68020 {
 		if a.CPU.M.Fetch && a.CPU.ICacheEnabled() {
 			return 0
 		}

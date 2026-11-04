@@ -119,3 +119,75 @@ func TestExactBusEvenSlotAlignment(t *testing.T) {
 		t.Errorf("%.2f cycles a pass, want 20", per)
 	}
 }
+
+// fastCPU is a 68040 running code at $1000 from its instruction cache
+// (so only its data accesses use the chip bus).
+func fastCPU(t *testing.T, code []uint16) *Amiga {
+	t.Helper()
+	a := createTestAmiga(t)
+	a.wireMemoryMap(false)
+	if err := a.SetCPU("68040", 0); err != nil {
+		t.Fatal(err)
+	}
+	a.CPU.CACR = 0x8000
+	buf := make([]byte, 2*len(code))
+	for i, w := range code {
+		binary.BigEndian.PutUint16(buf[2*i:], w)
+	}
+	a.ChipRAM.Write(0x1000, buf)
+	a.CPU.PC = 0x1000
+	a.CPU.SR = 0x2000
+	a.CPU.A[7] = 0x8000
+	a.cpuStopped = false
+	return a
+}
+
+// A fast CPU polling INTREQR for VERTB, with the VERTB interrupt on and
+// a handler that clears it, sees the bit: the read samples the chips at
+// the end of its bus cycle, before the CPU takes the interrupt. (Cruise
+// for a Corpse waits so on the A4000; it hung on a black screen while
+// every read came before the VERTB of its own bus cycle.)
+func TestFastCPUPollSeesVERTB(t *testing.T) {
+	for start := 0; start < 16; start++ {
+		a := fastCPU(t, []uint16{
+			0x3039, 0x00DF, 0xF01E, // loop: MOVE.W $DFF01E,D0 (INTREQR)
+			0x0800, 0x0005, //         BTST #5,D0
+			0x67F4, //         BEQ.S loop
+			0x60FE, // done:   BRA.S done
+		})
+		// The level 3 handler clears VERTB.
+		a.ChipRAM.Write(0x2000, []byte{0x33, 0xFC, 0x00, 0x20, 0x00, 0xDF, 0xF0, 0x9C, 0x4E, 0x73})
+		a.ChipRAM.Write(0x6C, []byte{0x00, 0x00, 0x20, 0x00})
+		a.Custom.Write(0x09A, []byte{0xC0, 0x20}) // INTEN + VERTB
+		a.vpos, a.hpos = a.linesThisFrame()-1, 2*start
+		for a.CPU.PC != 0x100C && a.vpos != 1 {
+			if err := a.Step(); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if a.CPU.PC != 0x100C {
+			t.Errorf("starting at hpos %d: the poll missed VERTB", 2*start)
+		}
+	}
+}
+
+// A fast CPU gets the chip bus at most every other colour clock: a loop
+// of INTREQR reads makes one a bus cycle, not hundreds a line. (With the
+// loop's other instructions between them, each read misses the next even
+// colour clock and takes the one after: one read every four.)
+func TestFastCPUChipAccessTakesBusCycle(t *testing.T) {
+	a := fastCPU(t, []uint16{
+		0x3039, 0x00DF, 0xF01E, // loop: MOVE.W $DFF01E,D0
+		0x5281, //       ADDQ.L #1,D1
+		0x60F6, //       BRA.S loop
+	})
+	a.vpos, a.hpos = 20, 0
+	for a.vpos == 20 {
+		if err := a.Step(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if n, want := int(a.CPU.D[1]), a.lineCycles/(4*CPUCyclesPerColorClock); n < want-1 || n > want+1 {
+		t.Errorf("%d INTREQR reads in a line, want %d (one every 4 colour clocks)", n, want)
+	}
+}
