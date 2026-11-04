@@ -30,6 +30,7 @@ func TestSpriteRendering(t *testing.T) {
 
 	s := &a.Sprites.sprites[0]
 	s.state = sprActive
+	s.armed = true
 	// hstart = (pos_low<<1)|ctl0 = 193 = DIW left edge $81 + 64 lores pixels
 	s.pos = 0x0060
 	s.ctl = 0xFF01
@@ -154,5 +155,41 @@ func TestSpriteDMANoAdvanceWhileWaiting(t *testing.T) {
 	if s.pos != 0 || s.ctl != 0 {
 		// May have loaded end words
 		t.Logf("end ctl pos=$%04X ctl=$%04X", s.pos, s.ctl)
+	}
+}
+
+// A SPRxDATA write arms the sprite's display but doesn't start its DMA:
+// a sprite waiting for VSTART goes on waiting. (Indiana Jones and the Fate
+// of Atlantis's Copper clears sprite 0's data at line 71, above the
+// pointer; DMA started there fetched the pointer's blank lines, its end
+// words and the Copper list after them as a garbled column.)
+func TestSpriteDataWriteDoesNotStartDMA(t *testing.T) {
+	a := newTestAmigaSprites()
+	a.Custom.WriteReg16(0x096, 0x8220) // DMAEN | SPREN
+	a.ChipRAM.Write(0x1000, []byte{
+		0x32, 0x40, 0x34, 0x00, // POS/CTL: VSTART 50, VSTOP 52
+		0x80, 0x00, 0x00, 0x00, // line 50
+		0x40, 0x00, 0x00, 0x00, // line 51
+		0x00, 0x00, 0x00, 0x00, // end
+		0xFF, 0xFE, 0x12, 0x34, // what follows: not sprite data
+	})
+	a.Sprites.SetPT(0, true, 0x0000)
+	a.Sprites.SetPT(0, false, 0x1000)
+	s := &a.Sprites.sprites[0]
+	for v := 0; v < 20; v++ {
+		a.Sprites.FetchLine(v)
+	}
+	pt := s.pt
+	a.Custom.Write(0x146, []byte{0, 0}) // SPR0DATB, SPR0DATA = 0, as the Copper does
+	a.Custom.Write(0x144, []byte{0, 0})
+	for v := 20; v < 50; v++ {
+		a.Sprites.FetchLine(v)
+		if s.pt != pt || s.data != 0 || s.datb != 0 {
+			t.Fatalf("line %d: pt=$%X data=$%04X datb=$%04X: DMA ran before VSTART (pt was $%X)", v, s.pt, s.data, s.datb, pt)
+		}
+	}
+	a.Sprites.FetchLine(50)
+	if s.data != 0x8000 || !s.armed {
+		t.Errorf("line 50: data=$%04X armed=%v, want $8000 shown", s.data, s.armed)
 	}
 }

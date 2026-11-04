@@ -172,6 +172,7 @@ func setSprite(a *Amiga, n, x int, data, datb uint16, attach bool) {
 	s := &a.Sprites.sprites[n]
 	h := OutputLeft + x
 	s.state = sprActive
+	s.armed = true
 	s.pos = uint16(h >> 1)
 	s.ctl = uint16(h & 1)
 	if attach {

@@ -16,7 +16,7 @@ func BenchmarkDrawLine(b *testing.B) {
 	for i := 0; i < 160; i++ {
 		a.ChipRAM.Write(0x1000+i, []byte{byte(i * 37)})
 	}
-	a.Sprites.sprites[0] = Sprite{state: sprActive, pos: 0x0060, ctl: 0x0001, data: 0xF0F0, datb: 0x3C3C}
+	a.Sprites.sprites[0] = Sprite{state: sprActive, armed: true, pos: 0x0060, ctl: 0x0001, data: 0xF0F0, datb: 0x3C3C}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		a.Video.bplpt[0], a.Video.bplpt[1] = 0x1000, 0x1050

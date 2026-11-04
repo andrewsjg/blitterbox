@@ -61,6 +61,24 @@ verified. Longer investigations get their own write-up in `docs/`.
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
 
+## 2026-11-04 — Indiana Jones and the Fate of Atlantis: SPRxDATA arms, it doesn't start DMA
+
+Fate of Atlantis (AGS) showed its pointer as a garbled column of sprite
+pixels that grew as it moved, and never its crosshair. The game hides
+Intuition's pointer (sprite 0, a blank image that graphics.library
+still moves with the mouse) and its Copper list clears SPR0DATB and
+SPR0DATA at line 71.
+
+A SPRxDATA write set the sprite's DMA state to active. Sprite 0 was
+waiting for its VSTART further down, so DMA started at line 71 and
+fetched, line after line, the blank image, its end words and the Copper
+list stored after it, all shown as the pointer down to VSTOP. On the
+real machine the write only arms Denise's display (SPRxCTL disarms it),
+and Agnus's DMA still waits for VSTART. Sprites now keep the two apart:
+`armed` decides what is shown, DMA or CPU writes to DATA and CTL set
+and clear it, and only DMA's own state machine fetches. The cursor is
+the game's black crosshair. State version 23.
+
 ## 2026-11-04 — It Came from the Desert: a BPLxPT write isn't dropped through zero
 
 It Came from the Desert (AGS) showed a torn picture for one frame in

@@ -33,7 +33,7 @@ import (
 const (
 	stateMagic   = "BlitterBox state\n"
 	oldMagic     = "goAmiga state\n" // states saved before the rename
-	stateVersion = 22                // 20: the RTG pointer, the clipboard helper; 21: AHI; 22: the Copper's pending restart
+	stateVersion = 23                // 20: the RTG pointer, the clipboard helper; 21: AHI; 22: the Copper's pending restart; 23: sprites' armed display
 )
 
 // stateCodec writes or reads the fields of a state in order.
@@ -743,6 +743,7 @@ func (se *SpriteEngine) state(s *stateCodec) {
 				num(s, &sp.datbX[i])
 			}
 			num(s, &sp.state)
+			s.bool(&sp.armed)
 		}
 	}
 	n := len(se.events)

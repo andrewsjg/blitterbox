@@ -23,7 +23,11 @@ type Sprite struct {
 	datb uint16 // SPRxDATB (plane 1)
 	// AGA wide sprites (FMODE): the further 1 or 3 words of each plane.
 	dataX, datbX [3]uint16
-	state        int // sprFetchCtl / sprWaitVStart / sprActive
+	state        int // DMA: sprFetchCtl / sprWaitVStart / sprActive / sprIdle
+	// armed: Denise shows the sprite at HSTART. A SPRxDATA write arms it
+	// and a SPRxCTL write disarms it, whether DMA or the CPU makes them;
+	// a CPU write doesn't change what the DMA does.
+	armed bool
 }
 
 // vstart returns the vertical start position (9 bits).
@@ -157,18 +161,21 @@ func (se *SpriteEngine) SetCTL(sprite int, val uint16) {
 	s.state = sprWaitVStart
 	s.data = 0
 	s.datb = 0
+	s.armed = false
 }
 
-// SetDATA writes SPRxDATA for the given sprite.
+// SetDATA writes SPRxDATA for the given sprite and arms it. Only the
+// display is armed: DMA still waits for VSTART. (Indiana Jones and the
+// Fate of Atlantis's Copper clears sprite 0's data at line 71, above the
+// pointer; taken as the start of the sprite, DMA fetched the pointer's
+// blank lines, its end and the Copper list after it as a garbled column
+// down to VSTOP.)
 func (se *SpriteEngine) SetDATA(sprite int, val uint16) {
 	if sprite < 0 || sprite >= 8 {
 		return
 	}
 	se.sprites[sprite].data = val
-	// CPU-loaded sprite: writing DATA enables display for the current line.
-	if se.sprites[sprite].state != sprActive {
-		se.sprites[sprite].state = sprActive
-	}
+	se.sprites[sprite].armed = true
 }
 
 // SetDATB writes SPRxDATB for the given sprite.
@@ -197,6 +204,7 @@ func (se *SpriteEngine) spriteWords() int {
 // its own wide fetch.
 func (se *SpriteEngine) fetchCtl(s *Sprite) {
 	n := uint32(se.spriteWords())
+	s.armed = false // DMA writes SPRxCTL
 	s.pos = se.readWord(s.pt)
 	s.pt += 2 * n
 	s.ctl = se.readWord(s.pt)
@@ -205,6 +213,7 @@ func (se *SpriteEngine) fetchCtl(s *Sprite) {
 
 func (se *SpriteEngine) fetchData(s *Sprite) {
 	n := se.spriteWords()
+	s.armed = true // DMA writes SPRxDATA
 	s.data = se.readWord(s.pt)
 	s.dataX = [3]uint16{}
 	for i := 1; i < n; i++ {
@@ -400,7 +409,7 @@ func (se *SpriteEngine) paint(i int, bits *[MaxOutputWidth]byte, left, width int
 			break
 		}
 	}
-	armed := s.state == sprActive
+	armed := s.armed
 	painted := false
 	words := se.spriteWords()
 	// Output columns are half a super-hires pixel each in a hires frame
