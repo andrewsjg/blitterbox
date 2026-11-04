@@ -61,6 +61,24 @@ verified. Longer investigations get their own write-up in `docs/`.
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
 
+## 2026-11-04 — Bubba 'n' Stix: a 68040's short steps give the blitter its slots
+
+Bubba 'n' Stix (AGS, 68040) sat on a dark "Press fire" screen over
+noise. It clears its screens with D-only blits and polls BBUSY with
+`BTST D2,(A5)` / `BNE` in between. On the 68040 those steps take 1 to
+3 cycles, and `blitterSlots` counted `cpuCycles/2` colour clocks from
+each, so every step rounded down to no slot: a 20 000-cycle clear took
+about 500 cycles of blitter time per frame, over half a minute.
+
+`blitterSlots` now counts the colour clocks the beam starts in during
+the step, from the beam position, so short steps add up to the whole
+line. The game gets to its options menu and into play.
+
+Still open: a fast CPU's chip bus access takes no minimum time (here
+about 250 DMACONR reads a line; the real bus gives a CPU at most one
+access per two colour clocks). That is a wider timing change, left for
+now.
+
 ## 2026-11-03 — B.C. Kid: a Copper restart waits for Copper DMA
 
 B.C. Kid's title screen was torn into noise on its odd planes. Setting

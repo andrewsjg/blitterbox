@@ -278,13 +278,15 @@ func (a *Amiga) chipBusWait(n int) int {
 }
 
 // blitterSlots returns how many colour clocks in the next cpuCycles CPU
-// cycles from the current beam position are free for the blitter.
+// cycles from the current beam position are free for the blitter. It
+// counts the colour clocks the beam starts in that time, so steps of an
+// odd number of cycles (a 68040's often take 1) lose none.
 func (a *Amiga) blitterSlots(cpuCycles int) int {
-	n := cpuCycles / CPUCyclesPerColorClock
+	cck := a.hpos / CPUCyclesPerColorClock
+	n := (a.hpos+cpuCycles)/CPUCyclesPerColorClock - cck
 	fixed := a.fixedDMAState()
 	copperWords := a.Copper.busyWords()
 	vpos := a.vpos
-	cck := a.hpos / CPUCyclesPerColorClock
 	f := a.bitplaneDMA(vpos)
 	free := 0
 	for i := 0; i < n; i++ {

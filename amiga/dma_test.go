@@ -130,6 +130,25 @@ func TestBlitterSlots(t *testing.T) {
 	}
 }
 
+// A 68040 step often lasts a single cycle, half a colour clock: the
+// blitter gets its slot from whichever step the beam crosses into it.
+// (Bubba 'n' Stix's 68040 polled BBUSY in steps of 1 and 3 cycles, which
+// each rounded down to no slot, so its blits took minutes.)
+func TestBlitterSlotsOddSteps(t *testing.T) {
+	a := dmaAmiga(t, 0, 0, 0)
+	a.vpos, a.hpos = 100, 40
+	free := 0
+	for range a.lineCycles {
+		free += a.blitterSlots(1)
+		if a.hpos++; a.hpos == a.lineCycles {
+			a.hpos, a.vpos = 0, a.vpos+1
+		}
+	}
+	if want := 227 - 4; free != want {
+		t.Errorf("one line in 1-cycle steps: %d blitter slots, want %d", free, want)
+	}
+}
+
 func TestBlitterBusContention(t *testing.T) {
 	a := dmaAmiga(t, 0, 0, 0)
 	a.Custom.Write(0x096, []byte{0x82, 0x40}) // DMAEN + BLTEN
