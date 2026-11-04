@@ -459,27 +459,17 @@ func (c *CustomChips) Write(addr int, p []byte) (int, error) {
 			c.amiga.Copper.cop2lc = (c.amiga.Copper.cop2lc & 0xFFFF0000) | uint32(p[0])<<8 | uint32(p[1]&0xFE)
 		}
 	case 0x0E0, 0x0E4, 0x0E8, 0x0EC, 0x0F0, 0x0F4, 0x0F8, 0x0FC: // BPLxPTH (high word)
+		// A write goes straight to Agnus's DMA pointer, even when it leaves
+		// it zero for a moment: It Came from the Desert clears BPL1PTL in its
+		// vertical blank and its Copper then writes BPL1PTH=0, BPL1PTL.
 		if c.amiga != nil && c.amiga.Video != nil {
-			planeIdx := (offset - 0x0E0) / 4
-			hi := uint32(p[0])<<24 | uint32(p[1])<<16
-			newPt := (c.amiga.Video.bplpt[planeIdx] & 0x0000FFFF) | hi
-			// KS copper list 1 blanks BPL1PTL early each frame; applying that
-			// zero to the working display pointer before COP2 reloads it makes
-			// plane 0 disappear / jump for a line and looks like vertical shake.
-			// Only push non-zero reloads (and always allow high-word updates that
-			// leave a non-zero address).
-			if newPt != 0 {
-				c.amiga.Video.bplpt[planeIdx] = newPt
-			}
+			pt := &c.amiga.Video.bplpt[(offset-0x0E0)/4]
+			*pt = *pt&0x0000FFFF | uint32(p[0])<<24 | uint32(p[1])<<16
 		}
 	case 0x0E2, 0x0E6, 0x0EA, 0x0EE, 0x0F2, 0x0F6, 0x0FA, 0x0FE: // BPLxPTL (low word)
 		if c.amiga != nil && c.amiga.Video != nil {
-			planeIdx := (offset - 0x0E2) / 4
-			lo := uint32(p[0])<<8 | uint32(p[1])
-			newPt := (c.amiga.Video.bplpt[planeIdx] & 0xFFFF0000) | lo
-			if newPt != 0 {
-				c.amiga.Video.bplpt[planeIdx] = newPt
-			}
+			pt := &c.amiga.Video.bplpt[(offset-0x0E2)/4]
+			*pt = *pt&0xFFFF0000 | uint32(p[0])<<8 | uint32(p[1])
 		}
 
 	case 0x088: // COPJMP1

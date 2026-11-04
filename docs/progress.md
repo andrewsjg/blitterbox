@@ -61,6 +61,22 @@ verified. Longer investigations get their own write-up in `docs/`.
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
 
+## 2026-11-04 — It Came from the Desert: a BPLxPT write isn't dropped through zero
+
+It Came from the Desert (AGS) showed a torn picture for one frame in
+eight through its text intro, and its Cinemaware logo flickered. The
+game double-buffers: its vertical blank code points COP2LC at the list
+for the buffer to show, and that code also writes 0 to BPL1PTL. The
+Copper list then writes BPL1PTH = 0 and BPL1PTL = $6508.
+
+The emulator skipped any BPLxPT write that left the pointer zero, a
+workaround from the first import for a Kickstart list that clears
+BPL1PTL. Here BPL1PTH = 0 met the cleared low word, the high word was
+dropped, and plane 1 came from $16508 (the other buffer) instead of
+$6508. On the real machine the write goes straight to Agnus's pointer,
+so the guard is gone. The intro and the logo no longer flash: the sweep
+counts no flashes in the game, against 245.
+
 ## 2026-11-04 — RoboCop 3: COPxLC bit 0 isn't wired
 
 RoboCop 3 (AGS) stayed black. It sets COP1LC to $11927 for a list at

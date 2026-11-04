@@ -256,6 +256,21 @@ func TestCopperLocationIsEven(t *testing.T) {
 	}
 }
 
+// A BPLxPT write sets the DMA pointer even when the half it leaves is
+// zero for a moment. (It Came from the Desert clears BPL1PTL in its vertical
+// blank, then its Copper writes BPL1PTH=0 and BPL1PTL: the high word was
+// dropped, so plane 1 came from $16508 instead of $6508.)
+func TestBitplanePointerWriteThroughZero(t *testing.T) {
+	a := createTestAmiga(t)
+	a.Custom.Write(0x0E0, []byte{0x00, 0x01, 0x2D, 0x30}) // BPL1PT = $12D30
+	a.Custom.Write(0x0E2, []byte{0x00, 0x00})             // BPL1PTL = 0
+	a.Custom.Write(0x0E0, []byte{0x00, 0x00})             // BPL1PTH = 0
+	a.Custom.Write(0x0E2, []byte{0x65, 0x08})             // BPL1PTL = $6508
+	if got := a.Video.GetBplPt(0); got != 0x6508 {
+		t.Errorf("BPL1PT = $%X, want $6508", got)
+	}
+}
+
 func TestCopperWAIT(t *testing.T) {
 	a := createTestAmiga(t)
 
