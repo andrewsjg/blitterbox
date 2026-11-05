@@ -9,13 +9,37 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-// Joystick input for game port 2 comes from any connected gamepad and,
+// Joystick input for game port 2 comes from any connected gamepad, the
+// iPad's on-screen joystick (TouchStick, TouchButton) and,
 // when JoyKeys is on (Ctrl+F12 toggles it), from the keyboard: the arrow
 // keys move, Right Ctrl or Right Alt/Option fires, Right Shift is the
 // second button. While JoyKeys is on those keys don't reach the Amiga
 // keyboard.
 
 const stickDeadZone = 0.5
+
+// touchJoystick is an on-screen joystick (the iPad's): its stick's
+// position, x and y from -1 to 1, read as a gamepad's stick is, and its
+// two buttons.
+type touchJoystick struct {
+	x, y        float64
+	fire, fire2 bool
+}
+
+// TouchStick moves the on-screen joystick's stick to x, y (-1 to 1, y
+// down; 0, 0 is centred).
+func (d *Display) TouchStick(x, y float64) { d.touchJoy.x, d.touchJoy.y = x, y }
+
+// TouchButton presses (down) or releases the on-screen joystick's fire
+// button (0) or its second button (1).
+func (d *Display) TouchButton(button int, down bool) {
+	switch button {
+	case 0:
+		d.touchJoy.fire = down
+	case 1:
+		d.touchJoy.fire2 = down
+	}
+}
 
 // joyKeys are the host keys the keyboard joystick takes over.
 var joyKeys = map[ebiten.Key]bool{
@@ -60,6 +84,16 @@ func (d *Display) pollJoystick() {
 		j.Fire = ebiten.IsKeyPressed(ebiten.KeyControlRight) || ebiten.IsKeyPressed(ebiten.KeyAltRight)
 		j.Fire2 = ebiten.IsKeyPressed(ebiten.KeyShiftRight)
 	}
+	t := d.touchJoy
+	if j.Analog {
+		j.AnalogX, j.AnalogY = t.x, t.y
+	}
+	j.Up = j.Up || t.y < -stickDeadZone
+	j.Down = j.Down || t.y > stickDeadZone
+	j.Left = j.Left || t.x < -stickDeadZone
+	j.Right = j.Right || t.x > stickDeadZone
+	j.Fire = j.Fire || t.fire
+	j.Fire2 = j.Fire2 || t.fire2
 	d.gamepads = ebiten.AppendGamepadIDs(d.gamepads[:0])
 	for _, id := range d.gamepads {
 		var up, down, left, right, fire, fire2 bool

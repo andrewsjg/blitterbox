@@ -221,7 +221,7 @@ final class AmigaKeyboardView: UIView {
 
 /// Palette is the keyboard's colours: the A500's beige, or charcoal in
 /// dark mode.
-private enum Palette {
+enum Palette {
     static func dynamic(_ light: UIColor, _ dark: UIColor) -> UIColor {
         UIColor { $0.userInterfaceStyle == .dark ? dark : light }
     }

@@ -1,6 +1,6 @@
 // MachineBar is the running machine's controls on the iPad, in place of
 // the desktop's status bar (amiga/display_status.go): the activity
-// lights, the keyboard, Reset, Power and Settings, floating over the
+// lights, the keyboard, the joystick, Reset, Power and Settings, floating over the
 // bottom of the picture. It fades to a small handle when left alone, and
 // the machine's notes show above it.
 import Blitterbox
@@ -30,6 +30,8 @@ final class MachineBarModel {
     private(set) var fading = false // the controls fading out, before the handle replaces them
     var keyboardShown = false
     var toggleKeyboard: () -> Void = {}
+    var joystickShown = false
+    var toggleJoystick: () -> Void = {}
     var holding = false { // a dialog is up: stay
         didSet { holding ? hide?.cancel() : stayAWhile() }
     }
@@ -159,6 +161,8 @@ struct MachineBar: View {
             Rectangle().fill(.white.opacity(0.25)).frame(width: 1, height: 28)
             ControlButton(bar.keyboardShown ? "keyboard.chevron.compact.down" : "keyboard",
                           bar.keyboardShown ? "Hide the keyboard" : "Show the keyboard") { tapped(bar.toggleKeyboard) }
+            ControlButton(bar.joystickShown ? "gamecontroller.fill" : "gamecontroller",
+                          bar.joystickShown ? "Hide the joystick" : "Show the joystick") { tapped(bar.toggleJoystick) }
             ControlButton("arrow.counterclockwise", "Reset") { tapped { BlitterboxReset() } }
             ControlButton("power", "Power cycle", tint: .red) { confirming = .power }
             ControlButton("gearshape", "Settings") { confirming = .settings }

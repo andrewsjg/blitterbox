@@ -11,6 +11,7 @@
 		A10000000000000000000003 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* Keyboard.swift */; };
 		A10000000000000000000002 /* Blitterbox.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* Blitterbox.xcframework */; };
 		A10000000000000000000009 /* Pointer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* Pointer.swift */; };
+		A1000000000000000000000C /* Joystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* Joystick.swift */; };
 		A1000000000000000000000A /* MachineBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* MachineBar.swift */; };
 		A10000000000000000000004 /* Launcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* Launcher.swift */; };
 		A10000000000000000000005 /* Bridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* Bridge.swift */; };
@@ -27,6 +28,7 @@
 		A20000000000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000004 /* BlitterBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlitterBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A20000000000000000000011 /* Pointer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pointer.swift; sourceTree = "<group>"; };
+		A20000000000000000000014 /* Joystick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Joystick.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* MachineBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MachineBar.swift; sourceTree = "<group>"; };
 		A20000000000000000000006 /* Launcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Launcher.swift; sourceTree = "<group>"; };
 		A20000000000000000000007 /* Bridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Bridge.swift; path = ../../macos/Sources/BlitterBoxLauncher/Bridge.swift; sourceTree = SOURCE_ROOT; };
@@ -78,6 +80,7 @@
 				A20000000000000000000005 /* Keyboard.swift */,
 				A20000000000000000000006 /* Launcher.swift */,
 				A20000000000000000000011 /* Pointer.swift */,
+				A20000000000000000000014 /* Joystick.swift */,
 				A20000000000000000000012 /* MachineBar.swift */,
 			);
 			path = Sources;
@@ -159,6 +162,7 @@
 				A10000000000000000000003 /* Keyboard.swift in Sources */,
 				A10000000000000000000004 /* Launcher.swift in Sources */,
 				A10000000000000000000009 /* Pointer.swift in Sources */,
+				A1000000000000000000000C /* Joystick.swift in Sources */,
 				A1000000000000000000000A /* MachineBar.swift in Sources */,
 				A10000000000000000000005 /* Bridge.swift in Sources */,
 				A10000000000000000000006 /* Model.swift in Sources */,

@@ -164,6 +164,27 @@ func PointerButton(button int, down bool) {
 	}
 }
 
+// JoystickStick moves the on-screen joystick's stick to x, y: -1 to 1
+// each way, y down, 0, 0 centred. It works as a gamepad's stick does,
+// in game port 2.
+func JoystickStick(x, y float64) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.TouchStick(x, y)
+	}
+}
+
+// JoystickButton presses (down) or releases the on-screen joystick's
+// fire button (0) or its second button (1).
+func JoystickButton(button int, down bool) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.TouchButton(button, down)
+	}
+}
+
 // Say shows a note in the status bar (Status's message).
 func Say(text string) {
 	g.mu.Lock()

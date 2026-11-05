@@ -97,6 +97,7 @@ type Display struct {
 	// sets port 2's pot counters (pots.go) rather than its directions.
 	JoyAnalog bool
 	gamepads  []ebiten.GamepadID
+	touchJoy  touchJoystick // the iPad's on-screen joystick
 
 	// Mute turns off host audio (Paula still runs).
 	Mute bool

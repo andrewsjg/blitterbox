@@ -44,9 +44,12 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 /// controller, as a child) with the on-screen keyboard, slightly
 /// see-through, over the picture's foot when shown, and the machine's
 /// controls (MachineBar) floating above it; the picture keeps its size.
+/// The on-screen joystick (Joystick.swift) lies over the picture too,
+/// when shown, where it was left.
 final class AmigaViewController: UIViewController {
     private let amiga = EbitenController()
     private let keyboard = AmigaKeyboardView()
+    private let pads: [MovablePad] = [StickPad(), ButtonsPad()]
     private let bar = MachineBarModel()
     private lazy var barHost = UIHostingController(rootView: MachineBar(bar: bar))
     private var keyboardShown: NSLayoutConstraint!
@@ -59,6 +62,10 @@ final class AmigaViewController: UIViewController {
         addChild(amiga)
         view.addSubview(amiga.view)
         amiga.didMove(toParent: self)
+        for p in pads {
+            p.isHidden = true
+            view.addSubview(p)
+        }
         view.addSubview(keyboard)
         keyboard.alpha = 0.8
         keyboard.layer.cornerRadius = 12 // it no longer reaches the edges
@@ -66,6 +73,7 @@ final class AmigaViewController: UIViewController {
         keyboard.onKey = { code, down in BlitterboxKey(code, down) }
 
         bar.toggleKeyboard = { [weak self] in self?.toggleKeyboard() }
+        bar.toggleJoystick = { [weak self] in self?.showJoystick(!(self?.bar.joystickShown ?? true)) }
         barHost.sizingOptions = .intrinsicContentSize
         barHost.view.backgroundColor = .clear
         addChild(barHost)
@@ -105,6 +113,13 @@ final class AmigaViewController: UIViewController {
         if UserDefaults.standard.bool(forKey: "keyboardShown") {
             showKeyboard(true)
         }
+        showJoystick(UserDefaults.standard.bool(forKey: "joystickShown"))
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let space = view.bounds.inset(by: view.safeAreaInsets)
+        for p in pads { p.place(in: space) }
     }
 
     /// takeKeys gives the hardware keyboard to the Amiga.
@@ -128,5 +143,16 @@ final class AmigaViewController: UIViewController {
         keyboardShown.isActive = show
         bar.keyboardShown = show
         UserDefaults.standard.set(show, forKey: "keyboardShown")
+    }
+
+    /// showJoystick shows the on-screen joystick or hides it, letting go of
+    /// it, and remembers which for next time.
+    private func showJoystick(_ show: Bool) {
+        for p in pads {
+            if !show { p.letGo() }
+            p.isHidden = !show
+        }
+        bar.joystickShown = show
+        UserDefaults.standard.set(show, forKey: "joystickShown")
     }
 }
