@@ -168,6 +168,7 @@ type Amiga struct {
 	FastIdleSkips uint64
 	FastIdleCount uint64 // number of times fast-idle triggered
 	cpuStopped    bool
+	poll          pollLoop // a raster wait being run on through (pollskip.go)
 
 	// Debug fields for interrupt tracing
 	debugIntCount int
@@ -486,6 +487,62 @@ func (a *Amiga) Reset() error {
 // CPU.Step() — doing so would reset the stopped flag and execute whatever opcode
 // happens to follow the STOP, which is wrong. Instead we idle by 4 cycles so
 // that the beam keeps advancing and VBLANK/VERTB interrupts get generated.
+// cyclesToNextEvent is how many CPU cycles the machine can run before
+// something may interrupt the CPU or wake it (VBL, a CIA timer, the
+// blitter, the disk, the Copper, Paula, Gayle, the serial port), at
+// most a frame: what an idle CPU can skip.
+func (a *Amiga) cyclesToNextEvent() int {
+	skip := CyclesPerFrame // upper bound: one full frame
+	// Cycles until next VBL (line 0 wrap)
+	cyclesToVBL := (a.linesThisFrame()-a.vpos)*a.lineCycles - a.hpos
+	if cyclesToVBL > 0 && cyclesToVBL < skip {
+		skip = cyclesToVBL
+	}
+	// CIA timers may fire sooner — find the earliest
+	if et := a.CIAA.ETicksToNextEvent(); et > 0 {
+		cpuCycles := et*10 - a.eClockCounter
+		if cpuCycles > 0 && cpuCycles < skip {
+			skip = cpuCycles
+		}
+	}
+	if et := a.CIAB.ETicksToNextEvent(); et > 0 {
+		cpuCycles := et*10 - a.eClockCounter
+		if cpuCycles > 0 && cpuCycles < skip {
+			skip = cpuCycles
+		}
+	}
+	// Wake in time to raise a pending blitter or disk interrupt.
+	if a.Blitter != nil && a.Blitter.busy && a.Blitter.completionCycles < skip {
+		skip = a.Blitter.completionCycles
+	}
+	if a.Disk != nil {
+		if c := a.Disk.CyclesToNextEvent(); c > 0 && c < skip {
+			skip = c
+		}
+	}
+	// The Copper can raise an interrupt too (Rainbow Islands ends
+	// its display with a MOVE to INTREQ and STOPs until then).
+	if c := a.Copper.idleCycles(a.hpos, a.vpos); c >= 0 && c < skip {
+		skip = c
+	}
+	if a.Paula != nil {
+		if c := a.Paula.CyclesToNextInterrupt(); c > 0 && c < skip {
+			skip = c
+		}
+	}
+	if a.Gayle != nil {
+		if c := a.Gayle.cyclesToNextEvent(); c > 0 && c < skip {
+			skip = c
+		}
+	}
+	if a.Serial != nil {
+		if c := a.Serial.CyclesToNextEvent(); c > 0 && c < skip {
+			skip = c
+		}
+	}
+	return skip
+}
+
 func (a *Amiga) Step() error {
 	var err error
 
@@ -494,64 +551,22 @@ func (a *Amiga) Step() error {
 		// Fast-idle: skip ahead to the next interesting event (CIA timer
 		// underflow, VBL, the Copper's next move ...) instead of ticking 4
 		// cycles at a time.
-		skip := CyclesPerFrame // upper bound: one full frame
-		// Cycles until next VBL (line 0 wrap)
-		cyclesToVBL := (a.linesThisFrame()-a.vpos)*a.lineCycles - a.hpos
-		if cyclesToVBL > 0 && cyclesToVBL < skip {
-			skip = cyclesToVBL
-		}
-		// CIA timers may fire sooner — find the earliest
-		if et := a.CIAA.ETicksToNextEvent(); et > 0 {
-			cpuCycles := et*10 - a.eClockCounter
-			if cpuCycles > 0 && cpuCycles < skip {
-				skip = cpuCycles
-			}
-		}
-		if et := a.CIAB.ETicksToNextEvent(); et > 0 {
-			cpuCycles := et*10 - a.eClockCounter
-			if cpuCycles > 0 && cpuCycles < skip {
-				skip = cpuCycles
-			}
-		}
-		// Wake in time to raise a pending blitter or disk interrupt.
-		if a.Blitter != nil && a.Blitter.busy && a.Blitter.completionCycles < skip {
-			skip = a.Blitter.completionCycles
-		}
-		if a.Disk != nil {
-			if c := a.Disk.CyclesToNextEvent(); c > 0 && c < skip {
-				skip = c
-			}
-		}
-		// The Copper can raise an interrupt too (Rainbow Islands ends
-		// its display with a MOVE to INTREQ and STOPs until then).
-		if c := a.Copper.idleCycles(a.hpos, a.vpos); c >= 0 && c < skip {
-			skip = c
-		}
-		if a.Paula != nil {
-			if c := a.Paula.CyclesToNextInterrupt(); c > 0 && c < skip {
-				skip = c
-			}
-		}
-		if a.Gayle != nil {
-			if c := a.Gayle.cyclesToNextEvent(); c > 0 && c < skip {
-				skip = c
-			}
-		}
-		if a.Serial != nil {
-			if c := a.Serial.CyclesToNextEvent(); c > 0 && c < skip {
-				skip = c
-			}
-		}
+		skip := a.cyclesToNextEvent()
 		if skip < 4 {
 			skip = 4
 		}
 		a.CPU.LastCycles = skip
 		a.FastIdleSkips += uint64(skip)
 		a.FastIdleCount++
+	} else if skip := a.pollSkip(); skip > 0 {
+		// A raster wait: run on to the next line (pollskip.go).
+		a.CPU.LastCycles = skip
 	} else {
+		pc := a.CPU.PC
 		a.instr = instrTiming{on: a.ExactBus, fast: !a.exactBus()}
 		err = a.CPU.Step()
 		a.instr.on = false
+		a.notePoll(pc)
 		// Detect transition into stopped state (STOP instruction just executed).
 		if a.CPU.RunState() == m68k.RunStateStopped {
 			a.cpuStopped = true
