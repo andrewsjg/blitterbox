@@ -61,6 +61,8 @@ final class AmigaViewController: UIViewController {
         amiga.didMove(toParent: self)
         view.addSubview(keyboard)
         keyboard.alpha = 0.8
+        keyboard.layer.cornerRadius = 12 // it no longer reaches the edges
+        keyboard.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         keyboard.onKey = { code, down in BlitterboxKey(code, down) }
 
         bar.toggleKeyboard = { [weak self] in self?.toggleKeyboard() }
@@ -82,8 +84,10 @@ final class AmigaViewController: UIViewController {
             amiga.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             amiga.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             amiga.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            keyboard.leadingAnchor.constraint(equalTo: safe.leadingAnchor),
-            keyboard.trailingAnchor.constraint(equalTo: safe.trailingAnchor),
+            // A little narrower than the screen, so it hides less of the
+            // picture; the keys keep their shape.
+            keyboard.centerXAnchor.constraint(equalTo: safe.centerXAnchor),
+            keyboard.widthAnchor.constraint(equalTo: safe.widthAnchor, multiplier: 0.85),
             keyboard.heightConstraint(),
             keyboardHidden,
             // The controls: centred above the keyboard, clear of the home
