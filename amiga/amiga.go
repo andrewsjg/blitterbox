@@ -168,6 +168,7 @@ type Amiga struct {
 	FastIdleSkips uint64
 	FastIdleCount uint64 // number of times fast-idle triggered
 	cpuStopped    bool
+	frames        uint64   // vertical blanks so far (RunFrame counts them)
 	poll          pollLoop // a raster wait being run on through (pollskip.go)
 
 	// Debug fields for interrupt tracing
@@ -717,40 +718,22 @@ func (a *Amiga) advance(elapsed int) {
 	}
 }
 
-// RunFrame advances the machine until the next VBLANK (vpos wraps to 0),
-// leaving a fully rendered frame in Video.Pixels for the display to present.
+// RunFrame advances the machine to the next vertical blank, leaving a
+// fully rendered frame in Video.Pixels for the display to present.
 //
-// A fixed cycle budget is a poor fit here: Step() can run many cycles at once
-// (STOP idle advances whole scanlines), so a budget often overshoots and stops
-// mid-frame. Presenting a half-updated framebuffer looks like vertical tear or
-// "shake". Syncing to VBLANK guarantees every presented image is complete.
-//
-// Important: when the CPU is STOP'd at vpos==0, a single Step() may fast-idle
-// through an entire frame and land on vpos==0 again. The old "leave line 0"
-// loop never exited in that case and froze the UI (force-quit). We detect
-// full-frame idle progress via the cycle counter and return.
+// It counts the blanks themselves (startFrame) rather than looking for
+// the beam on line 0 between steps: a step can run many cycles (a STOPped
+// CPU idles a line or a frame at a time, an instruction can wait long
+// for the chip bus), and one that carried the beam from the foot of a
+// frame past line 0 left RunFrame running on to its safety limit, four
+// frames for one. Superfrog's attract sequence ran four times fast so.
 func (a *Amiga) RunFrame() error {
-	startCycles := a.cycles
-
-	// Leave the current line-0 VBLANK so the next vpos==0 is a new frame.
-	if a.vpos == 0 {
-		for a.vpos == 0 {
-			if err := a.Step(); err != nil {
-				return err
-			}
-			// STOP idle from line 0 advanced a whole frame and wrapped to 0.
-			// That frame is fully rendered — present it.
-			if a.cycles-startCycles >= uint64(CyclesPerFrame) {
-				return nil
-			}
-		}
-	}
-	// Run until the beam returns to VBLANK.
-	for a.vpos != 0 {
+	start, startCycles := a.frames, a.cycles
+	for a.frames == start {
 		if err := a.Step(); err != nil {
 			return err
 		}
-		// Safety: never spin forever if something odd happens to vpos.
+		// Safety: never spin forever if the beam somehow stops.
 		if a.cycles-startCycles > uint64(CyclesPerFrame*4) {
 			return nil
 		}
@@ -851,6 +834,7 @@ func (a *Amiga) nextLine() bool {
 // Copper restart from COP1LC, and a new video frame.
 func (a *Amiga) startFrame() {
 	a.vpos = 0
+	a.frames++
 	// Agnus toggles LOF each frame only in interlace; otherwise every frame
 	// is long.
 	if a.Custom.ReadReg16(0x100)&0x0004 != 0 { // BPLCON0 LACE
