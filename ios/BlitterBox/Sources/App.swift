@@ -49,7 +49,8 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 final class AmigaViewController: UIViewController {
     private let amiga = EbitenController()
     private let keyboard = AmigaKeyboardView()
-    private let pads: [MovablePad] = [StickPad(), ButtonsPad()]
+    private let stick = StickPad()
+    private lazy var pads: [MovablePad] = [stick, ButtonsPad()]
     private let bar = MachineBarModel()
     private lazy var barHost = UIHostingController(rootView: MachineBar(bar: bar))
     private var keyboardShown: NSLayoutConstraint!
@@ -74,6 +75,13 @@ final class AmigaViewController: UIViewController {
 
         bar.toggleKeyboard = { [weak self] in self?.toggleKeyboard() }
         bar.toggleJoystick = { [weak self] in self?.showJoystick(!(self?.bar.joystickShown ?? true)) }
+        bar.joystickDPad = stick.dpad
+        bar.chooseDPad = { [weak self] dpad in
+            guard let self else { return }
+            stick.dpad = dpad
+            bar.joystickDPad = dpad
+            showJoystick(true)
+        }
         barHost.sizingOptions = .intrinsicContentSize
         barHost.view.backgroundColor = .clear
         addChild(barHost)

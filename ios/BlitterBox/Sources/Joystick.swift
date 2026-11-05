@@ -1,5 +1,6 @@
-// The on-screen joystick, for game port 2: a stick on the left and its two
-// buttons on the right, slightly see-through over the picture. Each part
+// The on-screen joystick, for game port 2: a stick or a D-pad (touch and
+// hold the machine bar's joystick button to choose) on the left and its
+// two buttons on the right, slightly see-through over the picture. Each part
 // has a grip to drag it somewhere else, and stays there.
 import Blitterbox
 import UIKit
@@ -92,13 +93,26 @@ class MovablePad: UIView {
     func letGo() {}
 }
 
-/// StickPad is the stick: a knob, dragged from the middle of its well,
-/// that leans the Amiga's joystick past half way.
+/// StickPad is the joystick's left part, in either of two styles. As a
+/// stick, a knob dragged from the middle of its well leans the Amiga's
+/// joystick past half way. As a D-pad, a cross whose eight ways (the
+/// arms and between them) push it all the way; a finger can roll round.
 final class StickPad: MovablePad {
     private let well = UIView()
     private let knob = UIView()
+    private let arms = [UIView(), UIView(), UIView(), UIView()] // up, right, down, left
+    private let hub = UIView()
     private var finger: UITouch?
     private static let diameter: CGFloat = 160
+
+    /// dpad: the D-pad rather than the stick, remembered for next time.
+    var dpad = UserDefaults.standard.bool(forKey: "joystickDPad") {
+        didSet {
+            letGo()
+            UserDefaults.standard.set(dpad, forKey: "joystickDPad")
+            showStyle()
+        }
+    }
 
     init() {
         super.init(name: "stick", home: CGPoint(x: 0.12, y: 0.62), size: CGSize(width: Self.diameter, height: Self.diameter))
@@ -115,10 +129,43 @@ final class StickPad: MovablePad {
         knob.layer.shadowOpacity = 0.35
         knob.layer.shadowRadius = 4
         knob.layer.shadowOffset = CGSize(width: 0, height: 2)
-        for v in [well, knob] {
+
+        // The cross: a hub and four arms out to the well's edge, each with
+        // its arrow.
+        let c = well.center, r = Self.diameter / 2 - 6, t: CGFloat = 54
+        hub.frame = CGRect(x: c.x - t / 2, y: c.y - t / 2, width: t, height: t)
+        let frames = [CGRect(x: c.x - t / 2, y: c.y - r, width: t, height: r - t / 2 + 1),
+                      CGRect(x: c.x + t / 2 - 1, y: c.y - t / 2, width: r - t / 2 + 1, height: t),
+                      CGRect(x: c.x - t / 2, y: c.y + t / 2 - 1, width: t, height: r - t / 2 + 1),
+                      CGRect(x: c.x - r, y: c.y - t / 2, width: r - t / 2 + 1, height: t)]
+        for (i, a) in arms.enumerated() {
+            a.frame = frames[i]
+            a.layer.cornerRadius = 8
+            let arrow = UIImageView(image: UIImage(systemName: ["arrowtriangle.up.fill", "arrowtriangle.right.fill",
+                                                                "arrowtriangle.down.fill", "arrowtriangle.left.fill"][i]))
+            arrow.tintColor = Palette.legend
+            arrow.preferredSymbolConfiguration = .init(pointSize: 13)
+            arrow.contentMode = .center
+            arrow.frame = a.bounds
+            a.addSubview(arrow)
+        }
+        for v in [well, knob, hub] + arms {
             v.isUserInteractionEnabled = false
             addSubview(v)
         }
+        showStyle()
+    }
+
+    private func showStyle() {
+        knob.isHidden = dpad
+        for v in arms + [hub] { v.isHidden = !dpad }
+        lightArms(x: 0, y: 0)
+    }
+
+    private func lightArms(x: CGFloat, y: CGFloat) {
+        let on = [y < 0, x > 0, y > 0, x < 0]
+        for (i, a) in arms.enumerated() { a.backgroundColor = on[i] ? Palette.held : Palette.special }
+        hub.backgroundColor = Palette.special
     }
 
     override func controlsContain(_ p: CGPoint) -> Bool {
@@ -129,6 +176,18 @@ final class StickPad: MovablePad {
         let r = Self.diameter / 2
         var v = CGPoint(x: p.x - well.center.x, y: p.y - well.center.y)
         let d = hypot(v.x, v.y)
+        if dpad {
+            // Eight ways, 45 degrees each, past a small dead middle.
+            var x: CGFloat = 0, y: CGFloat = 0
+            if d > r * 0.2 {
+                let way = (atan2(v.y, v.x) / (.pi / 4)).rounded() * .pi / 4
+                x = cos(way).rounded()
+                y = sin(way).rounded()
+            }
+            lightArms(x: x, y: y)
+            BlitterboxJoystickStick(Double(x), Double(y))
+            return
+        }
         if d > r { v = CGPoint(x: v.x * r / d, y: v.y * r / d) }
         knob.center = CGPoint(x: well.center.x + v.x, y: well.center.y + v.y)
         BlitterboxJoystickStick(Double(v.x / r), Double(v.y / r))
@@ -137,6 +196,7 @@ final class StickPad: MovablePad {
     override func letGo() {
         finger = nil
         UIView.animate(withDuration: 0.1) { self.knob.center = self.well.center }
+        lightArms(x: 0, y: 0)
         BlitterboxJoystickStick(0, 0)
     }
 

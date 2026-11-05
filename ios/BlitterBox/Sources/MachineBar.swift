@@ -32,6 +32,8 @@ final class MachineBarModel {
     var toggleKeyboard: () -> Void = {}
     var joystickShown = false
     var toggleJoystick: () -> Void = {}
+    var joystickDPad = false // its left part a D-pad, not a stick
+    var chooseDPad: (Bool) -> Void = { _ in }
     var holding = false { // a dialog is up: stay
         didSet { holding ? hide?.cancel() : stayAWhile() }
     }
@@ -163,6 +165,13 @@ struct MachineBar: View {
                           bar.keyboardShown ? "Hide the keyboard" : "Show the keyboard") { tapped(bar.toggleKeyboard) }
             ControlButton(bar.joystickShown ? "gamecontroller.fill" : "gamecontroller",
                           bar.joystickShown ? "Hide the joystick" : "Show the joystick") { tapped(bar.toggleJoystick) }
+                // Touch and hold: a stick or a D-pad.
+                .contextMenu {
+                    Picker("Style", selection: Binding(get: { bar.joystickDPad }, set: { d in tapped { bar.chooseDPad(d) } })) {
+                        Label("Stick", systemImage: "circle.circle").tag(false)
+                        Label("D-pad", systemImage: "dpad").tag(true)
+                    }
+                }
             ControlButton("arrow.counterclockwise", "Reset") { tapped { BlitterboxReset() } }
             ControlButton("power", "Power cycle", tint: .red) { confirming = .power }
             ControlButton("gearshape", "Settings") { confirming = .settings }
