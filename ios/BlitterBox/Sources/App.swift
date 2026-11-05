@@ -41,9 +41,9 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 }
 
 /// AmigaViewController shows the Amiga's display (Ebitengine's view
-/// controller, as a child) with the on-screen keyboard docked below it
-/// when shown, and the machine's controls (MachineBar) floating over the
-/// picture's foot; the picture shrinks to fit above the keyboard.
+/// controller, as a child) with the on-screen keyboard, slightly
+/// see-through, over the picture's foot when shown, and the machine's
+/// controls (MachineBar) floating above it; the picture keeps its size.
 final class AmigaViewController: UIViewController {
     private let amiga = EbitenController()
     private let keyboard = AmigaKeyboardView()
@@ -60,6 +60,7 @@ final class AmigaViewController: UIViewController {
         view.addSubview(amiga.view)
         amiga.didMove(toParent: self)
         view.addSubview(keyboard)
+        keyboard.alpha = 0.8
         keyboard.onKey = { code, down in BlitterboxKey(code, down) }
 
         bar.toggleKeyboard = { [weak self] in self?.toggleKeyboard() }
@@ -80,7 +81,7 @@ final class AmigaViewController: UIViewController {
             amiga.view.topAnchor.constraint(equalTo: view.topAnchor),
             amiga.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             amiga.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            amiga.view.bottomAnchor.constraint(equalTo: keyboard.topAnchor),
+            amiga.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             keyboard.leadingAnchor.constraint(equalTo: safe.leadingAnchor),
             keyboard.trailingAnchor.constraint(equalTo: safe.trailingAnchor),
             keyboard.heightConstraint(),
@@ -113,7 +114,7 @@ final class AmigaViewController: UIViewController {
         UIView.animate(withDuration: 0.25) { self.view.layoutIfNeeded() }
     }
 
-    /// showKeyboard docks the keyboard below the picture or hides it, and
+    /// showKeyboard slides the keyboard up over the picture or hides it, and
     /// remembers which for next time.
     private func showKeyboard(_ show: Bool) {
         if !show {
