@@ -169,7 +169,7 @@ type Amiga struct {
 	FastIdleCount uint64 // number of times fast-idle triggered
 	cpuStopped    bool
 	frames        uint64   // vertical blanks so far (RunFrame counts them)
-	poll          pollLoop // a raster wait being run on through (pollskip.go)
+	idle          idleLoop // a loop waiting for an event (idleloop.go)
 
 	// Debug fields for interrupt tracing
 	debugIntCount int
@@ -493,6 +493,17 @@ func (a *Amiga) Reset() error {
 // blitter, the disk, the Copper, Paula, Gayle, the serial port), at
 // most a frame: what an idle CPU can skip.
 func (a *Amiga) cyclesToNextEvent() int {
+	skip := a.cyclesToDeviceEvent()
+	// The Copper can raise an interrupt too (Rainbow Islands ends
+	// its display with a MOVE to INTREQ and STOPs until then).
+	if c := a.Copper.idleCycles(a.hpos, a.vpos); c >= 0 && c < skip {
+		skip = c
+	}
+	return skip
+}
+
+// cyclesToDeviceEvent is cyclesToNextEvent but for the Copper.
+func (a *Amiga) cyclesToDeviceEvent() int {
 	skip := CyclesPerFrame // upper bound: one full frame
 	// Cycles until next VBL (line 0 wrap)
 	cyclesToVBL := (a.linesThisFrame()-a.vpos)*a.lineCycles - a.hpos
@@ -520,11 +531,6 @@ func (a *Amiga) cyclesToNextEvent() int {
 		if c := a.Disk.CyclesToNextEvent(); c > 0 && c < skip {
 			skip = c
 		}
-	}
-	// The Copper can raise an interrupt too (Rainbow Islands ends
-	// its display with a MOVE to INTREQ and STOPs until then).
-	if c := a.Copper.idleCycles(a.hpos, a.vpos); c >= 0 && c < skip {
-		skip = c
 	}
 	if a.Paula != nil {
 		if c := a.Paula.CyclesToNextInterrupt(); c > 0 && c < skip {
@@ -559,15 +565,16 @@ func (a *Amiga) Step() error {
 		a.CPU.LastCycles = skip
 		a.FastIdleSkips += uint64(skip)
 		a.FastIdleCount++
-	} else if skip := a.pollSkip(); skip > 0 {
-		// A raster wait: run on to the next line (pollskip.go).
-		a.CPU.LastCycles = skip
+	} else if a.runIdle() {
+		// An idle loop: the machine has run on to the next event
+		// (idleloop.go), and there is nothing more to do.
+		return nil
 	} else {
 		pc := a.CPU.PC
 		a.instr = instrTiming{on: a.ExactBus, fast: !a.exactBus()}
 		err = a.CPU.Step()
 		a.instr.on = false
-		a.notePoll(pc)
+		a.noteLoop(pc)
 		// Detect transition into stopped state (STOP instruction just executed).
 		if a.CPU.RunState() == m68k.RunStateStopped {
 			a.cpuStopped = true

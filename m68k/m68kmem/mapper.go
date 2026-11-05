@@ -169,6 +169,18 @@ func (mm *Mapper) Write(addr int, p []byte) (n int, err error) {
 	return n, nil
 }
 
+// Device returns the memory mapped at addr, or nil if none is.
+func (mm *Mapper) Device(addr int) Memory {
+	addr, err := mm.maskAddr(addr)
+	if err != nil {
+		return nil
+	}
+	if m := mm.find(addr); m != nil {
+		return m.m
+	}
+	return nil
+}
+
 // find returns the mapping containing addr, or nil.
 func (mm *Mapper) find(addr int) *mapping {
 	if m := mm.last; m != nil && m.start <= addr && m.end >= addr {

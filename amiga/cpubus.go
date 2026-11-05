@@ -33,11 +33,15 @@ type cpuBus struct{ a *Amiga }
 
 func (b *cpuBus) Read(addr int, p []byte) (int, error) {
 	b.a.cpuAccess(addr, len(p))
+	if b.a.idle.watch {
+		b.a.watchRead(addr, len(p))
+	}
 	return b.a.Mapper.Read(addr, p)
 }
 
 func (b *cpuBus) Write(addr int, p []byte) (int, error) {
 	b.a.cpuAccess(addr, len(p))
+	b.a.idle.clean = false
 	return b.a.Mapper.Write(addr, p)
 }
 
