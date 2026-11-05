@@ -38,6 +38,7 @@ var helpSections = []struct {
 		{"Cmd+P / Cmd+W", "pause / warp (as fast as possible)"},
 		{"Cmd+Shift+1-9 / Cmd+1-9", "save state / load state"},
 		{"Cmd+S / Cmd+F", "screenshot / full screen"},
+		{"Cmd+I", "performance: emulation time, sound buffer"},
 		{"Cmd+,", "the configuration screen"},
 		{"Cmd+/", "this help"},
 	}},

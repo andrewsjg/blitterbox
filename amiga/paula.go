@@ -449,6 +449,17 @@ type AudioBuffer struct {
 	r, n int       // read position and frames held
 	tmp  []float32 // Read's scratch, reused to spare the GC
 	mute bool      // drop writes (warp mode)
+	dry  int       // frames Read padded with silence (TakeDry)
+}
+
+// TakeDry returns how many frames the player asked for that the buffer
+// didn't hold (played as silence) since the last call, and starts again.
+func (b *AudioBuffer) TakeDry() int {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	n := b.dry
+	b.dry = 0
+	return n
 }
 
 // SetMuted drops everything written while on, and empties the buffer when
@@ -513,7 +524,13 @@ func (b *AudioBuffer) Read(p []byte) (int, error) {
 	}
 	tmp := b.tmp[:2*frames]
 	clear(tmp)
-	b.ReadFrames(tmp)
+	if got := b.ReadFrames(tmp); got < frames {
+		b.mu.Lock()
+		if !b.mute {
+			b.dry += frames - got
+		}
+		b.mu.Unlock()
+	}
 	for i, v := range tmp {
 		binary.LittleEndian.PutUint32(p[4*i:], math.Float32bits(v))
 	}

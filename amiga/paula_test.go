@@ -225,3 +225,23 @@ func TestPaceFramesJitter(t *testing.T) {
 		t.Errorf("emulated %.2f frames/s, want ~49.92", rate)
 	}
 }
+
+// The player asking for more than the buffer holds gets silence, counted
+// as dry (the performance overlay's glitches); muted, nothing counts.
+func TestAudioBufferDry(t *testing.T) {
+	b := NewAudioBuffer(16)
+	b.Write(0.5, 0.5)
+	b.Write(0.5, 0.5)
+	b.Read(make([]byte, 8*5))
+	if got := b.TakeDry(); got != 3 {
+		t.Errorf("dry %d frames, want 3", got)
+	}
+	if got := b.TakeDry(); got != 0 {
+		t.Errorf("dry %d after TakeDry, want 0", got)
+	}
+	b.SetMuted(true)
+	b.Read(make([]byte, 8*5))
+	if got := b.TakeDry(); got != 0 {
+		t.Errorf("muted: dry %d, want 0", got)
+	}
+}

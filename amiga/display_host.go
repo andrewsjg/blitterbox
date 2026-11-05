@@ -24,6 +24,7 @@ import (
 //	Cmd+P  pause
 //	Cmd+F  fullscreen
 //	Cmd+S  screenshot: a PNG of the picture in ScreenshotDir
+//	Cmd+I  the performance overlay (display_stats.go)
 //	Cmd+Shift+1..9  save state to slot 1-9 (in StateDir)
 //	Cmd+1..9        load state from slot 1-9
 //	Cmd+Shift+R  power off and on (a cold start; the disks stay in)
@@ -63,6 +64,8 @@ func (d *Display) pollHostKeys() {
 		}
 	case inpututil.IsKeyJustPressed(ebiten.KeyF):
 		ebiten.SetFullscreen(!ebiten.IsFullscreen())
+	case inpututil.IsKeyJustPressed(ebiten.KeyI):
+		d.stats.toggle(d.amiga.Paula.Output)
 	case inpututil.IsKeyJustPressed(ebiten.KeyComma):
 		d.ConfigRequested = true
 	case inpututil.IsKeyJustPressed(ebiten.KeyS):

@@ -19,8 +19,9 @@ const (
 
 // Display implements ebiten.Game to show the Amiga's video output.
 type Display struct {
-	helpShown bool // the help overlay (Cmd+/)
-	rtgShown  bool // the RTG card has the display (fitWindow)
+	helpShown bool      // the help overlay (Cmd+/)
+	stats     perfStats // the performance overlay (Cmd+I)
+	rtgShown  bool      // the RTG card has the display (fitWindow)
 
 	// Name is the machine's name for the title bar: the configuration's.
 	Name string
@@ -172,11 +173,18 @@ func (d *Display) Update() error {
 		d.runWarp()
 		return nil
 	}
-	for n := d.framesToRun(); n > 0; n-- {
+	fill := -1
+	if out := d.amiga.Paula.Output; out != nil && d.stats.on {
+		fill = out.Frames()
+	}
+	t0 := time.Now()
+	n := d.framesToRun()
+	for i := 0; i < n; i++ {
 		if err := d.amiga.RunFrame(); err != nil {
 			return nil
 		}
 	}
+	d.stats.note(n, time.Since(t0), fill, d.amiga.Paula.Output)
 	return nil
 }
 
@@ -485,6 +493,7 @@ func (d *Display) Draw(screen *ebiten.Image) {
 		b := screen.Bounds()
 		d.renderHelp(b.Dx(), picH, d.finalScale(b.Dx(), b.Dy()))
 	}
+	d.stats.draw(screen)
 	if d.StatusBar {
 		// The bar itself is drawn at the window's resolution
 		// (DrawFinalScreen); its place here is just its background.
