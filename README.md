@@ -366,8 +366,11 @@ controller.
 - Kickstart 2.0 or later is needed, as Kickstart 1.3 has no FFS in ROM.
 - Keep it to 4 GB or less: `scsi.device` in Kickstart 3.1 and older
   controllers' ROMs reach only that far.
-- HDToolBox sees the disk as it would a real drive, and can change the
-  partition or its boot priority.
+- To change the partition or its boot priority with HDToolBox, connect
+  the disk as an IDE drive (`--ide`, on an A600, A1200 or A4000). HDToolBox
+  then finds it through Kickstart's `scsi.device`, its default, as it would
+  a real drive. `goamiga.device` takes no SCSI commands, which HDToolBox
+  needs.
 
 **IDE drives.** `--ide file.hdf` connects a hardfile as an IDE drive on
 Gayle: the first is the master, a second the slave. Kickstart 3.x for the
