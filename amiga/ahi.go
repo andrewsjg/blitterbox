@@ -156,12 +156,12 @@ type ahiState struct {
 
 // ahiStrings are the GetAttr strings, in the board's ROM.
 var ahiStrings = []struct{ label, text string }{
-	{"ahiAuthor", "goAmiga"},
-	{"ahiCopyright", "Free (part of goAmiga)"},
+	{"ahiAuthor", "BlitterBox"},
+	{"ahiCopyright", "Free (part of BlitterBox)"},
 	{"ahiVersion", "goamiga.audio 6.0 (23.10.2026)"},
-	{"ahiAnnotation", "Plays on the computer goAmiga runs on"},
+	{"ahiAnnotation", "Plays on the computer BlitterBox runs on"},
 	{"ahiOutput", "Host"},
-	{"ahiSlaveName", "goAmiga AHI"},
+	{"ahiSlaveName", "BlitterBox AHI"},
 }
 
 // buildAHIROM adds the driver's board code: the entry its library jumps
@@ -939,32 +939,32 @@ func (o *ahiOut) peak() float64 {
 	return p
 }
 
-// AmigaFiles are the files BlitterBox offers the Amiga on its "goAmiga"
+// AmigaFiles are the files BlitterBox offers the Amiga on its "BlitterBox"
 // volume: the AHI driver and its mode file, a script that installs them,
 // and a ReadMe. Paths are the volume's, slash-separated.
 func AmigaFiles() map[string][]byte {
-	script := `; Installs goAmiga's AHI driver, so AHI programs play on this computer.
+	script := `; Installs BlitterBox's AHI driver, so AHI programs play on this computer.
 ; AHI itself must be installed first: Aminet driver/audio/m68k-amigaos-ahiusr.lha
 If NOT EXISTS DEVS:AHI
   Echo "AHI isn't installed: install it first (Aminet driver/audio/m68k-amigaos-ahiusr.lha)."
   Quit 5
 EndIf
-Copy goAmiga:Devs/AHI/goamiga.audio DEVS:AHI/ QUIET
-Copy goAmiga:Devs/AudioModes/GOAMIGA DEVS:AudioModes/ QUIET
+Copy BlitterBox:Devs/AHI/goamiga.audio DEVS:AHI/ QUIET
+Copy BlitterBox:Devs/AudioModes/GOAMIGA DEVS:AudioModes/ QUIET
 If EXISTS C:AddAudioModes
   C:AddAudioModes QUIET
 EndIf
-Echo "goAmiga's AHI driver is installed. In Prefs/AHI, choose a GOAMIGA mode for each unit."
+Echo "BlitterBox's AHI driver is installed. In Prefs/AHI, choose a GOAMIGA mode for each unit."
 `
-	readme := `goAmiga's files for the Amiga
-=============================
+	readme := `BlitterBox's files for the Amiga
+================================
 
 Install-AHI-Driver
-  Installs goamiga.audio, an AHI driver that plays on the computer goAmiga
+  Installs goamiga.audio, an AHI driver that plays on the computer BlitterBox
   runs on, and its modes (GOAMIGA:16 bit stereo++ and others). Install
   AHI first (Aminet: driver/audio/m68k-amigaos-ahiusr.lha), then run
-  "Execute goAmiga:Install-AHI-Driver" in a Shell, and choose a GOAMIGA
-  mode for each unit in Prefs/AHI. The driver needs goAmiga's hard disk
+  "Execute BlitterBox:Install-AHI-Driver" in a Shell, and choose a GOAMIGA
+  mode for each unit in Prefs/AHI. The driver needs BlitterBox's hard disk
   board (any hardfile or shared folder), as this volume does.
 `
 	return map[string][]byte{

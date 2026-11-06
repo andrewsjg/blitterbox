@@ -245,9 +245,9 @@ func Build(s *config.Settings, loadState string, logger io.Writer, out io.Writer
 	// sharing (Kickstart 2.0 or later) needs the board, drives or not.
 	if s.AmigaFiles {
 		if dir, err := writeAmigaFiles(); err == nil {
-			a.AttachDirectory(dir, "goAmiga", true)
+			a.AttachDirectory(dir, "BlitterBox", true)
 		} else {
-			fmt.Fprintf(out, "goAmiga volume: %v\n", err)
+			fmt.Fprintf(out, "BlitterBox volume: %v\n", err)
 		}
 	}
 	if a.HostClipboard != nil && romInfo.Version >= 36 {
@@ -403,7 +403,7 @@ func (m *Machine) bootWHDLoad(s *config.Settings, rom amiga.ROMInfo, out io.Writ
 }
 
 // writeAmigaFiles writes BlitterBox's files for the Amiga (amiga.AmigaFiles)
-// into a folder for the goAmiga volume, and returns it.
+// into a folder for the BlitterBox volume, and returns it.
 func writeAmigaFiles() (string, error) {
 	dir := filepath.Join(config.Dir(), "amiga")
 	for name, b := range amiga.AmigaFiles() {

@@ -14,7 +14,7 @@ import (
 // program on the Amiga can use the device, so the hard disk board starts
 // one: its RomTag init adds a small task (at boot, when it runs), which
 // waits, woken now and then by a vertical blank interrupt server, until
-// DOS has started its first process, then creates the "goAmiga clipboard"
+// DOS has started its first process, then creates the "BlitterBox clipboard"
 // process and ends. The task and the process run the same kind of loop:
 //
 //	loop: trap CALL       ; Go sets A5 to a library function, A6 and arguments
@@ -153,7 +153,7 @@ func (h *hdBoard) clipInit() {
 	for i := uint32(0); i < 92; i++ {
 		a.poke8(t+i, 0)
 	}
-	a.pokeString(h.base+clipNames, "goAmiga clipboard")
+	a.pokeString(h.base+clipNames, "BlitterBox clipboard")
 	a.poke8(t+8, 1)                  // NT_TASK
 	a.poke8(t+9, 0)                  // pri 0
 	a.poke32(t+10, h.base+clipNames) // ln_Name

@@ -287,7 +287,9 @@ the game from boot into level 1 matching the reference screenshots.
 goAmiga is now BlitterBox: the apps, the Go module
 (`github.com/andrewsjg/blitterbox`), the command (`cmd/blitterbox`) and
 its files. What the Amiga sees keeps its old names (goamiga.device,
-goamiga.audio, the goAmiga volume), so installed systems still find them.
+goamiga.audio and its GOAMIGA modes), so installed systems still find them.
+(The volume with the AHI driver was goAmiga too until 2026-11-06; it is
+now BlitterBox, as are the names the boards and processes show.)
 `~/.config/goamiga` moves to `~/.config/blitterbox` the first time, and
 old save states (magic `goAmiga state`, `goamiga-N.state`) still load.
 

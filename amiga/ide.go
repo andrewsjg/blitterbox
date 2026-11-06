@@ -369,7 +369,7 @@ func (d *ideDrive) identify() {
 	str(10, 10, "GOAMIGA0001")
 	w[20], w[21] = 3, 16 // buffer type, size (sectors)
 	str(23, 4, "1.0")
-	str(27, 20, "goAmiga hardfile")
+	str(27, 20, "BlitterBox hardfile")
 	w[47] = 0x8010 // READ/WRITE MULTIPLE: up to 16 sectors
 	w[49] = 0x0200 // LBA
 	w[51] = 0x0200 // PIO mode 2

@@ -14,7 +14,7 @@ import (
 const ahiUsr = "../AHI/m68k-amigaos-ahiusr.lha"
 
 // ahiMachine boots Workbench 3.2 on an A1200 from a folder with AHI
-// installed and the goAmiga volume beside it. Before Workbench, the
+// installed and the BlitterBox volume beside it. Before Workbench, the
 // volume's script installs BlitterBox's driver, AUDIO: is mounted, and
 // script runs.
 func ahiMachine(t *testing.T, files map[string][]byte, script ...string) (*Amiga, string) {
@@ -35,8 +35,8 @@ func ahiMachine(t *testing.T, files map[string][]byte, script ...string) (*Amiga
 	for _, m := range modes {
 		os.Remove(m)
 	}
-	// the goAmiga volume, from which its script installs the driver.
-	vol := filepath.Join(t.TempDir(), "goAmiga")
+	// the BlitterBox volume, from which its script installs the driver.
+	vol := filepath.Join(t.TempDir(), "BlitterBox")
 	for name, b := range AmigaFiles() {
 		p := filepath.Join(vol, filepath.FromSlash(name))
 		os.MkdirAll(filepath.Dir(p), 0o755)
@@ -47,7 +47,7 @@ func ahiMachine(t *testing.T, files map[string][]byte, script ...string) (*Amiga
 	}
 	ss := filepath.Join(boot, "S", "Startup-Sequence")
 	b, _ := os.ReadFile(ss)
-	pre := append([]string{"Execute goAmiga:Install-AHI-Driver >SYS:install.log", "Mount DEVS:DOSDrivers/AUDIO"}, script...)
+	pre := append([]string{"Execute BlitterBox:Install-AHI-Driver >SYS:install.log", "Mount DEVS:DOSDrivers/AUDIO"}, script...)
 	os.WriteFile(ss, []byte(strings.Replace(string(b), "LoadWB", strings.Join(pre, "\n")+"\nLoadWB", 1)), 0o644)
 
 	a, _ := New(rom, nil)
@@ -58,7 +58,7 @@ func ahiMachine(t *testing.T, files map[string][]byte, script ...string) (*Amiga
 	if err := a.AttachDirectory(boot, "", false); err != nil {
 		t.Fatal(err)
 	}
-	a.AttachDirectory(vol, "goAmiga", true)
+	a.AttachDirectory(vol, "BlitterBox", true)
 	if os.Getenv("HD_TRACE") != "" {
 		a.HardDisk.Trace = logWriter{t}
 	}

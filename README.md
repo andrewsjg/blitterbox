@@ -464,7 +464,7 @@ default (`--clipboard=false` turns it off; on the configuration screen
 it's under Ports).
 
 It works through a small helper that BlitterBox runs on the Amiga, the
-"goAmiga clipboard" process. The helper needs Kickstart 2.0 or later and
+"BlitterBox clipboard" process. The helper needs Kickstart 2.0 or later and
 `clipboard.device` in DEVS:, as every Workbench has. It works from a
 floppy Workbench too: the helper lives on BlitterBox's hard disk board,
 which BlitterBox fits for it when there are no drives.
@@ -480,9 +480,9 @@ BlitterBox has an AHI driver, `goamiga.audio`. AHI mixes on the Amiga as
 usual, and the driver plays the result on the Mac, alongside Paula.
 
 1. Install AHI from Aminet (`driver/audio/m68k-amigaos-ahiusr.lha`).
-2. Turn on **goAmiga volume** (Ports, or `--amiga-files`): a read-only
+2. Turn on **BlitterBox volume** (Ports, or `--amiga-files`): a read-only
    volume with the driver on it. In a Shell, run
-   `Execute goAmiga:Install-AHI-Driver`, then turn the volume off again
+   `Execute BlitterBox:Install-AHI-Driver`, then turn the volume off again
    if you like; the driver stays installed.
 3. In Prefs/AHI, choose a GOAMIGA mode for each unit, for example
    "GOAMIGA:16 bit stereo++" or "GOAMIGA:HiFi 32 bit stereo++", and a

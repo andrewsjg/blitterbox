@@ -94,7 +94,7 @@ func TestIDEIdentify(t *testing.T) {
 	for _, w := range id[27:47] {
 		model = append(model, byte(w>>8), byte(w))
 	}
-	if !strings.HasPrefix(string(model), "goAmiga hardfile") {
+	if !strings.HasPrefix(string(model), "BlitterBox hardfile") {
 		t.Errorf("model %q", model)
 	}
 }

@@ -407,8 +407,8 @@ struct PortsTab: View {
             #endif
             Section("AHI sound") {
                 Toggle(isOn: $model.settings.amigaFiles) {
-                    Text("goAmiga volume")
-                    Text("A read-only disk with BlitterBox's AHI driver: run goAmiga:Install-AHI-Driver once, with AHI installed.")
+                    Text("BlitterBox volume")
+                    Text("A read-only disk with BlitterBox's AHI driver: run BlitterBox:Install-AHI-Driver once, with AHI installed.")
                 }
             }
         }

@@ -189,8 +189,8 @@ func (n *netBoard) buildROM(base uint32) {
 	s.addr("idString")
 	s.addr("init")
 	s.str("libName", "bsdsocket.library")
-	s.str("idString", "bsdsocket.library 4.0 (11.10.2026) goAmiga host sockets\r\n")
-	s.str("diagName", "goAmiga network")
+	s.str("idString", "bsdsocket.library 4.0 (11.10.2026) BlitterBox host sockets\r\n")
+	s.str("diagName", "BlitterBox network")
 	s.align(4)
 	s.label("diagEnd")
 

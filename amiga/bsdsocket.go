@@ -1326,7 +1326,7 @@ func (n *netBoard) tagList(t *sockTask, tags uint32) int32 {
 			}
 		case 29: // SBTC_RELEASESTRPTR
 			if !set {
-				a.pokeString(t.buf+bufErrStr, "goAmiga bsdsocket.library (host sockets)")
+				a.pokeString(t.buf+bufErrStr, "BlitterBox bsdsocket.library (host sockets)")
 				put(t.buf + bufErrStr)
 			}
 		default:

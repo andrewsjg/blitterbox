@@ -157,7 +157,7 @@ func TestClipboardShellCopy(t *testing.T) {
 }
 
 // With no hard disk or folder of its own, a Workbench floppy still gets
-// clipboard sharing: the goAmiga volume alone carries the board the helper
+// clipboard sharing: the BlitterBox volume alone carries the board the helper
 // lives on, and the floppy still boots.
 func TestClipboardFloppyWorkbench(t *testing.T) { clipboardFloppyWorkbench(t, true) }
 
@@ -177,7 +177,7 @@ func clipboardFloppyWorkbench(t *testing.T, volume bool) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vol := filepath.Join(t.TempDir(), "goAmiga")
+	vol := filepath.Join(t.TempDir(), "BlitterBox")
 	for name, b := range AmigaFiles() {
 		p := filepath.Join(vol, filepath.FromSlash(name))
 		os.MkdirAll(filepath.Dir(p), 0o755)
@@ -190,7 +190,7 @@ func clipboardFloppyWorkbench(t *testing.T, volume bool) {
 	a.SetChipRAM(2048)
 	a.HostClipboard = host
 	if volume {
-		a.AttachDirectory(vol, "goAmiga", true)
+		a.AttachDirectory(vol, "BlitterBox", true)
 	} else {
 		a.FitHardDiskBoard()
 	}

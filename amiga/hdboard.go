@@ -362,7 +362,7 @@ func (h *hdBoard) buildROM(base uint32) {
 	s.str("idString", "goamiga.device 1.0 (27.9.2026) hardfile driver\r\n")
 	s.str("dosName", "dos.library")
 	s.str("expName", "expansion.library")
-	s.str("diagName", "goAmiga hard disk")
+	s.str("diagName", "BlitterBox hard disk")
 	s.align(4)
 	s.label("diagEnd")
 
