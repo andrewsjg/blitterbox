@@ -41,7 +41,9 @@ func (b *cpuBus) Read(addr int, p []byte) (int, error) {
 
 func (b *cpuBus) Write(addr int, p []byte) (int, error) {
 	b.a.cpuAccess(addr, len(p))
-	b.a.idle.clean = false
+	if b.a.idle.watch {
+		b.a.watchWrite(addr, p)
+	}
 	return b.a.Mapper.Write(addr, p)
 }
 

@@ -38,35 +38,50 @@ func runTo(t *testing.T, a *Amiga, pc uint32, max int) int {
 
 // A loop waiting for the VERTB interrupt's handler to clear a flag in
 // RAM runs on to the interrupt, not a test at a time, and leaves the
-// loop just after it: polled, at colour clock 62 of line 0; run on, the
-// interrupt comes between the TST and the BNE, and the loop goes round
-// once more after it (72).
+// loop just after it on line 0, within a round of where the polled loop
+// left (polled): run on, the interrupt can come at another point in the
+// round. So too one that stores what it reads each round, changing
+// nothing (Monkey Island 2).
 func TestIdleLoopRunsOnToTheInterrupt(t *testing.T) {
-	a := idleTestAmiga(t, []uint16{
-		0x4A39, 0x0000, 0x3000, // loop: TST.B $3000
-		0x66F8,                                 // BNE.S loop
-		0x33F9, 0x00DF, 0xF006, 0x0000, 0x4000, // MOVE.W $DFF006,$4000
-		0x60FE, // BRA.S to itself
-	})
-	// The level 3 handler clears the flag and VERTB.
-	a.ChipRAM.Write(0x2000, []byte{
-		0x42, 0x39, 0x00, 0x00, 0x30, 0x00, // CLR.B $3000
-		0x33, 0xFC, 0x00, 0x20, 0x00, 0xDF, 0xF0, 0x9C, // MOVE.W #$20,$DFF09C
-		0x4E, 0x73, // RTE
-	})
-	a.ChipRAM.Write(0x6C, []byte{0x00, 0x00, 0x20, 0x00})
-	a.ChipRAM.Write(0x3000, []byte{1})
-	a.Custom.Write(0x09A, []byte{0xC0, 0x20}) // INTEN + VERTB
-	a.vpos, a.hpos = 100, 0
-	steps := runTo(t, a, 0x1012, 100000)
-	got := make([]byte, 2)
-	a.ChipRAM.Read(0x4000, got)
-	t.Logf("%d steps, left at line %d, colour clock %d", steps, got[0], got[1])
-	if got[0] != 0 || got[1] > 80 {
-		t.Errorf("left the loop at line %d, colour clock %d: want line 0, just after VERTB", got[0], got[1])
-	}
-	if steps > 100 {
-		t.Errorf("%d steps to the next frame: the loop was polled, not run on", steps)
+	for _, c := range []struct {
+		name   string
+		polled int // the colour clock the polled loop left at
+		loop   []uint16
+	}{
+		{"tests the flag", 62, []uint16{
+			0x4A39, 0x0000, 0x3000, // loop: TST.B $3000
+			0x66F8, //                     BNE.S loop
+		}},
+		{"stores the flag again", 90, []uint16{
+			0x1039, 0x0000, 0x3000, // loop: MOVE.B $3000,D0
+			0x13C0, 0x0000, 0x3002, //       MOVE.B D0,$3002
+			0x66F2, //                     BNE.S loop
+		}},
+	} {
+		a := idleTestAmiga(t, append(c.loop,
+			0x33F9, 0x00DF, 0xF006, 0x0000, 0x4000, // MOVE.W $DFF006,$4000
+			0x60FE, // BRA.S to itself
+		))
+		// The level 3 handler clears the flag and VERTB.
+		a.ChipRAM.Write(0x2000, []byte{
+			0x42, 0x39, 0x00, 0x00, 0x30, 0x00, // CLR.B $3000
+			0x33, 0xFC, 0x00, 0x20, 0x00, 0xDF, 0xF0, 0x9C, // MOVE.W #$20,$DFF09C
+			0x4E, 0x73, // RTE
+		})
+		a.ChipRAM.Write(0x6C, []byte{0x00, 0x00, 0x20, 0x00})
+		a.ChipRAM.Write(0x3000, []byte{1})
+		a.Custom.Write(0x09A, []byte{0xC0, 0x20}) // INTEN + VERTB
+		a.vpos, a.hpos = 100, 0
+		steps := runTo(t, a, 0x1000+2*uint32(len(c.loop))+10, 100000)
+		got := make([]byte, 2)
+		a.ChipRAM.Read(0x4000, got)
+		t.Logf("%s: %d steps, left at line %d, colour clock %d", c.name, steps, got[0], got[1])
+		if got[0] != 0 || int(got[1]) < c.polled-20 || int(got[1]) > c.polled+20 {
+			t.Errorf("%s: left the loop at line %d, colour clock %d: want line 0, near %d", c.name, got[0], got[1], c.polled)
+		}
+		if steps > 100 {
+			t.Errorf("%s: %d steps to the next frame: the loop was polled, not run on", c.name, steps)
+		}
 	}
 }
 
