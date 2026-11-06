@@ -45,6 +45,7 @@ func TestCIAReadSyncsToEClock(t *testing.T) {
 		if err := a.Step(); err != nil {
 			t.Fatal(err)
 		}
+		a.catchUp() // the CPU may run ahead of the clock (runahead.go)
 		// Less any wait for a chip bus slot for the fetch (the program is
 		// in chip RAM; with ExactBus the 68000 waits for an even colour
 		// clock).

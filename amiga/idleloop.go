@@ -260,6 +260,7 @@ func (a *Amiga) runIdle() bool {
 		return false
 	}
 	l.armed = false
+	a.catchUp() // done already: a watched round does not run ahead
 	if a.interruptDue() {
 		return false // the CPU takes it first
 	}

@@ -170,6 +170,7 @@ type Amiga struct {
 	cpuStopped    bool
 	frames        uint64   // vertical blanks so far (RunFrame counts them)
 	idle          idleLoop // a loop waiting for an event (idleloop.go)
+	ahead         runAhead // the CPU running ahead of the rest of the machine (runahead.go)
 
 	// Debug fields for interrupt tracing
 	debugIntCount int
@@ -413,6 +414,7 @@ func (a *Amiga) mapROM(base int) {
 
 // Reset performs a hard reset of the Amiga.
 func (a *Amiga) Reset() error {
+	a.ahead = runAhead{}
 	// Expansion boards forget their configuration on reset.
 	for _, b := range a.zorroBoards() {
 		b.autoconfig().unconfigure()
@@ -647,7 +649,7 @@ func (a *Amiga) Step() error {
 		a.cpuCIAAccesses = 0
 	}
 
-	a.advance(elapsed)
+	a.runOn(elapsed)
 
 	// If the CPU was stopped, check whether a newly-raised interrupt is
 	// strong enough to wake it (pendingIPL > current IPL mask in SR).

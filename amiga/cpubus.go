@@ -32,6 +32,7 @@ import m68k "github.com/andrewsjg/blitterbox/m68k"
 type cpuBus struct{ a *Amiga }
 
 func (b *cpuBus) Read(addr int, p []byte) (int, error) {
+	b.a.cpuReaches(addr)
 	b.a.cpuAccess(addr, len(p))
 	if b.a.idle.watch {
 		b.a.watchRead(addr, len(p))
@@ -40,6 +41,7 @@ func (b *cpuBus) Read(addr int, p []byte) (int, error) {
 }
 
 func (b *cpuBus) Write(addr int, p []byte) (int, error) {
+	b.a.cpuReaches(addr)
 	b.a.cpuAccess(addr, len(p))
 	if b.a.idle.watch {
 		b.a.watchWrite(addr, p)
@@ -134,9 +136,11 @@ func (a *Amiga) chipSlot() {
 		a.Blitter.completionCycles += CPUCyclesPerColorClock
 	}
 	for {
-		// The 68000 starts its bus cycles on even colour clocks.
-		for a.hpos%(2*CPUCyclesPerColorClock) != 0 {
-			step(1)
+		// The 68000 starts its bus cycles on even colour clocks: the
+		// machine runs on to the next in one go, as it would a cycle at a
+		// time.
+		if r := a.hpos % (2 * CPUCyclesPerColorClock); r != 0 {
+			step(2*CPUCyclesPerColorClock - r)
 		}
 		if !a.slotTaken() {
 			break

@@ -133,6 +133,7 @@ func (s *stateCodec) check(what string, current int64) {
 
 // SaveState writes the machine's state.
 func (a *Amiga) SaveState(w io.Writer) error {
+	a.catchUp()
 	zw := gzip.NewWriter(w)
 	bw := bufio.NewWriter(zw)
 	s := &stateCodec{w: bw}
@@ -168,6 +169,7 @@ func (a *Amiga) LoadState(r io.Reader) error {
 	if s.err != nil || string(magic) != stateMagic && string(magic) != oldMagic {
 		return errors.New("not a BlitterBox state")
 	}
+	a.ahead = runAhead{}
 	a.state(s)
 	if s.err != nil {
 		return s.err
