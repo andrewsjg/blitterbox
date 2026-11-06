@@ -41,27 +41,43 @@ func runTo(t *testing.T, a *Amiga, pc uint32, max int) int {
 // loop just after it on line 0, within a round of where the polled loop
 // left (polled): run on, the interrupt can come at another point in the
 // round. So too one that stores what it reads each round, changing
-// nothing (Monkey Island 2).
+// nothing (Monkey Island 2), and one that calls a subroutine, which
+// writes below the stack pointer, and sets a variable and puts it back
+// (Eye of the Beholder 2).
 func TestIdleLoopRunsOnToTheInterrupt(t *testing.T) {
 	for _, c := range []struct {
 		name   string
 		polled int // the colour clock the polled loop left at
+		round  int // colour clocks a round takes
 		loop   []uint16
 	}{
-		{"tests the flag", 62, []uint16{
+		{"tests the flag", 62, 15, []uint16{
 			0x4A39, 0x0000, 0x3000, // loop: TST.B $3000
 			0x66F8, //                     BNE.S loop
 		}},
-		{"stores the flag again", 90, []uint16{
+		{"stores the flag again", 90, 20, []uint16{
 			0x1039, 0x0000, 0x3000, // loop: MOVE.B $3000,D0
 			0x13C0, 0x0000, 0x3002, //       MOVE.B D0,$3002
 			0x66F2, //                     BNE.S loop
+		}},
+		{"calls a subroutine", 166, 75, []uint16{
+			0x1039, 0x0000, 0x3000, //         loop: MOVE.B $3000,D0
+			0x4EB9, 0x0000, 0x1100, //               JSR sub
+			0x13FC, 0x0001, 0x0000, 0x3004, //       MOVE.B #1,$3004
+			0x4239, 0x0000, 0x3004, //               CLR.B $3004
+			0x4A00, //                               TST.B D0
+			0x66E2, //                               BNE.S loop
 		}},
 	} {
 		a := idleTestAmiga(t, append(c.loop,
 			0x33F9, 0x00DF, 0xF006, 0x0000, 0x4000, // MOVE.W $DFF006,$4000
 			0x60FE, // BRA.S to itself
 		))
+		a.ChipRAM.Write(0x1100, []byte{
+			0x3F, 0x00, // sub: MOVE.W D0,-(A7)
+			0x54, 0x8F, //      ADDQ.L #2,A7
+			0x4E, 0x75, //      RTS
+		})
 		// The level 3 handler clears the flag and VERTB.
 		a.ChipRAM.Write(0x2000, []byte{
 			0x42, 0x39, 0x00, 0x00, 0x30, 0x00, // CLR.B $3000
@@ -76,7 +92,7 @@ func TestIdleLoopRunsOnToTheInterrupt(t *testing.T) {
 		got := make([]byte, 2)
 		a.ChipRAM.Read(0x4000, got)
 		t.Logf("%s: %d steps, left at line %d, colour clock %d", c.name, steps, got[0], got[1])
-		if got[0] != 0 || int(got[1]) < c.polled-20 || int(got[1]) > c.polled+20 {
+		if got[0] != 0 || int(got[1]) < c.polled-c.round || int(got[1]) > c.polled+c.round {
 			t.Errorf("%s: left the loop at line %d, colour clock %d: want line 0, near %d", c.name, got[0], got[1], c.polled)
 		}
 		if steps > 100 {
@@ -85,8 +101,9 @@ func TestIdleLoopRunsOnToTheInterrupt(t *testing.T) {
 	}
 }
 
-// A loop that writes, or reads anything but memory, is run as it is: a
-// count down in RAM, and a wait for a CIA's port to change.
+// A loop that changes memory, or reads anything but memory, is run as it
+// is: a count down in RAM, a flag set each round and put back only at
+// the end, and a wait for a CIA's port to change.
 func TestBusyLoopsAreRun(t *testing.T) {
 	for _, c := range []struct {
 		name string
