@@ -366,11 +366,16 @@ controller.
 - Kickstart 2.0 or later is needed, as Kickstart 1.3 has no FFS in ROM.
 - Keep it to 4 GB or less: `scsi.device` in Kickstart 3.1 and older
   controllers' ROMs reach only that far.
-- To change the partition or its boot priority with HDToolBox, connect
-  the disk as an IDE drive (`--ide`, on an A600, A1200 or A4000). HDToolBox
-  then finds it through Kickstart's `scsi.device`, its default, as it would
-  a real drive. `goamiga.device` takes no SCSI commands, which HDToolBox
-  needs.
+- HDToolBox can change the partition, for example its boot priority, or
+  its Mask: use `0xFFFFFE` for an A590 or A2091 in a machine with 32-bit
+  fast RAM.
+  - For a disk added as a hardfile, set the `SCSI_DEVICE_NAME` tooltype on
+    HDToolBox's icon to `goamiga.device`, or run `HDToolBox
+    DEVICE=goamiga.device` in a Shell.
+  - For an IDE drive (`--ide`), HDToolBox's default, `scsi.device`, is
+    right.
+  - Save Changes to Drive, then reset: the Amiga uses the new partition
+    from then on.
 
 **IDE drives.** `--ide file.hdf` connects a hardfile as an IDE drive on
 Gayle: the first is the master, a second the slave. Kickstart 3.x for the

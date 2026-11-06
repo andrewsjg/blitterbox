@@ -137,3 +137,82 @@ func TestNewHardfilesNamedApart(t *testing.T) {
 		t.Errorf("devices %s, want DH0 DH1 DH2", got)
 	}
 }
+
+// HDToolBox reaches a disk on goamiga.device as it would a SCSI drive
+// (HD_SCSICMD): it asks what the drive is, reads the RDB, and writes the
+// partition back changed, here its Mask, which the partition has from
+// the next reset on.
+func TestHDSCSICmd(t *testing.T) {
+	a := createTestAmiga(t)
+	path := filepath.Join(t.TempDir(), "new.hdf")
+	if err := CreateHardfile(path, 10); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.AttachHardfile(path, false); err != nil {
+		t.Fatal(err)
+	}
+	h := a.HardDisk
+	const base = 0xE90000
+	h.base = base
+	h.configured(base)
+	a.wireMemoryMap(false) // chip RAM at 0, not the ROM's overlay
+
+	const io, sc, cdbAt, buf, sense = 0x1000, 0x1100, 0x1200, 0x2000, 0x1300
+	run := func(read bool, n int, cdb ...byte) (status byte, ioErr byte) {
+		t.Helper()
+		a.poke32(io+ioUnit, base+hdUnits)
+		a.poke16(io+ioCommand, 28)
+		a.poke8(io+ioFlags, iofQuick)
+		a.poke32(io+ioData, sc)
+		a.poke32(io+ioLength, scsiCmdSize)
+		a.pokeBytes(cdbAt, cdb)
+		a.poke32(sc+scsiData, buf)
+		a.poke32(sc+scsiLength, uint32(n))
+		a.poke32(sc+scsiCommand, cdbAt)
+		a.poke16(sc+scsiCmdLength, uint16(len(cdb)))
+		flags := byte(scsifAutoSense)
+		if read {
+			flags |= scsifRead
+		}
+		a.poke8(sc+scsiFlags, flags)
+		a.poke32(sc+scsiSenseData, sense)
+		a.poke16(sc+scsiSenseLength, 18)
+		h.beginIO(io)
+		return a.peek8(sc + scsiStatus), a.peek8(io + ioError)
+	}
+	got := func(n int) []byte { b := make([]byte, n); a.peekBytes(buf, b); return b }
+
+	if s, e := run(true, 36, 0x12, 0, 0, 0, 36, 0); s != 0 || e != 0 || !bytes.Contains(got(36), []byte("BLITTERB")) {
+		t.Errorf("INQUIRY: status %d, error %d, %q", s, e, got(36))
+	}
+	if s, _ := run(true, 8, 0x25, 0, 0, 0, 0, 0, 0, 0, 0, 0); s != 0 || binary.BigEndian.Uint32(got(4)) != uint32(h.Files[0].blocks-1) {
+		t.Errorf("READ CAPACITY: status %d, last block %d", s, binary.BigEndian.Uint32(got(4)))
+	}
+	// The RDB and its partition: READ(10) of blocks 0 and 1.
+	if s, _ := run(true, 1024, 0x28, 0, 0, 0, 0, 0, 0, 0, 2, 0); s != 0 || string(got(4)) != "RDSK" {
+		t.Fatalf("READ: status %d, %q", s, got(4))
+	}
+	part := got(1024)[512:]
+	if string(part[:4]) != "PART" {
+		t.Fatalf("block 1 is %q", part[:4])
+	}
+	binary.BigEndian.PutUint32(part[128+4*deMask:], 0x00FFFFFE)
+	binary.BigEndian.PutUint32(part[8:], 0)
+	binary.BigEndian.PutUint32(part[8:], -rdbSum(part, 64))
+	a.pokeBytes(buf, part)
+	if s, e := run(false, 512, 0x2A, 0, 0, 0, 0, 1, 0, 0, 1, 0); s != 0 || e != 0 {
+		t.Fatalf("WRITE: status %d, error %d", s, e)
+	}
+	// A command the drive doesn't know: CHECK CONDITION, and the sense.
+	if s, e := run(true, 0, 0xFF, 0, 0, 0, 0, 0); s != scsiCheckCondition || e != hferrBadStatus || a.peek8(sense+2) != senseIllegalRequest {
+		t.Errorf("unknown command: status %d, error %d, sense key %d", s, e, a.peek8(sense+2))
+	}
+
+	if m := h.Files[0].Partitions[0].Env[deMask]; m != 0x7FFFFFFE {
+		t.Errorf("Mask %08X before the reset", m)
+	}
+	h.configured(base) // the reset HDToolBox asks for
+	if m := h.Files[0].Partitions[0].Env[deMask]; m != 0x00FFFFFE {
+		t.Errorf("Mask %08X after the reset, want 00FFFFFE", m)
+	}
+}

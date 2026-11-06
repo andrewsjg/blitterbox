@@ -116,7 +116,7 @@ func TestA2091(t *testing.T) {
 	}
 	var inq [36]byte
 	a.peekBytes(0x10000, inq[:])
-	if inq[0] != 0 || !bytes.Contains(inq[:], []byte("GOAMIGA")) {
+	if inq[0] != 0 || !bytes.Contains(inq[:], []byte("BLITTERB")) {
 		t.Errorf("INQUIRY data % X", inq)
 	}
 	if ph := r.reg(wdPhase); ph != 0x60 {

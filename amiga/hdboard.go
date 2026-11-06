@@ -111,6 +111,8 @@ type hdBoard struct {
 
 	lastIO    uint64 // Amiga.cycles at the last read or write
 	lastWrite bool
+
+	scsi map[*Hardfile]*scsiDisk // each unit as a SCSI disk, for HD_SCSICMD
 }
 
 // hdLEDHold keeps the activity light on after a transfer: transfers are
@@ -186,6 +188,20 @@ func (h *hdBoard) space() m68kmem.Memory { return h }
 func (h *hdBoard) size() int             { return hdBoardSize }
 
 func (h *hdBoard) configured(base uint32) {
+	// Each reset, the disks' partitions as they are now: HDToolBox may
+	// have changed them, and asks for a reset so that they are used.
+	for _, f := range h.Files {
+		if err := f.Rescan(); err != nil {
+			h.tracef("%v (its partitions are as they were)", err)
+		}
+	}
+	if g := h.amiga.Gayle; g != nil {
+		for _, d := range g.drives {
+			if d != nil {
+				d.hf.Rescan()
+			}
+		}
+	}
 	h.buildROM(base)
 }
 
@@ -532,7 +548,7 @@ func (h *hdBoard) buildROM(base uint32) {
 	binary.BigEndian.PutUint16(lib[18:], 34)                   // lib_PosSize
 	binary.BigEndian.PutUint16(lib[20:], 1)                    // lib_Version
 	binary.BigEndian.PutUint32(lib[24:], s.labels["idString"]) // lib_IdString
-	for i, cmd := range []uint16{2, 3, 4, 5, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 24, 25, 26, 27,
+	for i, cmd := range []uint16{2, 3, 4, 5, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28,
 		0x4000, 0xC000, 0xC001, 0xC002, 0xC003, 0} {
 		binary.BigEndian.PutUint16(h.mem[hdCmdList+2*i:], cmd)
 	}
@@ -829,6 +845,8 @@ func (h *hdBoard) beginIO(io uint32) uint32 {
 		be.PutUint32(g[24:], 1) // MEMF_PUBLIC; DG_DIRECT_ACCESS; no flags
 		a.pokeBytes(data, g)
 		actual = 32
+	case 28: // HD_SCSICMD: struct SCSICmd, as HDToolBox sends
+		errCode, actual = h.scsiCmd(f, data, length)
 	case 0x4000: // NSCMD_DEVICEQUERY: struct NSDeviceQueryResult
 		if length < 16 {
 			errCode = ioerrBadLength
@@ -851,6 +869,80 @@ func (h *hdBoard) beginIO(io uint32) uint32 {
 		h.tracef("unit %d command %d: error %d, actual %d", unit, cmd, int8(errCode), actual)
 	}
 	return uint32(flags&iofQuick ^ iofQuick)
+}
+
+// SCSICmd fields (devices/scsidisk.h), and HD_SCSICMD's errors.
+const (
+	scsiData        = 0
+	scsiLength      = 4
+	scsiActual      = 8
+	scsiCommand     = 12
+	scsiCmdLength   = 16
+	scsiCmdActual   = 18
+	scsiFlags       = 20
+	scsiStatus      = 21
+	scsiSenseData   = 22
+	scsiSenseLength = 26
+	scsiSenseActual = 28
+	scsiCmdSize     = 30
+
+	scsifRead      = 1
+	scsifAutoSense = 2
+
+	hferrBadStatus = 45
+)
+
+// scsiCmd runs a SCSI command on unit f's disk, as a SCSI disk of the
+// hardfile (scsi.go) would: HDToolBox asks what the drive is (INQUIRY,
+// READ CAPACITY, MODE SENSE) and reads and writes its RDB so.
+func (h *hdBoard) scsiCmd(f *Hardfile, cmd, length uint32) (byte, uint32) {
+	a := h.amiga
+	if length < scsiCmdSize {
+		return ioerrBadLength, 0
+	}
+	if h.scsi == nil {
+		h.scsi = map[*Hardfile]*scsiDisk{}
+	}
+	d := h.scsi[f]
+	if d == nil {
+		d = newSCSIDisk(f)
+		d.onIO = func(write bool) { h.lastIO, h.lastWrite = a.cycles|1, write }
+		h.scsi[f] = d
+	}
+	cdb := make([]byte, min(int(a.peek16(cmd+scsiCmdLength)), 16))
+	a.peekBytes(a.peek32(cmd+scsiCommand), cdb)
+	a.poke16(cmd+scsiCmdActual, uint16(len(cdb)))
+	a.poke32(cmd+scsiActual, 0)
+	a.poke16(cmd+scsiSenseActual, 0)
+	if len(cdb) == 0 || len(cdb) < cdbLength(cdb[0]) {
+		a.poke8(cmd+scsiStatus, scsiCheckCondition)
+		return hferrBadStatus, scsiCmdSize
+	}
+	buf, n := a.peek32(cmd+scsiData), a.peek32(cmd+scsiLength)
+	var out []byte
+	if a.peek8(cmd+scsiFlags)&scsifRead == 0 {
+		out = make([]byte, min(n, uint32(d.dataOut(cdb))))
+		a.peekBytes(buf, out)
+	}
+	in, status := d.command(0, cdb, out)
+	if a.peek8(cmd+scsiFlags)&scsifRead != 0 {
+		in = clip(in, int(n))
+		a.pokeBytes(buf, in)
+		a.poke32(cmd+scsiActual, uint32(len(in)))
+	} else {
+		a.poke32(cmd+scsiActual, uint32(len(out)))
+	}
+	a.poke8(cmd+scsiStatus, status)
+	if status == scsiGood {
+		return 0, scsiCmdSize
+	}
+	if a.peek8(cmd+scsiFlags)&scsifAutoSense != 0 {
+		sense, _ := d.command(0, []byte{0x03, 0, 0, 0, 18, 0}, nil)
+		sense = clip(sense, int(a.peek16(cmd+scsiSenseLength)))
+		a.pokeBytes(a.peek32(cmd+scsiSenseData), sense)
+		a.poke16(cmd+scsiSenseActual, uint16(len(sense)))
+	}
+	return hferrBadStatus, scsiCmdSize
 }
 
 func ioErr(err error) byte {

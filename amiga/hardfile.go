@@ -23,6 +23,8 @@ type Hardfile struct {
 
 	Partitions []Partition
 	rdb        bool
+	unit       int    // for a plain hardfile's name, DH<unit>
+	dosType    uint32 // a plain hardfile's filesystem when unformatted
 
 	// FileSystems are the filesystems stored in the RDB (hdfilesys.go);
 	// FSError says why reading them stopped early, if it did.
@@ -81,21 +83,34 @@ func OpenHardfile(path string, readOnly bool, unit int, dosType uint32) (*Hardfi
 		f.Close()
 		return nil, err
 	}
-	h := &Hardfile{Path: path, ReadOnly: readOnly, f: f, blocks: st.Size() / hdBlockSize}
+	h := &Hardfile{Path: path, ReadOnly: readOnly, f: f, blocks: st.Size() / hdBlockSize, unit: unit, dosType: dosType}
 	if h.blocks < 64 {
 		f.Close()
 		return nil, fmt.Errorf("%s: too small for a hard disk (%d bytes)", path, st.Size())
 	}
-	ok, err := h.readRDB()
-	if err != nil {
+	if err := h.Rescan(); err != nil {
 		f.Close()
-		return nil, fmt.Errorf("%s: %v", path, err)
-	}
-	h.rdb = ok
-	if !ok {
-		h.plain(unit, dosType)
+		return nil, err
 	}
 	return h, nil
+}
+
+// Rescan reads the partitions and filesystems again, as the Amiga may
+// have changed them (HDToolBox), and leaves them as they were if it
+// can't.
+func (h *Hardfile) Rescan() error {
+	n := &Hardfile{Path: h.Path, ReadOnly: h.ReadOnly, f: h.f, blocks: h.blocks, unit: h.unit, dosType: h.dosType}
+	ok, err := n.readRDB()
+	if err != nil {
+		return fmt.Errorf("%s: %v", h.Path, err)
+	}
+	n.rdb = ok
+	if !ok {
+		n.plain(h.unit, h.dosType)
+	}
+	h.Cylinders, h.Heads, h.Sectors = n.Cylinders, n.Heads, n.Sectors
+	h.Partitions, h.rdb, h.FileSystems, h.FSError = n.Partitions, n.rdb, n.FileSystems, n.FSError
+	return nil
 }
 
 // plain sets up a hardfile without an RDB as one partition covering it.

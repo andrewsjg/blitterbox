@@ -119,7 +119,7 @@ func (d *scsiDisk) command(lun int, cdb, out []byte) ([]byte, byte) {
 			r[0] = 0x7F // no device on this LUN
 		}
 		r[2], r[3], r[4] = 2, 2, 31 // SCSI-2, its format, more bytes
-		copy(r[8:], fmt.Sprintf("%-8s%-16s%-4s", "GOAMIGA", "HARDFILE", "1.0"))
+		copy(r[8:], fmt.Sprintf("%-8s%-16s%-4s", "BLITTERB", "HARDFILE", "1.0"))
 		return clip(r, int(cdb[4])), scsiGood
 	case 0x25: // READ CAPACITY
 		r := make([]byte, 8)
