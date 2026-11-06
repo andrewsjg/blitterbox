@@ -34,6 +34,7 @@ type launcher struct {
 	ui *ui
 
 	hdScroll int // the first drive shown on the Hard disks tab
+	newHDF   int // the size New hardfile makes, in newHDFSizes
 
 	kicksFor string   // the ROM kicks was found for (WHDLoad tab)
 	kicks    []string // WHDLoad's names for the Kickstart images beside it
@@ -95,6 +96,7 @@ type fileChoice struct {
 	target string // what the file is for: "rom", "df0".."df3", "hdf", "shots", "states"
 	path   string
 	err    error
+	mb     int // newhdf: the new hardfile's size
 }
 
 func newLauncher(s config.Settings, name string) *launcher {
@@ -613,10 +615,21 @@ func (l *launcher) hardDiskTab(x, y int) {
 	if u.buttonOn(x+256, y, 130, 24, "Add SCSI disk…", len(l.s.SCSI) < 7) {
 		l.choose("scsi", "", hdfFilter, false)
 	}
+	y += 30
+	// New hardfile: a blank disk of the size beside it (amiga.CreateHardfile).
+	if u.buttonOn(x, y, 120, 24, "New hardfile…", len(l.s.Hardfiles) < amiga.HardfileLimit && partitions < 64) {
+		l.chooseNew(newHDFSizes[l.newHDF])
+	}
+	names := make([]string, len(newHDFSizes))
+	for i, mb := range newHDFSizes {
+		names[i] = sizeName(mb)
+	}
+	l.newHDF = u.cycle(x+128, y+1, 100, names, l.newHDF)
 	y += 34
 	// The explanation, if there's room for it below the drives.
-	lines := u.wrap("Plain hardfiles and RDB images both work here. A new, empty hardfile "+
-		"can be made with --hdf-create from the command line and formatted from Workbench. "+
+	lines := u.wrap("Plain hardfiles and RDB images both work here. New hardfile makes a blank disk "+
+		"with one partition: format it from Workbench before use. It suits IDE and SCSI too, and "+
+		"a real Amiga's SCSI controller from a BlueSCSI's SD card. "+
 		"A folder appears as a volume named after it, and boots if it has S/Startup-Sequence. "+
 		"SCSI disks go on an A2091 for Amiga Unix (the first at ID 6, where it looks for its "+
 		"root); AmigaOS sees them too.", 520)
@@ -809,7 +822,32 @@ func (l *launcher) choose(target, current string, filters zenity.FileFilters, di
 			opts = append(opts, filters)
 		}
 		p, err := zenity.SelectFile(opts...)
-		ch <- fileChoice{target, p, err}
+		ch <- fileChoice{target, p, err, 0}
+	}()
+}
+
+// newHDFSizes are the sizes New hardfile offers, in MB.
+var newHDFSizes = []int{100, 250, 500, 1024, 2048}
+
+func sizeName(mb int) string {
+	if mb < 1024 {
+		return fmt.Sprintf("%d MB", mb)
+	}
+	return fmt.Sprintf("%d GB", mb/1024)
+}
+
+// chooseNew asks where to save a new, blank hardfile of mb MB, which
+// pollChooser makes and adds to the hardfiles.
+func (l *launcher) chooseNew(mb int) {
+	if l.chooser != nil {
+		return
+	}
+	ch := make(chan fileChoice, 1)
+	l.chooser = ch
+	go func() {
+		p, err := zenity.SelectFileSave(zenity.Title("Save the new "+sizeName(mb)+" hardfile"),
+			zenity.Filename("Blank "+sizeName(mb)+".hdf"))
+		ch <- fileChoice{"newhdf", p, err, mb}
 	}()
 }
 
@@ -829,6 +867,17 @@ func (l *launcher) pollChooser() {
 		return
 	case c.err != nil:
 		l.say(true, "File dialog: %v", c.err)
+		return
+	}
+	if c.target == "newhdf" {
+		// Never over a file already there (CreateHardfile won't): a disk
+		// replaced by mistake is lost.
+		if err := amiga.CreateHardfile(c.path, c.mb); err != nil {
+			l.say(true, "Can't make the hardfile: %v", err)
+			return
+		}
+		launch.ApplyChoice(&l.s, "hdf", c.path)
+		l.say(false, "Made %s, a blank %s hard disk: format it from Workbench before use", filepath.Base(c.path), sizeName(c.mb))
 		return
 	}
 	launch.ApplyChoice(&l.s, c.target, c.path)
