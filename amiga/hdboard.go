@@ -538,22 +538,44 @@ func (h *hdBoard) buildROM(base uint32) {
 	}
 
 	h.parts = h.parts[:0]
+	// Every device a name of its own: the IDE drives' partitions (which
+	// Kickstart's scsi.device mounts) keep theirs, and a hardfile's
+	// partition named as one before it, as new hardfiles' DH0s all are
+	// (hdfcreate.go), is the next free DH device instead.
 	used := map[string]bool{}
+	if h.amiga != nil && h.amiga.Gayle != nil {
+		g := h.amiga.Gayle
+		for _, d := range g.drives {
+			if d != nil {
+				for _, p := range d.hf.Partitions {
+					used[strings.ToUpper(p.Name)] = true
+				}
+			}
+		}
+	}
+	n := 0
+	free := func() string {
+		for used[fmt.Sprintf("DH%d", n)] {
+			n++
+		}
+		return fmt.Sprintf("DH%d", n)
+	}
 	for u, f := range h.Files {
 		for i := range f.Partitions {
+			p := &f.Partitions[i]
+			if used[strings.ToUpper(p.Name)] {
+				p.Name = free()
+			}
+			used[strings.ToUpper(p.Name)] = true
 			if len(h.parts) < hdMaxParts {
-				h.parts = append(h.parts, hdPart{u, &f.Partitions[i], nil})
-				used[strings.ToUpper(f.Partitions[i].Name)] = true
+				h.parts = append(h.parts, hdPart{u, p, nil})
 			}
 		}
 	}
 	// Folders are DH devices after the hardfiles' partitions.
-	n := 0
+	n = 0
 	for i, d := range h.Dirs {
-		for used[fmt.Sprintf("DH%d", n)] {
-			n++
-		}
-		d.Device = fmt.Sprintf("DH%d", n)
+		d.Device = free()
 		used[d.Device] = true
 		if len(h.parts) < hdMaxParts {
 			h.parts = append(h.parts, hdPart{hostDirUnit + i, d.partition(), d})

@@ -347,9 +347,27 @@ With no bootable floppy in DF0:, the Amiga boots from the hard disk.
 blitterbox --rom ROMS/Kick32.rom --hdf dh0.hdf --hdf-create 100 --df0 Workbench/Install3.2.adf
 ```
 
-`--hdf-create MB` creates any `--hdf` file that doesn't exist yet, blank.
-Format it from the Amiga (e.g. `Format DRIVE DH0: NAME Work FFS QUICK`),
-then install onto it.
+`--hdf-create MB` creates any `--hdf` file that doesn't exist yet, as
+**New Hardfile** in the Hard Disks settings does. Format it from the Amiga
+(e.g. `Format DRIVE DH0: NAME Work FFS QUICK`), then install onto it.
+- A new hardfile is a whole blank disk, like a real one: a Rigid Disk
+  Block, 16 heads and 63 sectors a track, and one partition, DH0. The
+  partition is bootable, at priority -20, and uses FFS (`DOS\3`), which
+  is in Kickstart 2.0 and later.
+- It works with `--hdf`, `--ide` and `--scsi`. When two disks would both
+  be DH0, the later one is renamed DH1, and so on.
+
+**On a real Amiga.** A new hardfile is a raw disk image, so it can go on
+the SD card of a BlueSCSI (or ZuluSCSI) on a real Amiga's SCSI
+controller.
+- Format it, and install onto it, in BlitterBox first if you like.
+- Name it as the BlueSCSI expects: `HD` and the SCSI ID, then the block
+  size, for example `HD0_512.hda`.
+- Kickstart 2.0 or later is needed, as Kickstart 1.3 has no FFS in ROM.
+- Keep it to 4 GB or less: `scsi.device` in Kickstart 3.1 and older
+  controllers' ROMs reach only that far.
+- HDToolBox sees the disk as it would a real drive, and can change the
+  partition or its boot priority.
 
 **IDE drives.** `--ide file.hdf` connects a hardfile as an IDE drive on
 Gayle: the first is the master, a second the slave. Kickstart 3.x for the

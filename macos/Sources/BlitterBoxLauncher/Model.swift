@@ -161,6 +161,12 @@ final class LauncherModel {
         apply(bridge.call(Request(op: "choose", settings: settings, target: target, path: bridge.settingsPath(url))))
     }
 
+    // newHardfile makes a blank, partitioned hard disk of mb MB at url and
+    // adds it to the hardfiles (newHardfile in Go).
+    func newHardfile(_ url: URL, mb: Int) {
+        apply(bridge.call(Request(op: "newHardfile", settings: settings, path: bridge.settingsPath(url), mb: mb)))
+    }
+
     // MARK: Running the machine
 
     func start() {

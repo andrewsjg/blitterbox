@@ -103,7 +103,7 @@ func (s *Settings) Register(fs *flag.FlagSet) {
 	fs.StringVar(&s.Tape, "tape", s.Tape, "A read-only SCSI tape drive on the A2091, as ID:DIR, playing the tape kept in DIR (its files in index.tape order, with filemarks between): Amiga Unix's distribution tape at ID 4")
 	fs.Var(&s.IDE, "ide", "Hardfile (with a Rigid Disk Block) as an IDE drive on Gayle (or the A4000's IDE interface), booted by Kickstart's own scsi.device: the master, then the slave")
 	fs.StringVar(&s.Gayle, "gayle", s.Gayle, "Gayle, the A600/A1200 IDE interface: auto (fitted with the AGA chipset), on or off; --ide fits it")
-	fs.IntVar(&s.HDFCreate, "hdf-create", s.HDFCreate, "Create any --hdf file that does not exist, blank, this many MB (format it from the Amiga)")
+	fs.IntVar(&s.HDFCreate, "hdf-create", s.HDFCreate, "Create any --hdf file that does not exist, a blank disk of this many MB with one partition, DH0 (format it from the Amiga)")
 	fs.IntVar(&s.NumDrives, "drives", s.NumDrives, "Number of drives to connect (1-4), even without disks for them")
 	fs.BoolVar(&s.WriteProtect, "write-protect", s.WriteProtect, "Write-protect every drive and hardfile: the Amiga cannot change the image files")
 	fs.BoolVar(&s.Mute, "mute", s.Mute, "No sound")

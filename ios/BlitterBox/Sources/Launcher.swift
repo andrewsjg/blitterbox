@@ -72,6 +72,19 @@ func chooseFile(title: String, folder: Bool, types: [String] = [], start: String
     topViewController()?.present(picker, animated: true)
 }
 
+/// chooseNewFile gives a place in Documents, where the Files app shows it,
+/// for a new file named name (numbered if one is there already).
+func chooseNewFile(title: String, name: String, then: (URL) -> Void) {
+    let base = (name as NSString).deletingPathExtension, ext = (name as NSString).pathExtension
+    var url = Documents.url.appendingPathComponent(name)
+    var n = 2
+    while FileManager.default.fileExists(atPath: url.path) {
+        url = Documents.url.appendingPathComponent("\(base) \(n).\(ext)")
+        n += 1
+    }
+    then(url)
+}
+
 /// importIntoDocuments gives a picked file's place in Documents: where it
 /// is, or a copy of it there (one already copied is used again).
 private func importIntoDocuments(_ url: URL) throws -> URL {

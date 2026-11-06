@@ -249,6 +249,17 @@ struct HardDiskTab: View {
                 HStack {
                     Button("Add Hardfile…", systemImage: "externaldrive.badge.plus") { add("hdf", folder: false) }
                         .disabled(s.hardfiles.count >= (model.limits["hardfiles"] ?? 28) || partitions >= 64)
+                    Menu("New Hardfile", systemImage: "externaldrive.badge.plus") {
+                        ForEach(newHardfileSizes, id: \.self) { mb in
+                            Button(sizeName(mb)) {
+                                chooseNewFile(title: "Save the new \(sizeName(mb)) hardfile", name: "Blank \(sizeName(mb)).hdf") { url in
+                                    model.newHardfile(url, mb: mb)
+                                }
+                            }
+                        }
+                    }
+                    .fixedSize()
+                    .disabled(s.hardfiles.count >= (model.limits["hardfiles"] ?? 28) || partitions >= 64)
                     Button("Add Folder…", systemImage: "folder.badge.plus") { add("dir", folder: true) }
                         .disabled(partitions >= 64)
                     Button("Add SCSI Disk…", systemImage: "opticaldiscdrive") { add("scsi", folder: false) }
@@ -264,11 +275,15 @@ struct HardDiskTab: View {
             }
             Section {
             } footer: {
-                Note("Plain hardfiles and RDB images both work. A new, empty hardfile can be made with --hdf-create from the command line and formatted from Workbench. A folder appears as a volume named after it, and boots if it has S/Startup-Sequence. SCSI disks go on an A2091 for Amiga Unix (the first at ID 6, where it looks for its root); AmigaOS sees them too.")
+                Note("Plain hardfiles and RDB images both work. New Hardfile makes a blank disk with one partition: format it from Workbench (or with Format in a Shell) before use. It suits IDE and SCSI too, and a real Amiga's SCSI controller from a BlueSCSI's SD card. A folder appears as a volume named after it, and boots if it has S/Startup-Sequence. SCSI disks go on an A2091 for Amiga Unix (the first at ID 6, where it looks for its root); AmigaOS sees them too.")
             }
         }
         .settingsForm()
     }
+
+    private let newHardfileSizes = [100, 250, 500, 1024, 2048]
+
+    private func sizeName(_ mb: Int) -> String { mb < 1024 ? "\(mb) MB" : "\(mb / 1024) GB" }
 
     private func add(_ target: String, folder: Bool) {
         let title = ["hdf": "Choose a hardfile", "dir": "Choose a folder to use as an Amiga drive",

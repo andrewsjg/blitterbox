@@ -75,6 +75,7 @@ struct Request: Encodable {
     var preset: String?
     var target: String?
     var path: String?
+    var mb: Int?
 }
 
 struct Response: Decodable {

@@ -31,6 +31,7 @@ type Request struct {
 	Preset   string           `json:"preset,omitempty"`
 	Target   string           `json:"target,omitempty"` // choose: what a file is for (ApplyChoice)
 	Path     string           `json:"path,omitempty"`
+	MB       int              `json:"mb,omitempty"` // newHardfile: its size
 }
 
 // ROMReport is what the chosen Kickstart ROM is, and whether it can run.
@@ -175,6 +176,13 @@ func Handle(req Request) (resp Response) {
 	case "choose":
 		ApplyChoice(&s, req.Target, req.Path)
 		resp.Settings = &s
+	case "newHardfile": // a blank, partitioned hardfile at Path, added to the hardfiles
+		if err := amiga.CreateHardfile(req.Path, req.MB); err != nil {
+			return fail("Can't make the hardfile: %v", err)
+		}
+		ApplyChoice(&s, "hdf", req.Path)
+		resp.Settings = &s
+		resp.Status = fmt.Sprintf("Made %s, a blank %d MB hard disk: format it from Workbench before use", filepath.Base(req.Path), req.MB)
 	case "summaries":
 		resp.Summaries = map[string]Summary{}
 		for _, n := range config.Saved() {

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/andrewsjg/blitterbox/amiga"
 	"github.com/andrewsjg/blitterbox/internal/config"
 )
 
@@ -201,3 +202,21 @@ func TestSummarize(t *testing.T) {
 }
 
 func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }
+
+// newHardfile makes a blank disk and adds it to the hardfiles; it won't
+// make one over a file already there.
+func TestNewHardfile(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "Blank 100 MB.hdf")
+	r := Handle(Request{Op: "newHardfile", Path: p, MB: 100})
+	if !r.OK || r.Settings == nil || len(r.Settings.Hardfiles) != 1 || r.Settings.Hardfiles[0] != p {
+		t.Fatalf("response %+v", r)
+	}
+	if h, err := amiga.OpenHardfile(p, true, 0, 0); err != nil || !h.HasRDB() {
+		t.Errorf("the new hardfile: %v", err)
+	} else {
+		h.Close()
+	}
+	if r := Handle(Request{Op: "newHardfile", Path: p, MB: 100}); r.OK || r.Error == "" {
+		t.Error("made a hardfile over one already there")
+	}
+}

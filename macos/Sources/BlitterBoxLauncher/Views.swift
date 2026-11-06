@@ -439,6 +439,20 @@ func chooseFile(title: String, folder: Bool, types: [String] = [], start: String
     }
 }
 
+// chooseNewFile asks where to save a new file, suggesting name, and gives
+// the place to then. (The iPad app's puts it in Documents.)
+@MainActor
+func chooseNewFile(title: String, name: String, then: (URL) -> Void) {
+    let p = NSSavePanel()
+    p.title = title
+    p.message = title
+    p.nameFieldStringValue = name
+    p.canCreateDirectories = true
+    if p.runModal() == .OK, let url = p.url {
+        then(url)
+    }
+}
+
 // openPanel asks for a file (of these extensions) or a folder.
 @MainActor
 func openPanel(title: String, folder: Bool, types: [String] = [], start: String = "") -> URL? {

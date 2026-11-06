@@ -196,10 +196,10 @@ func Build(s *config.Settings, loadState string, logger io.Writer, out io.Writer
 	for _, p := range s.Hardfiles {
 		if s.HDFCreate > 0 {
 			if _, err := os.Stat(p); os.IsNotExist(err) {
-				if err := createHardfile(p, s.HDFCreate); err != nil {
+				if err := amiga.CreateHardfile(p, s.HDFCreate); err != nil {
 					return fail(err)
 				}
-				fmt.Fprintf(out, "Created blank %d MB hardfile %s\n", s.HDFCreate, p)
+				fmt.Fprintf(out, "Created blank %d MB hardfile %s (format DH0: from Workbench)\n", s.HDFCreate, p)
 			}
 		}
 		if err := a.AttachHardfile(p, s.WriteProtect); err != nil {
@@ -325,19 +325,6 @@ func Build(s *config.Settings, loadState string, logger io.Writer, out io.Writer
 	}
 	a.Video.SetOverscan(s.Overscan)
 	return m, nil
-}
-
-// createHardfile makes a blank (sparse) image of mb megabytes.
-func createHardfile(path string, mb int) error {
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0o644)
-	if err != nil {
-		return err
-	}
-	if err := f.Truncate(int64(mb) << 20); err != nil {
-		f.Close()
-		return err
-	}
-	return f.Close()
 }
 
 // printFileSystems lists the filesystems stored in a hardfile's RDB.
