@@ -220,6 +220,16 @@ func Reset() {
 	}
 }
 
+// ToggleWarp turns warp mode on or off: the machine runs as fast as it
+// can, silent.
+func ToggleWarp() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.disp != nil {
+		g.disp.ToggleWarp()
+	}
+}
+
 // PowerCycle switches the machine off and on again, the disks still in.
 func PowerCycle() {
 	g.mu.Lock()

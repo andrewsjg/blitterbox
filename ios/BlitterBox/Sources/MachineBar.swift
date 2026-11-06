@@ -1,6 +1,6 @@
 // MachineBar is the running machine's controls on the iPad, in place of
 // the desktop's status bar (amiga/display_status.go): the activity
-// lights, the keyboard, the joystick, Reset, Power and Settings, floating over the
+// lights, the keyboard, the joystick, warp, Reset, Power and Settings, floating over the
 // bottom of the picture. It fades to a small handle when left alone, and
 // the machine's notes show above it.
 import Blitterbox
@@ -172,6 +172,8 @@ struct MachineBar: View {
                         Label("D-pad", systemImage: "dpad").tag(true)
                     }
                 }
+            ControlButton("hare", s.warp ? "Turn warp off" : "Warp", tint: s.warp ? .yellow : .white,
+                          on: s.warp) { tapped { BlitterboxToggleWarp() } }
             ControlButton("arrow.counterclockwise", "Reset") { tapped { BlitterboxReset() } }
             ControlButton("power", "Power cycle", tint: .red) { confirming = .power }
             ControlButton("gearshape", "Settings") { confirming = .settings }
@@ -194,10 +196,11 @@ private struct ControlButton: View {
     let symbol: String
     let label: String
     var tint: Color = .white
+    var on = false // a toggle that is on: its circle lit
     let action: () -> Void
 
-    init(_ symbol: String, _ label: String, tint: Color = .white, action: @escaping () -> Void) {
-        (self.symbol, self.label, self.tint, self.action) = (symbol, label, tint, action)
+    init(_ symbol: String, _ label: String, tint: Color = .white, on: Bool = false, action: @escaping () -> Void) {
+        (self.symbol, self.label, self.tint, self.on, self.action) = (symbol, label, tint, on, action)
     }
 
     var body: some View {
@@ -206,10 +209,11 @@ private struct ControlButton: View {
                 .font(.title3.weight(.medium))
                 .foregroundStyle(tint)
                 .frame(width: 44, height: 44)
-                .background(.white.opacity(0.08), in: Circle())
+                .background(on ? tint.opacity(0.25) : .white.opacity(0.08), in: Circle())
                 .contentShape(Circle())
         }
         .accessibilityLabel(label)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
 

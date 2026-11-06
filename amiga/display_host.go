@@ -52,7 +52,7 @@ func (d *Display) pollHostKeys() {
 	}
 	switch {
 	case inpututil.IsKeyJustPressed(ebiten.KeyW):
-		d.setWarp(!d.warp)
+		d.ToggleWarp()
 	case inpututil.IsKeyJustPressed(ebiten.KeyR) && ebiten.IsKeyPressed(ebiten.KeyShift):
 		d.PowerRequested = true
 	case inpututil.IsKeyJustPressed(ebiten.KeyR):
@@ -274,6 +274,10 @@ func (d *Display) syncDisks() {
 // warpBudget is the host time each tick spends emulating in warp mode,
 // leaving the rest of the 20 ms tick for drawing and input.
 const warpBudget = 14 * time.Millisecond
+
+// ToggleWarp turns warp mode on or off (the host key and W, or the iPad's
+// bar).
+func (d *Display) ToggleWarp() { d.setWarp(!d.warp) }
 
 func (d *Display) setWarp(on bool) {
 	d.warp = on
