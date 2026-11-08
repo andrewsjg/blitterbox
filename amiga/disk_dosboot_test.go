@@ -84,11 +84,7 @@ func TestDiskDosBoot(t *testing.T) {
 				openLib = readLVO(-0x228)
 				addTask = readLVO(-0x11A)
 				alertLVO = readLVO(-0x6C)
-				waitIO = readLVO(-0x1C8) // WaitIO is -$1C8? Actually CheckIO -$1D0, WaitIO -$1C8, DoIO -$1C2
-				// Standard: DoIO=-$1C2, WaitIO=-$1C8, SendIO=-$1CE, CheckIO=-$1D0
-				// Recheck: OpenDevice=-$1BC, CloseDevice=-$1C2, DoIO=-$1C8, SendIO=-$1CE, CheckIO=-$1D4, WaitIO=-$1DA
-				// I'll use the bootdecision_test values:
-				// WaitIO(-$1C8) at 0x04AE with ExecBase $676: $676-$1C8=$4AE
+				// OpenDevice=-$1BC, DoIO=-$1C8, WaitIO=-$1DA
 				doIO = readLVO(-0x1C8)
 				waitIO = readLVO(-0x1DA)
 				openDev = readLVO(-0x1BC)

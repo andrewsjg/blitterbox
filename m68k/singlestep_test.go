@@ -88,13 +88,6 @@ func (m sparseMem) Write(addr int, p []byte) (int, error) {
 
 func (m sparseMem) Reset() error { return nil }
 
-// runSingleStep runs one test and returns a description of each mismatch,
-// and whether the cycle count matched.
-func runSingleStep(tc *ssTest) (diffs []string, cyclesOK bool) {
-	diffs, cyclesOK, _ = runSingleStepCycles(tc)
-	return
-}
-
 func runSingleStepCycles(tc *ssTest) (diffs []string, cyclesOK bool, cycles int) {
 	in, out := &tc.Initial, &tc.Final
 	mem := sparseMem{}

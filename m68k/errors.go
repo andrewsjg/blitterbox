@@ -6,11 +6,10 @@ import (
 )
 
 var (
-	errNoProgram      = errors.New("no program loaded or memory device attached")
-	errBadAddress     = errors.New("illegal effective address")
-	errBadOpcode      = errors.New("illegal operation code")
-	errBadOpSize      = errors.New("illegal operand size")
-	errNotImplemented = errors.New("operation code not implemented")
+	errNoProgram  = errors.New("no program loaded or memory device attached")
+	errBadAddress = errors.New("illegal effective address")
+	errBadOpcode  = errors.New("illegal operation code")
+	errBadOpSize  = errors.New("illegal operand size")
 )
 
 type traceableError struct {

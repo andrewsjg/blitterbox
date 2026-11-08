@@ -52,10 +52,6 @@ func TestDiskPostBoot(t *testing.T) {
 		return string(b)
 	}
 
-	type hit struct {
-		name string
-		n    int
-	}
 	counts := map[string]int{}
 	logHit := func(name string, i int, extra string) {
 		counts[name]++

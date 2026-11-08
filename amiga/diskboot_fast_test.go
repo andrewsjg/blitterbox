@@ -31,7 +31,6 @@ func TestDiskBootFast(t *testing.T) {
 	}
 	var lastDSKLEN uint16
 	dskDMA := 0
-	cylHist := []int{}
 
 	for i := 0; i < 40_000_000; i++ {
 		pc := a.CPU.PC
@@ -57,7 +56,6 @@ func TestDiskBootFast(t *testing.T) {
 		if i > 0 && i%10_000_000 == 0 {
 			t.Logf("--- %dM PC=$%08X motor=%v cyl=%d hits=%v dskDMA=%d ---",
 				i/1_000_000, pc, a.Disk.motor, a.Disk.cylinder, hits, dskDMA)
-			cylHist = append(cylHist, a.Disk.cylinder)
 		}
 		if err := a.Step(); err != nil {
 			t.Fatalf("step %d: %v", i, err)

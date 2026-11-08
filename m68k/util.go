@@ -12,11 +12,6 @@ func wordToInt32(n uint16) int32 {
 	return NewInt(uint32(n), SizeWord).SignedLong()
 }
 
-// longToInt32 decodes the given long as a signed Int32.
-func longToInt32(n uint32) int32 {
-	return int32(n)
-}
-
 // rmwState holds saved processor state for read-modify-write cycles.
 // For memory EAs with extension words, the read phase advances PC past
 // the extensions. The write phase would then re-read extensions from

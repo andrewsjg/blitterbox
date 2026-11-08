@@ -68,3 +68,11 @@ func TestDiskBootNoIllegalInstruction(t *testing.T) {
 		}
 	}
 }
+
+// mustReadBytes reads n bytes at addr as the CPU sees them, so ROM
+// addresses work too.
+func mustReadBytes(a *Amiga, addr, n int) []byte {
+	b := make([]byte, n)
+	a.Mapper.Read(addr, b)
+	return b
+}

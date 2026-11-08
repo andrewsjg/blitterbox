@@ -18,8 +18,6 @@ type Video struct {
 	// bplpt holds working bitplane pointers, auto-incremented per line.
 	bplpt [8]uint32
 
-	buf [2]byte // scratch for chip RAM reads
-
 	// planeBuf holds the current line's bitplane data.
 	planeBuf [8][2 * maxShresFetchWords]byte
 
@@ -1027,11 +1025,6 @@ func hamStep(hold uint32, idx int, ham8 bool, lp *[256]uint32) uint32 {
 	default:
 		return hold&0xFF00FF | val*17<<8
 	}
-}
-
-// rgb12 converts a 12-bit $RGB colour to RGBA.
-func rgb12(c uint16) [4]byte {
-	return [4]byte{byte(c >> 8 & 0xF * 17), byte(c >> 4 & 0xF * 17), byte(c & 0xF * 17), 0xFF}
 }
 
 func (v *Video) put(row []byte, x int, c [4]byte) {

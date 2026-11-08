@@ -173,8 +173,7 @@ type Amiga struct {
 	ahead         runAhead // the CPU running ahead of the rest of the machine (runahead.go)
 
 	// Debug fields for interrupt tracing
-	debugIntCount int
-	debugWriter   io.Writer
+	debugWriter io.Writer
 
 	// cpuChipAccesses counts CPU chip bus accesses since the last DMA
 	// contention charge (see chipBusWait). DMAWaitCycles totals the CPU

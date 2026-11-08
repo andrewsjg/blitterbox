@@ -540,17 +540,6 @@ func (n *netBoard) tick() {
 	n.mu.Unlock()
 }
 
-// waiting reports whether any call is waiting (the CPU should not sleep
-// past the next poll).
-func (n *netBoard) waiting() bool {
-	for _, t := range n.tasks {
-		if t.op != nil {
-			return true
-		}
-	}
-	return false
-}
-
 func (n *netBoard) state(s *stateCodec) {
 	n.autoconfigState.state(s)
 	if s.load {

@@ -42,13 +42,12 @@ func (d *Display) pollDiskKeys() {
 	if ebiten.IsKeyPressed(ebiten.KeyControl) {
 		unit += 2
 	}
-	dr := d.amiga.Disk.DF(unit)
-	if dr == nil {
+	if d.amiga.Disk.DF(unit) == nil {
 		// Modifier state is unreliable on some hosts (macOS reports Option
 		// held after some shortcuts), and with only DF0: fitted there is
 		// nothing else it could mean.
 		fmt.Printf("DF%d: not connected (use --drives); using DF0: (modifiers seen:%s)\n", unit, heldModifiers())
-		unit, dr = 0, d.amiga.Disk.DF(0)
+		unit = 0
 	}
 	switch {
 	case ebiten.IsKeyPressed(ebiten.KeyShift):

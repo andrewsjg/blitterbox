@@ -97,18 +97,6 @@ func xorRect(a *Amiga, plane, bpr int, x, y, w, h int, sing bool) {
 	xorLine(a, plane, bpr, x, y+h-1, x, y, sing)
 }
 
-func planeChecksum(a *Amiga, plane, n int) (sum uint32, nonzero int) {
-	b := make([]byte, n)
-	a.ChipRAM.Read(plane, b)
-	for _, v := range b {
-		sum = sum*131 + uint32(v)
-		if v != 0 {
-			nonzero++
-		}
-	}
-	return
-}
-
 func TestXORDragOutlineStress(t *testing.T) {
 	for _, sing := range []bool{true, false} {
 		a := &Amiga{ChipRAM: newChipRAM(ChipRAMSize)}

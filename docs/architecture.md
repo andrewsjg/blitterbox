@@ -1,18 +1,25 @@
 # BlitterBox architecture
 
-BlitterBox emulates the Amiga 500 to 1200 (OCS, ECS and AGA chipsets; 68000 or
-68020). The CPU is the pure-Go 680x0 core in `m68k/`
-(`github.com/andrewsjg/blitterbox/m68k`), part of this module.
+BlitterBox emulates the Amiga 500 to 4000 (OCS, ECS and AGA chipsets; a
+68000, 68020, 68030 or 68040). The CPU is the pure-Go 680x0 core in `m68k/`
+(`github.com/andrewsjg/blitterbox/m68k`), part of this module. It runs in its
+own window on macOS, Linux and Windows, behind a native configuration screen
+on the Mac, and as an iPadOS app.
 
 ## Layout
 
 | Path | Contents |
 |---|---|
-| `cmd/blitterbox/` | CLI and window: `main.go` (flags, no arguments opens the configuration screen), `machine.go` (builds an Amiga from `config.Settings`), `display.go` (the `app` game: configuration screen or running machine), `launcher.go` and `ui.go` (the configuration screen) |
+| `amiga/` | The machine: chipset, CIAs, floppy, expansion boards, input, the host window, save states, and most tests |
+| `m68k/` | The CPU: 68000-68040 instruction set, the 68030 and 68040 MMUs, the 68881/68882 FPU, exceptions, prefetch, cycle timing (`m68k/README.md`); `m68kmem/` memory interfaces; tests include the SingleStepTests 68000 suite (data in `m68k/testdata/680x0`, downloaded, not in git). `sim/`, `srec/`, `dump/`, `m68ktest/` and `cmd/m68k` come from go-m68k, for running assembled test programs |
+| `internal/launch/` | Settings to a running Amiga for every front end: `machine.go` (builds an Amiga from `config.Settings`), `presets.go`, and the launcher API (`api.go`) the native configuration screens use |
 | `internal/config/` | Settings: the `Settings` struct behind the flags, settings files, and saved configurations (`~/.config/blitterbox/configs/`) |
-| `m68k/` | The CPU: 68000 and 68020 instruction set, 68881/68882 FPU, exceptions, prefetch, cycle timing (`m68k/README.md`); `m68kmem/` memory interfaces; tests include the SingleStepTests 68000 suite (data in `m68k/testdata/680x0`, downloaded, not in git) |
-| `amiga/` | The machine: chipset, CIAs, floppy, input, display, and all tests |
-| `diag/` | Diagnostic tools: `adf.py` (list and extract files in OFS/FFS disk images) and `disasm68k.py` (68000/68020 disassembler for ROMs and memory dumps; needs capstone) |
+| `internal/whdload/`, `internal/lha/` | WHDLoad games: a boot folder and the game unpacked from its LhA archive |
+| `cmd/blitterbox/` | The program: `main.go` (flags), `display.go` (the configuration screen or the running machine), `launcher.go` and `ui.go` (the Ebitengine configuration screen), `launcherapi.go` (`--launcher-api`, for the Mac app) |
+| `cmd/amixdisk/` | Builds a hard disk image with Amiga Unix (AMIX 2.1) installed, from the distribution's cpio archive |
+| `macos/` | The Mac app's SwiftUI configuration screen (`scripts/macos-app.sh` builds the app) |
+| `mobile/`, `ios/` | The iPadOS app: `mobile/` is bound into an xcframework by `scripts/ios-framework.sh`; `ios/` is the app, which shares the Mac's configuration screen |
+| `diag/` | Diagnostic tools (Python): `adf.py` (list and extract files in disk images), `disasm68k.py` (disassembler; needs capstone), `hunkload.py` (load a hunk executable with its relocations), `s5.py` (read AMIX filesystems), `p96settings.py` (Picasso96 settings), `games.txt` (the game sweep's list) |
 | `docs/` | This file, the progress log, and write-ups of the harder bugs |
 
 ## Machine (`amiga/amiga.go`)
@@ -66,7 +73,7 @@ faults on the Amiga bus).
 
 | Range | Device |
 |---|---|
-| `$000000-$0FFFFF` | Chip RAM, 512 KB or 1 MB (`chipram.go`, `SetChipRAM`, `--chipram`). Addresses wrap at the fitted size as Agnus's do, so DMA pointers wrap too. ROM appears here while the CIA-A OVL bit is set at reset |
+| `$000000-$1FFFFF` | Chip RAM, 512 KB, 1 MB or (AGA) 2 MB (`chipram.go`, `SetChipRAM`, `--chipram`). Addresses wrap at the fitted size as Agnus's do, so DMA pointers wrap too. ROM appears here while the CIA-A OVL bit is set at reset |
 | `$200000-$9FFFFF` | Zorro II fast RAM once Autoconfig has placed it (`--fastram`; normally at `$200000`) |
 | `$BF0000-$BFFFFF` | Both CIAs, partially decoded (`ciaSpace`): CIA-A when A12 is low, odd bytes (`$BFE001`: OVL, LED, disk status, keyboard serial, mouse button, TOD = frame counter); CIA-B when A13 is low, even bytes (`$BFD000`: disk control, index pulse on /FLAG, TOD = scanline counter) |
 | `$C00000-$D7FFFF` | Slow RAM (`--slowram`, on the chip bus) |
@@ -101,12 +108,21 @@ Chipset DMA (Copper, blitter, bitplanes, sprites, disk) reads and writes
 | `netboard.go`, `bsdsocket*.go` | Network | `--bsdsocket`: Zorro II board whose ROM adds bsdsocket.library; each vector traps to Go, which runs host sockets non-blocking; calls that must wait `Wait()` in 68000 code and are woken by the board's INT2 server |
 | `serial.go`, `serial_host.go` | Serial port | Paula's UART (SERDAT/SERDATR/SERPER, TBE and RBF interrupts, baud-rate timing), CIA-B modem lines; `NetSerial` connects it to a telnet or raw TCP listener (`--serial`) |
 | `keyboard.go`, `mouse.go`, `joystick.go` | Input | Keyboard serial handshake via CIA-A. Mouse counters in JOY0DAT. Port 2 joystick in JOY1DAT. Fire buttons on CIA-A PRA. Second and third buttons on the POTGO pins |
+| `hdfcreate.go` | New hardfiles | A blank disk with an RDB and one FFS partition (`CreateHardfile`), for BlitterBox or a real Amiga |
+| `scsi.go`, `a2091.go`, `scsitape.go` | SCSI | A SCSI disk's commands (also behind goamiga.device's HD_SCSICMD), the A2091 controller (DMAC and WD33C93), and a read-only tape drive |
+| `a2065.go`, `usernet.go` | Ethernet | The A2065 card (Am7990 LANCE) on a user-mode network, as QEMU's "user" networking |
+| `zorro3.go`, `motherboard.go`, `rtc.go` | A3000/A4000 | Zorro III Autoconfig and RAM, the motherboard resources and 32-bit RAM, the battery-backed clock |
+| `rtg*.go` | RTG | The uaegfx card for Picasso96, with its blitter and sprite functions done in Go |
+| `ahi.go`, `clipboard.go` | Host audio and clipboard | goamiga.audio for AHI; text shared between the host's clipboard and the Amiga's |
+| `savestate.go` | Save states | The whole machine between two instructions |
+| `runahead.go`, `idleloop.go` | Speed | The CPU running ahead of the chipset in fast RAM, and idle loops (a CPU waiting on an interrupt) run on to the next event in one go |
 | `display.go`, `display_joystick.go`, `display_disk.go`, `display_host.go`, `keyboard_ebiten.go` | Host window: F11 disk dialog (zenity), Cmd host commands, warp, status bar | Ebitengine, 50 fps (60 on NTSC); excluded by `-tags noebitengine` |
 
 ## Tests
 
-All tests live in `amiga/` and need `Kick13.rom` and the Workbench 1.3 ADFs
-in the repository root (they skip otherwise). There are three kinds:
+Most tests live in `amiga/`. The ones that boot Kickstart need ROMs in
+`ROMS/` and disks in `Workbench/` or `ADF/` (they skip otherwise). There are
+three kinds:
 
 - **Unit tests** of a component with a bare `Amiga` (blitter, CIA, MFM, sprites).
 - **Integration tests** that boot Kickstart/Workbench headlessly and assert
@@ -114,14 +130,15 @@ in the repository root (they skip otherwise). There are three kinds:
   `TestDiskBootNoIllegalInstruction`). Helpers for driving Workbench are in
   `wb_diag_helpers_test.go`, `wb_drag_release_test.go` and
   `wb_open_window_drag_test.go`.
-- **Diagnostic traces** that print large amounts of state. They are skipped
-  unless `BLITTERBOX_DIAG=1` is set.
+- **Diagnostic traces** that print large amounts of state rather than
+  assert. They are skipped unless `BLITTERBOX_DIAG=1` is set
+  (`requireDiag`).
 
 ```bash
-go test ./amiga/                                    # full suite, ~6 min
+go test ./...                                       # everything, ~8 min with the ROMs
 go test -tags noebitengine ./amiga/                 # without the Ebitengine window code
 BLITTERBOX_DIAG=1 go test -run TestHotPCs -v ./amiga/  # a diagnostic trace
 ```
 
-Tests write screenshots (PNG) to the repository root or `screenshots/`;
-both are git-ignored.
+Tests write screenshots (PNG) to the repository root, `screenshots/` or
+`/tmp`; the first two are git-ignored.

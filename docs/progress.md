@@ -55,9 +55,9 @@ verified. Longer investigations get their own write-up in `docs/`.
    There is no 68060 and no Zorro III I/O boards other than the RTG
    card (see `docs/a4000-68040-plan.md`). The caches aren't emulated
    (CACR is stored).
-6. **AMIX.** The arrow keys don't work under X Windows (the X server's
+5. **AMIX.** The arrow keys don't work under X Windows (the X server's
    keymap); they work everywhere else.
-5. **Safety nets.** CPU access violations are dropped rather than raised
+6. **Safety nets.** CPU access violations are dropped rather than raised
    (`busErrorCount`); with the open-bus Mapper they should not occur.
    Real bus errors exist only for the A3000/A4000's bus timeout.
 

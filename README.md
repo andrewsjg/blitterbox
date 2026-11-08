@@ -61,8 +61,8 @@ included), from the A500 to the A1200. It has its own 680x0 CPU core, in
 - Activity lights, and Power, Reset and Config buttons.
 
 What isn't done yet is listed under "Known gaps" in
-[docs/progress.md](docs/progress.md). The PCMCIA slot and an MMU are among
-them.
+[docs/progress.md](docs/progress.md). The PCMCIA slot and the 68060 are
+among them.
 
 ## Building
 
@@ -763,7 +763,9 @@ format.
   [docs/debugging-prefs-hang.md](docs/debugging-prefs-hang.md): two of
   the bug hunts, written up.
 - `diag/`: `adf.py` lists and extracts files from disk images;
-  `disasm68k.py` disassembles ROMs and memory dumps.
+  `disasm68k.py` disassembles ROMs and memory dumps; `hunkload.py` loads
+  a hunk executable with its relocations; `s5.py` reads Amiga Unix
+  filesystems; `p96settings.py` makes Picasso96 settings.
 
 ## Licence
 

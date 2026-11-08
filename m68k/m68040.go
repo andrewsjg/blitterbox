@@ -47,17 +47,16 @@ func (c *Processor) is040() bool { return c.Model >= Model68040 }
 
 // mmu040 is the 68040's MMU registers and its translation caches.
 type mmu040 struct {
-	tc            uint32 // E (bit 15), P (bit 14)
-	urp, srp      uint32
-	itt, dtt      [2]uint32
-	mmusr         uint32
-	enabled       bool
-	ps            uint // page shift: 12 or 13
-	iatc, datc    [atc040Size]atc040Entry
-	pageMask      uint32
-	ttWriteProt   bool // a TT register write-protects its block
-	anyTT         bool // a TT register is enabled
-	translationOn bool // the Decoder hook is installed
+	tc          uint32 // E (bit 15), P (bit 14)
+	urp, srp    uint32
+	itt, dtt    [2]uint32
+	mmusr       uint32
+	enabled     bool
+	ps          uint // page shift: 12 or 13
+	iatc, datc  [atc040Size]atc040Entry
+	pageMask    uint32
+	ttWriteProt bool // a TT register write-protects its block
+	anyTT       bool // a TT register is enabled
 }
 
 const atc040Size = 256

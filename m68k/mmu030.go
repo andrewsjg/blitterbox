@@ -212,13 +212,11 @@ func (c *Processor) translate(addr, n int, write bool) int {
 
 // walkResult is the outcome of a table walk.
 type walkResult struct {
-	phys                    uint32
-	wp, s, m                bool
-	invalid, limit, buserr  bool
-	levels                  int
-	descAddr                uint32 // the last descriptor read
-	supervisorViolation     bool
-	writeProtectedViolation bool
+	phys                   uint32
+	wp, s, m               bool
+	invalid, limit, buserr bool
+	levels                 int
+	descAddr               uint32 // the last descriptor read
 }
 
 func (w *walkResult) fault() bool { return w.invalid || w.limit || w.buserr }

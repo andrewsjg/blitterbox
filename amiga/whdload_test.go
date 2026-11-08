@@ -193,6 +193,7 @@ func TestWHDLoadBubbleBobble(t *testing.T) {
 // SDI (Mindscape, SPS 720), installed as its WHDLoad install does it: the
 // pictures and prog files from the disk called "sdi" go in data.
 func TestWHDLoadSDI(t *testing.T) {
+	requireDiag(t) // it logs what happens, and checks nothing
 	m := newWHDMachine(t, "SDI", "../ADF/SDI (1987)(Mindscape)[0720].zip", []string{
 		`Copy "sdi:(pictures|prog)" SYS:Game/data ALL QUIET >SYS:copy.log`,
 		"List SYS:Game/data >SYS:list.log",
