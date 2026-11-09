@@ -584,7 +584,8 @@ func (d *Display) Start() {
 // window can show something else.
 func (d *Display) Stop() {
 	if d.audioPlayer != nil {
-		d.audioPlayer.Close()
+		// It stops reading Paula's buffer before Output lets go of it.
+		d.audioPlayer.PauseAndStopReading()
 		d.audioPlayer = nil
 	}
 	d.amiga.Paula.Output = nil

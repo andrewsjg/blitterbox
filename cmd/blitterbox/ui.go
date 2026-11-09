@@ -278,11 +278,9 @@ func (u *ui) cycle(x, y, w int, opts []string, cur int) int {
 		p.LineTo(cx+7*k, cy-5*k)
 		p.LineTo(cx+2*k, cy-2*k)
 		p.Close()
-		vs, is := p.AppendVerticesAndIndicesForFilling(nil, nil)
-		for i := range vs {
-			vs[i].ColorR, vs[i].ColorG, vs[i].ColorB, vs[i].ColorA = 0, 0, 0, 1
-		}
-		dst.DrawTriangles(vs, is, uiPixel(), &ebiten.DrawTrianglesOptions{AntiAlias: true})
+		op := &vector.DrawPathOptions{AntiAlias: true}
+		op.ColorScale.ScaleWithColor(uiBlack)
+		vector.FillPath(dst, &p, nil, op)
 	})
 	u.fill(x+24, y+4, 1, h-8, uiBlack)
 	u.fill(x+25, y+4, 1, h-8, uiWhite)
@@ -409,15 +407,4 @@ func (u *ui) wrap(s string, w int) []string {
 		lines = append(lines, line)
 	}
 	return lines
-}
-
-var uiWhitePixel *ebiten.Image
-
-// uiPixel is a white source image for DrawTriangles.
-func uiPixel() *ebiten.Image {
-	if uiWhitePixel == nil {
-		uiWhitePixel = ebiten.NewImage(1, 1)
-		uiWhitePixel.Fill(color.White)
-	}
-	return uiWhitePixel
 }

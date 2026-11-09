@@ -78,7 +78,7 @@ func statusFace(size float64) text.Face {
 
 // statusTextWidth is s's width in logical pixels.
 func statusTextWidth(s string) float64 {
-	return text.Advance(s, statusFace(statusFontSize))
+	return text.AdvanceAt(s, len(s), statusFace(statusFontSize))
 }
 
 // statusLight is an activity light: its label and colour (nil: off), the
